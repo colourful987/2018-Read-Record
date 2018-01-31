@@ -76,7 +76,7 @@ Behavior 这个小框架以strategy 设计模式为基础，同时借助runtime 
 
 ### 2018/01/29
 终端命令跳转快捷键：
-![cfce7b59ly1fnvicbi7haj20nu080t9e.jpg](/Users/pmst/Source Code Repositories/2018-Read-Record/2018-01/resource/20180129.jpg)
+![cfce7b59ly1fnvicbi7haj20nu080t9e.jpg](./resource/20180129.jpg)
 其中 `ctl+w` 往前删除，`ctrl+k` 往后删除，快速切换到上一个单词是`alt+方向键左`，同理 `alt+方向键右`，
 
 ###Aspect
