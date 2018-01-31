@@ -61,17 +61,22 @@
 内容：观察者模式和 Behavior 策略模式
 总结：
 >Q: 首先观察什么？ 
+>
 >A: 要有 Subject，你可以选择订阅来观察，当然Subject可能包含多个Events.
+>
 >Q: Subject要有什么？ 
+>
 >A：基本的subscribeObserver,removeObserver，供外部调用的接口改变主题，然后响应内部所有的注册者。
+>
 >Q: 注册者需要什么？ 
+>
 >A: 一般会用协议来规范，比如定义一个 ObserverableInterface 。
 
 Behavior 这个小框架以strategy 设计模式为基础，同时借助runtime message forward 技术达到多重代理的目的。
 
 ### 2018/01/29
 终端命令跳转快捷键：
-![cfce7b59ly1fnvicbi7haj20nu080t9e.jpg](quiver-image-url/9D4DA932E3297BA4B516D62698F6B2FD.jpg)
+![cfce7b59ly1fnvicbi7haj20nu080t9e.jpg](/Users/pmst/Source Code Repositories/2018-Read-Record/2018-01/resource/20180129.jpg)
 其中 `ctl+w` 往前删除，`ctrl+k` 往后删除，快速切换到上一个单词是`alt+方向键左`，同理 `alt+方向键右`，
 
 ###Aspect
