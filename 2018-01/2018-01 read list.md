@@ -79,9 +79,12 @@ Behavior 这个小框架以strategy 设计模式为基础，同时借助runtime 
 ![cfce7b59ly1fnvicbi7haj20nu080t9e.jpg](./resource/20180129.jpg)
 其中 `ctl+w` 往前删除，`ctrl+k` 往后删除，快速切换到上一个单词是`alt+方向键左`，同理 `alt+方向键右`，
 
-###Aspect
+### Aspect
+
 链接：[Aspect 源码学习](https://github.com/steipete/Aspects)
+
 阅读一遍源码，大致已经了解整个设计思路，收获如下：
+
 1. 巩固 runtime 基础知识： instance object, class object, metaClass object ，后两者生命周期有且仅有一个，同时都分配在堆上；
 2. 对某个类所有的实例变量以及方法描述都存储在class object 对象中，而所有类方法(+ 标识)和变量都存储在 metaClass object 中
 3. 必须理解oc消息发送的灵魂在于 `objc_msg_send`，依次传参：self，sel，args可变参数；其中self可以理解为内存地址，self 可以为实例、class object，我猜测这个c语言方法这么实现：先用`object_getClass(self)`获取到isa的地址，然后通过sel就可以找到对应的方法了，如果self是实例变量，那么`object_getClass`取到的就是类对象，它完整描述了当前类的实例信息：有什么变量以及方法；如果self是类对象，那么`object_getClass`取到的就是metaClass object，它完整描述了当前类的类信息：有什么类变量以及类方法。（ps：所以为啥总是类属性有且仅有一个，因为类对象整个生命周期也只有一个啊）
