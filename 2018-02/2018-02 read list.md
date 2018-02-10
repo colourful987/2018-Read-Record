@@ -103,14 +103,27 @@ Aspect 可以对 intance object， class object 都允许**多次(重复)**，ho
 8. StockChart-master
 9. YY_stock
 
-看了各个项目的运行效果，更多的让人觉得只是个demo。
+看了各个项目的运行效果，并不能解决我当前的问题，只是为了实现效果和功能，并没有过多考虑后续扩展和维护，当然还是有借鉴价值。
 
 # 2018/02/08
 [iOS架构之View层的架构方案](https://mp.weixin.qq.com/s/t_IBkCClPBZFBPmtZT0WsQ)
 简单介绍了 MVC，MVVM，MVP，VIPER（View、Interactor、Presenter、Entity、Router），并未给实质性的帮助，不过喜欢作者的一句话：
 > 好的架构需要1.解决现有问题；2.应对未来变化。
 
-###Title
+# 2018/02/09 - 2018/02/10
+ [Charts](https://github.com/danielgindi/Charts) 图形库，基本上满足所有日常画图的需求，功能非常强大。
+
+小总结，带着目的性阅读了Charts一小部分源码，稍微记录下理解：
+* ChartView 设计应用了oop的继承，派生出 LineChartView , BarChartView 等专门呈现一种类型的图形，当然内部可以是画多条 LinePoint 或多个 Bar 图，当然专门有个 CombinedChartView ，不过是限定了类型的（只有lineChart bubble candle等4、5种）；
+* ChartViewData 是图形的数据源，作为 ChartView 的一个属性关联（One Chart, One Data），为了规范这一行为，设计了 ChartDataProvide 协议，再次基础上还有 LineChartDataProvider，主要是为了制定规则，让各个ChartView 绑定一个数据源；
+* 具体说说ChartViewData的设计，同样是继承，基类是 ChartData，它封装了一个 `[IChartDataSet]` 数组，接口都是从这个数据源提取信息：比如最大值，最小值等；为了让各式各样的曲线都加进来，数组元素类型必须遵循 `IChartDataSet` 协议；
+* 一幅曲线图可能包含多条曲线，一条曲线的数据源就是 `LineChartDataSet` ———— 所有`set`结尾的数据源，即代表一条曲线；所有`set`结尾的单条数据源都是继承自 `ChartBaseDataSet` 这个类是服务类，所有都是需要子类来重写的；`ChartData` 是它的上一级，持有一个 `values: [ChartDataEntry]` 数组类型的变量; 
+* `LineChartDataSet` 的更小一级颗粒度是 `EntryDataSource`，图由很多曲线组成，一条曲线由很多点组成，这里图的数据源->chartData，线的数据源->set，点的数据源->entry；
+
+
+
+### Title
 链接：
 总结：
+
 
