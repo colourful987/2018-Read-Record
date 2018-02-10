@@ -24,10 +24,10 @@
 [去model化和数据对象](https://casatwy.com/OOP_nomodel.html)
 
 总结：
-1. 对象之间简单传值，即定义外部属性，例如`property(nonamatic,copy)NSString *stockName`，写死了属性；
+1. 对象之间简单传值，即定义外部属性，例如`@property(nonamatic,copy)NSString *stockName`，写死了属性；
 2. 轻度抽象，定义一个基类，包含所有可用的属性和方法，子类派生重写即可 ———— 这里可以参考NSNumber这种；
 3. 制定协议规范接口，好处时可以multi-compliance，但是oc不能默认实现，swift是可以的
-4. `arget-Action`有待学习，强解耦，但是失去编译器检查
+4. `Target-Action`有待学习，强解耦，但是失去编译器检查
 5. 响应式不能局限于所谓的注册通知，而是发送一个signal出去，让所有关心这个信号的对象来处理这件事，避免了原本关心这个信号的对象需要定时轮询的尴尬；
 6. `delegate和notification有什么区别` 命令式和响应式的区别，很容易理解；
 
