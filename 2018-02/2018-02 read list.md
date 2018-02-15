@@ -1,21 +1,24 @@
-> Theme: 计算机底层知识
-> Source Code Read Plan: Aspect
-> Reference Book List: 《Code》《程序员的自我修养》
+> Theme: 计算机底层知识    
+> Source Code Read Plan: Aspect      
+> Reference Book List: 《Code》《程序员的自我修养》     
 
 # 2018/02/01 dyld & runtime base knowledge
 [Friday Q&A 2012-11-09: dyld: Dynamic Linking On OS X](https://www.mikeash.com/pyblog/friday-qa-2012-11-09-dyld-dynamic-linking-on-os-x.html)
+
 [dyld 源代码gitHub链接](https://github.com/opensource-apple/dyld)
+
 需要有汇编基础，底层知识，否则阅读起来有点吃力，推荐《程序员的自我修养》这本书。
 
 总结：
 [runtime - self super的理解](quiver-note-url/8D998466-EC2F-41AE-B9E1-B3623872E46E)
+
 [runtime - class & instance object & class object & meta class object](quiver-note-url/51FDBE0D-D81B-4A01-9716-E092299018FC)
 
 # 2018/02/02
 昨天的汇编把我虐的不轻，所以今天特地搜了几篇文章补补基础知识，顺便学习了一些计算机基础知识：CPU架构、指令集以及过往发展历史，这是个文集，感觉写得全面易懂：
-[1.深入iOS系统底层之汇编语言](https://www.jianshu.com/p/ff8ed52bdd67)
-[2.深入iOS系统底层之指令集介绍](https://www.jianshu.com/p/54884ce976ca)
-[3.深入iOS系统底层之XCODE对汇编的支持介绍](https://www.jianshu.com/p/365ed6c385e5)
+[1.深入iOS系统底层之汇编语言](https://www.jianshu.com/p/ff8ed52bdd67)    
+[2.深入iOS系统底层之指令集介绍](https://www.jianshu.com/p/54884ce976ca)    
+[3.深入iOS系统底层之XCODE对汇编的支持介绍](https://www.jianshu.com/p/365ed6c385e5)    
 
 接下来可能会先重拾 《Code》 这本书，然后是《程序员自我修养》和源代码阅读（Runtime、GCD、RunLoop、Block）“并行”学习。 
 
@@ -111,7 +114,7 @@ Aspect 可以对 intance object， class object 都允许**多次(重复)**，ho
 > 好的架构需要1.解决现有问题；2.应对未来变化。
 
 # 2018/02/09 - 2018/02/10
- [Charts](https://github.com/danielgindi/Charts) 图形库，基本上满足所有日常画图的需求，功能非常强大。
+阅读 [Charts](https://github.com/danielgindi/Charts) 源代码
 
 小总结，带着目的性阅读了Charts一小部分源码，稍微记录下理解：
 * ChartView 设计应用了oop的继承，派生出 LineChartView , BarChartView 等专门呈现一种类型的图形，当然内部可以是画多条 LinePoint 或多个 Bar 图，当然专门有个 CombinedChartView ，不过是限定了类型的（只有lineChart bubble candle等4、5种）；
@@ -120,10 +123,38 @@ Aspect 可以对 intance object， class object 都允许**多次(重复)**，ho
 * 一幅曲线图可能包含多条曲线，一条曲线的数据源就是 `LineChartDataSet` ———— 所有`set`结尾的数据源，即代表一条曲线；所有`set`结尾的单条数据源都是继承自 `ChartBaseDataSet` 这个类是服务类，所有都是需要子类来重写的；`ChartData` 是它的上一级，持有一个 `values: [ChartDataEntry]` 数组类型的变量; 
 * `LineChartDataSet` 的更小一级颗粒度是 `EntryDataSource`，图由很多曲线组成，一条曲线由很多点组成，这里图的数据源->chartData，线的数据源->set，点的数据源->entry；
 
+# 2018/02/11
+[Sharing State between View Controllers in MVC ](https://talk.objc.io/episodes/S01E87-sharing-state-between-view-controllers-in-mvc-part-2) 出自 objc 的 App Architecture 一书demo。
+场景：音频播放器在主界面播放时，用户希望以 modal 方式弹一个新的页面继续播放音频，此刻要求播放状态、进度都要保持一致。
+解决方案是使用单例 `SharedPlayer` 内部持有一个 audioPlayer 对象，多个VC共同维护一个播放器的播放状态和进度，当播放器在某个VC中状态更改时，发送通知给所有实例（当然要带上状态信息），这样所有的VC会根据通知中的state来更新 UI。
+举一反三：1.竖屏中视频播放器播放过程中用户点击横屏播放模式，视频的进度和画面同步；2.股票软件中，用户在盯盘某只股票的分时图，此刻想要跳到其他页面，但又想继续关注该股，分时图以小图方式呈现，而再次点击又恢复。
 
+# 2018/02/12
+[看懂UML类图和时序图](http://design-patterns.readthedocs.io/zh_CN/latest/read_uml.html#id1)
+
+UML （unified modeling language） 对于梳理模块类之间的关系真的非常棒。
+
+![简单示例](http://design-patterns.readthedocs.io/zh_CN/latest/_images/uml_class_struct.jpg)
+
+* 切勿错把依赖当做关联，oc中 `property(nonamati, strong)Person *person` 表达的是关联，而只要类中用到了其他类————可能在某个方法，这是依赖；
+* 组合和聚合，前者contains a ，后者 has a 关系。两者表达整体和部分的关系，组合比聚合紧密程度要高，生命周期组合中整体和部分是保持一致，而聚合是两者独立的。
+
+关于工厂模式：
+1. 简单工厂也称静态工厂方法，依赖所有具体的产品类，所有产品类都是派生自 Product 抽象类，这种方式的好处在于分离对象的创建，降低系统的耦合度。可以这么理解：如果使用简单工厂，那么所有需要创建产品的类，只需要导入（依赖）Factory 类即可，不用在导入具体的产品类，可以看到工厂类的职责过重，增加新产品需要修改逻辑————其实就是if-else多加一个，并依赖新类。
+2. 工厂模式，让工程子类决定创建具体的Product。简单工厂只有一个工厂，但是它可以创建各式各样不同的产品，关联的类型之多导致责任巨大；而工厂模式则是很多个工厂，每个工厂职责明确，只创建属于自己的产品，因此依赖也只有一个。
+
+# 2018/02/14
+[如何给TableView、CollectionView添加动效](https://bjdehang.github.io/OneSwift/)
+
+总结：主要提供了给TableView CollectionView加动画的思路，但是文中并没有准确提及时机，简单的放到viewWillAppear是不恰当的，因为第一次push，present VC的时候，viewWillAppear 中取到的visibleCells为空。
+
+以上文章都是作者自己项目中已经实现的效果，很有借鉴意义。
+
+学习项：
+1. 学习 CGAffineTransform 数学知识；
+2. UIView 生命周期加载顺序；
 
 ### Title
 链接：
 总结：
-
 
