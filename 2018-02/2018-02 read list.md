@@ -154,6 +154,11 @@ UML （unified modeling language） 对于梳理模块类之间的关系真的�
 1. 学习 CGAffineTransform 数学知识；
 2. UIView 生命周期加载顺序；
 
+# 2018/02/15
+[结构型模式](http://design-patterns.readthedocs.io/zh_CN/latest/structural_patterns/structural.html)
+
+包含 Adapter、Bridge、Composite、Decorator、Facade、Flyweight、Proxy 六种，其中看似实现一样但因用途不同而叫法不一。
+
 ### Title
 链接：
 总结：
