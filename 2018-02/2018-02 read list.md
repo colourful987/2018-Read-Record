@@ -168,8 +168,61 @@ UML （unified modeling language） 对于梳理模块类之间的关系真的�
 # 2018/02/23
 行为型模式: 1. 中间者模式即将所有依赖依附于一个对象，而其他对象则只引入中间者这个依赖即可，MVC中的 Controller 就扮演着 View 和 Model 的中间者；2. 观察者由 Subject 主题+Observer组成；3. 命令模式在 Runtime 中就是 Invocation，caller + selector；4. 状态模式
 
-# 2018/02/25 - 2018/02/26
->  [博主 Aspect 源代码学习总结记录(Updating...)](https://github.com/colourful987/2018-Read-Record/blob/master/2018-02/resource/Aspect-Source-Code-Learning.md)
+# 2018/02/25
+[Aspect 源代码学习总结记录(Updating...)](https://github.com/colourful987/2018-Read-Record/blob/master/2018-02/resource/Aspect-Source-Code-Learning.md)
+
+# 2018/02/26
+[iOS中坐标系和像素点的设定](https://stackoverflow.com/questions/3661076/uiview-drawrect-drawing-lines-of-wrong-width)
+
+> The integral coordinates indicate places half-way between pixels; that is, (0,0) is in the upper-left corner, above and to the left of the upper-left pixel; similarly, (1,0) is between the first and second pixels; finally, (0.5,0.5) is at the center of the upper-left pixel.
+> According to the documentation for CGContextSetLineWidth, "when stroked, the line straddles the path, with half of the total width on either side." Thus, if the path is lying precisely in between the pixels, the line will be stroked half on one row of pixels, half on the other.
+> Hence, to get a sharp pixel line, you must offset your coordinates by half a pixel: for your x coordinate, use rect.size.height - 7.5 instead of - 7.
+> By the way, when drawing rectangles, it is handy to use CGRectInset(rect, 0.5, 0.5) to achieve this.
+
+下图是我自己粗略画了下示意图，圆圈表示物理上的像素点，1倍屏。
+
+![](https://mobiledev.hexin.cn/ios/uploadResource/%E5%83%8F%E7%B4%A0%E5%92%8C%E5%9D%90%E6%A0%87%E5%85%B3%E7%B3%BB.PNG)
+
+### 简单 demo 加深理解
+
+创建一个自定义视图`Myview`(只是重写`drawRect`方法，但是什么都不写)，接下来我们会修改视图的位置(origin)以及高度(height)，因为这两个因素会参与计算，接下来会有公式
+
+```
+CGRect rect = CGRectMake(100,100,100,35.7);
+Myview *myview = [[Myview alloc] initWithFrame:rect];
+[self.view addSubview:myview];
+```
+
+如果在 `Myview` 的 `drawRect:(CGRect)rect` 打断点，然后`po self; po self.layer;po rect`，可以得到如下信息：
+
+```
+MyView: frame:(100,100;100,35.5)
+CALayer:position=CGPoint(150,117.75) bounds=CGRect(0,0;100,35.5)
+rect:origin=CGPoint(x=0,y=-0.1666666666666643) size=(width=100,height=35.66666666666667)
+```
+
+正是因为 `drawRect` 调用时 `rect` 被修正过，导致在三倍屏下出现了一条1px的线，至于线的颜色为啥是一条0x7F7F7F，后面会提及。
+
+计算公式如下，设`GCRect rect = CGRectMake(x,y,with,height)` 这里只讨论Y轴方向上。
+
+1. 首先`height * scale `(height = 35.7,三倍屏 scale=3) 得到107.1个像素，因为我们知道像素最小单位为1，所以四舍五入107px,换算成点为35.6666667pt————这就是矫正后的高度；
+2. 至于起始位置，首先iOS中的UIView布局是依靠 center 和 bound决定的，而 frame 只不过是一个计算属性，依托于上面两个属性，同理给 frame 赋值时，反向计算修改 center和bounds。ps：关于transform先按下不表；
+3. 再来说CALayer，它才是真正渲染视图内容的大佬，而UIView是它的delegate，注意到CALayer的位置 `position=CGPoint(150,117.75)`，originY 计算方式如下 `(17.75-35.666666667/2) * 2 = -0.1666666667`，为什么要乘以 2，这个坑还没填。 
+
+上面就是drawRect中 rect 计算公式，读者可以修改 y 和 height 验证，比如修改 height=35.7。
+
+现在说下为什么`rect:origin=CGPoint(x=0,y=-0.1666666666666643) size=(width=100,height=35.66666666666667)` 为导致顶部出现一条横线
+
+```
+po [self convertRect:rect toView:self.superView]
+// x=100 y=99.833333333333 width=100 height=35.666666666657
+// 甚至我觉得直接 [self convertRect:rect toView:self.window] 更直接正确。
+```
+
+这里矩形填充和在某个位置画线还略有不同：
+* 矩形：如果框定了一个范围，那么这个范围内所有的物理像素就会填充，同理如果框选刚好落在一个像素的中心位置，那么这个尴尬的一行像素点都会填充一半的色值，这就是所谓的grayline效果；
+* 画线：正如最上面所说，在某个位置左右发散`width/2`方式填充，同理左右边界的像素点若无法充满最小单位1px，那么这个像素点会填充一半色值的。
+
 
 ### Title
 链接：
