@@ -38,7 +38,7 @@
 
 ![CRT 电子枪屏幕渲染顺序](https://blog.ibireme.com/wp-content/uploads/2015/11/ios_screen_scan.png)
 
-显示屏本质为二极管等物理原件色彩填充，输入源输入第一行数据->屏幕渲染一行（从左到右）后 set siganl（HSync???）-> 输入源输入第二行 -> 屏幕渲染第二行->...反复执行这一行为至到底部最后一行->整屏(一帧)渲染完毕，显示器set signal(VSync) 即表示回到左上角起始位置，输入源更换下一帧数据继续。
+显示屏本质为二极管等物理原件色彩填充，输入源输入第一行数据->屏幕渲染一行（从左到右）后 set signal（HSync✔️）-> 输入源输入第二行 -> 屏幕渲染第二行->...反复执行这一行为至到底部最后一行->整屏(一帧)渲染完毕，显示器set signal(VSync) 即表示回到左上角起始位置，输入源更换下一帧数据继续。
 
 ![总线电路](https://blog.ibireme.com/wp-content/uploads/2015/11/ios_screen_display.png)
 
