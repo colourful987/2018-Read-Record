@@ -96,9 +96,9 @@ typedef struct Method {
 }Method;
 
 typedef struct Class {
-  char *className,
+  char *className;
   /// Variable List 是一个数组 类型为 Variable
-  Variable *variableList,
+  Variable *variableList;
   /// Method List 也是一个数组 类型为 Method
   Method *methodList
 }
@@ -187,5 +187,83 @@ call(pmst);
 2. 存在太多的硬编码，比如 `findMethod` 写死了是从 `personClsObject` 中去遍历方法列表
 
 > 小总结：1.实例对象允许很多个，但是对应的类对象有且仅有一个，运行时保存在堆上；2.类对象是一份抽象描述，我们可以在运行通过查询类对象，拿到关于类的信息，比如第一个变量名称，占字节数，变量类型等等，拿到这些信息可以帮助我们实际访问实例对象指针指向内存中的数据啦！—————— 因为我们知道字节偏移和变量类型。
+
+
+## 3.4 改进：实例对象关联类对象
+3.3节中我们仅考虑只有一个`personClsObject`，并且在 `findMethod` 查询函数中也硬编码写死了是从 `Person` 类对象方法列表中遍历匹配，现在开始加入不同的类对象，`findMethod` 只需要新增一个入参即可:
+
+```C
+/// 分离硬编码部分，传入 `Class *classObject` 不同的类对象
+void (*findMethod(Class *classObject, char *methodName))(void *myself) {
+  for method in classObject->methodList {
+    if methodName == method->name {
+      return method->callAddress;
+    }
+  }
+  return NULL;
+}
+/// 现在调用方式改为：
+void (*call)(void *) = findMethod(personClsObject, "selfIntroducation");
+call(pmst);
+```
+但是这样实现 `findMethod` 的前提是知道 `pmst` 这个实例对象对应的类对象为 `personClsObject`，单纯拿到指向实例对象内存的指针（0x1000 0000）显然信息不足：
+
+
+
+![Screen Shot 2018-02-27 at 11.28.11 PM.png](./Aspect-Source-Code-Learning-img_2.png)
+
+
+
+试想知晓一个实例对象的指针 `0x1000 0000`，指针类型为 `void *` ，我们可以访问这块内存的数据，但是问题来了：
+
+1. 这个实例对象到底占几个字节呢？
+2. 内存布局怎样————比如第一个成员类型是`Int`，要读入4个字节，ps:这里可能要考虑内存对齐问题；
+3. 我们依旧不知道这个实例对象对应的类对象是哪个，或者说类对象所占的内存地址是多少。
+
+正如第三点指出，问题根本在于我们的实例对象没有绑定类对象的内存地址！这样问题就很好解决了，我们只需在内存头部“塞入”类对象的指针就OK了，假设 `personClsObject` 类对象地址为`0x2000 0000`
+```
+—————————————————                 ——————————————————————————————————————————————
+|   0x2000 0000 -|--------------->|     "Person"(char *className)              |
+|_______________ |                |____________________________________________|
+|   "pmst"       |                |     0x2000 1000(Variable *variableList)    |  
+|     26         |                |____________________________________________|
+|     0          |                |     0x2000 2000(Method *methodList)        |
+—————————————————                 |____________________________________________|  
+```
+其中 `0x2000 1000 0x02000 2000` 都是指针，分别指向变量列表和方法列表内存地址。
+
+这样的结构意味着要修改 `Person` 的结构体：
+```
+typedef struct Person {
+    Class *clsObject;
+    char name[12];
+    int age;
+    int sex;
+} Person;
+
+////////// 伪代码(前提我们已经得到了person 类对象) /////////////
+int size = 0;
+for variable in personClsObject->variableList {
+  size = variable->memorySize;// 当然这里肯定要考虑内存对齐问题
+}
+Person *pmst =  (Person *)malloc(size + 8); // 因为多了一个指针，32位平台占4字节 64位平台占8字节
+pmst->clsObject = personClsObject;
+//...
+```
+这样就可以解决我们之前的问题了，给一个实例变量的指针，我们先取到内存首地址开始的8个字节，解释成 `Class *` 指针指向了我们的类对象，愉快地获取想要的所有信息。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
