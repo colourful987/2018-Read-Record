@@ -149,9 +149,9 @@ for variable in personClsObject->variableList {
   size = variable->memorySize;// 当然这里肯定要考虑内存对齐问题
 }
 
-Person *pmst =  (Person *)malloc(size);   // 分配内存 得到指针0x1000 1000
-Person *numbbbb = (Person *)malloc(size); // 分配内存 得到指针0x1000 1000
-Person *MM = (Person *)malloc(size);      // 分配内存 得到指针0x1000 2000
+Person *pmst =  (Person *)malloc(size);   // 分配内存 得到指针0x10000000
+Person *numbbbb = (Person *)malloc(size); // 分配内存 得到指针0x10001000
+Person *MM = (Person *)malloc(size);      // 分配内存 得到指针0x10002000
 ```
 
 > note: 这里只为实例变量分配了内存，章节2中我们还包含一个8字节的函数指针，那么问题来了，现在我们该如何调用`selfIntroducation`函数呢？
@@ -208,14 +208,9 @@ call(pmst);
 ```
 但是这样实现 `findMethod` 的前提是知道 `pmst` 这个实例对象对应的类对象为 `personClsObject`，单纯拿到指向实例对象内存的指针（0x1000 0000）显然信息不足：
 
-
-
 ![Screen Shot 2018-02-27 at 11.28.11 PM.png](./Aspect-Source-Code-Learning-img_2.png)
 
-
-
-试想知晓一个实例对象的指针 `0x1000 0000`，指针类型为 `void *` ，我们可以访问这块内存的数据，但是问题来了：
-
+试想知晓一个实例对象的指针 `0x1000,0000`，指针类型为 `void *` ，我们可以访问这块内存的数据，但是问题来了：
 1. 这个实例对象到底占几个字节呢？
 2. 内存布局怎样————比如第一个成员类型是`Int`，要读入4个字节，ps:这里可能要考虑内存对齐问题；
 3. 我们依旧不知道这个实例对象对应的类对象是哪个，或者说类对象所占的内存地址是多少。
@@ -230,10 +225,10 @@ call(pmst);
 |     0          |                |     0x2000 2000(Method *methodList)        |
 —————————————————                 |____________________________________________|  
 ```
-其中 `0x2000 1000 0x02000 2000` 都是指针，分别指向变量列表和方法列表内存地址。
+其中 `0x2000,1000 0x02000,2000` 都是指针，分别指向变量列表和方法列表内存地址。
 
 这样的结构意味着要修改 `Person` 的结构体：
-```
+```C
 typedef struct Person {
     Class *clsObject;
     char name[12];
@@ -253,17 +248,152 @@ pmst->clsObject = personClsObject;
 这样就可以解决我们之前的问题了，给一个实例变量的指针，我们先取到内存首地址开始的8个字节，解释成 `Class *` 指针指向了我们的类对象，愉快地获取想要的所有信息。
 
 
+## 3.5 关于实例对象
+
+不过问题来了，上述实现必须在抽象出来的数据结构顶部插入一个 `Class *clsObject` ，如下：
+```C
+typedef struct Person {
+    Class *clsObject; // 指向 personClsObject 类对象
+    char name[12];
+    int age;
+    int sex;
+} Person;
+
+typedef struct Car {
+    Class *clsObject; // 指向 carClsObject 类对象
+    char brand[12];
+    int color; 
+    int EngineDisplacement;
+    //...
+} Car;
+
+//... 还有其他很多抽象类定义
+```
+不同类的实例对象声明如下：
+```C
+// Person 实例对象：pmst numbbbb
+Person *pmst = (Person *)malloc(person_size);
+pmst->clsObject = personClsObject;
+
+Person *numbbbb = (Person *)malloc(person_size);
+numbbbb->clsObject = personClsObject;
+
+// Car 实例对象：pmst's bmw  & benz 以下表示客观存在的两辆车 
+Car *bmw_pmst = (Car *)malloc(car_size);
+bmw_pmst->clsObject = carClsObject;
+
+Car *benz_pmst = (Car *)malloc(car_size);
+benz_pmst->clsObject = carClsObject;
+```
+尽管 `pmst` `numbbbb` `bmw_pmst` `benz_pmst` 都是指针，但是指向类型分别是 `Person` 和 `Car` 结构体，那么在此种情况下，我们使用能够使用一种统一的方式来定义一个实例对象呢？
+
+观察上述实例对象声明以及抽象类的定义，我们找出相同点：数据结构顶部都为 `Class *clsObject` 指针。
+
+```C
+struct object {
+  Class *clsObject; 
+};
+
+struct object *pmst = (Person *)malloc(person_size)
+pmst->clsObject = personClsObject;
+
+struct object *bmw_pmst = (Car *)malloc(car_size);
+bmw_pmst->clsObject = carClsObject;
+```
+`Person` 和 `Car` 后面的成员，我们无法使用 `->` 访问了，转而变成查询各自的类对象中 `variableList` 变量列表————变量类型和地址偏移量。这样可以间接访问`pmst`这个实例指向内存内容了（当然内存前8个字节保存的是类对象指针）。
+
+至于为什么能这么做，先来说说C语言实现**变长结构体**。
+
+```
+struct Data   
+{  
+    int length;  
+    char buffer[0];  
+};
+```
+结构体中，length 其实表示分配的内存大小，而buffer是一个空数组，可理解为占位名称罢了；buffer的真实地址紧随 Data 结构体包含数据之后，可以看到这个结构体仅占4个字节，倘若我们在`malloc`时候分配了100个字节，那么剩下`100-4=96`个字节就是属于 `buffer` 数组，非常巧妙不是吗？
+
+```
+char str[10] = "pmst demo";
+Data *data = (Data *)malloc(sizeof(Data) + 10); 
+data->length = 10;
+memcpy(data->data,str, 10); 
+```
+
+回归正题，现在我们可以使用 `struct object` 结构来统一指向我们的实例对象了，但是这并不意味着我们不需要`Person`类 `Car`类的定义，只不过现在抽象数据结构体的顶部不需要嵌入 `Class *clsObject`了。
+
+## 3.6 改写实例对象的分配方式
+前文demo中是这么实例化一个对象的:
+```
+/// ...
+
+Person *pmst = (Person *)malloc(person_size)
+pmst->clsObject = personClsObject;
+
+/// ...
+```
+
+> PersonClsObject 知道 Person 的一切。
+
+以 `(Person *)malloc(person_size)` 方式实例化一个对象，首先是要拿到 `personClsObject` 对象，然后遍历 `variableList` 累加所有变量占的内存得到 `person_size`，最后调用 `malloc` 方法开辟内存返回指针。
+
+`分配一块内存给person实例对象` 这种行为属于`person`类对象的职责，因此将这种行为添加到 `personClsObject` 类对象的 `methodList` 中（其实细细想来，是不太恰当的，之后还会继续改进），命名为 `mallocInstance`。
+
+```
+/// 简单修改下定义 真实定义结构名称改为了 `Person_IMP`
+typedef struct object Person;
+
+struct Person_IMP {
+    char name[12];
+    int age;
+    int sex;
+}
+
+/// 增加一个分配内存的方法 注意传参为实例对象 对于当前方法来说应该传NULL
+(struct object *)mallocIntance(void *myself) {
+  /// 伪代码
+  int size = 0;
+  for variable in personClsObject->variableList {
+    size = variable->memorySize;// 当然这里肯定要考虑内存对齐问题
+  }
+  return (struct object *)malloc(size);
+}
+personClsObject->methodList[xx]=mallocInstance;
+
+/// 分配内存改写如下：
+void (*mallocIntance)(void *) = findMethod(personClsObject, "mallocIntance");
+Person *pmst = mallocIntance(NULL); // 之前是要传一个实例对象进去，为了方便操作，但是分配内存比较特殊，要知道此刻连实例都不存在!
+```
+
+## 3.8 对象调用函数方式的思考
+实例对象函数调用过程： `findMethod` 传入对应的类对象和函数名称，遍历 `methodList` 找到匹配项返回函数指针，传入实例对象指针调用即可，譬如之前person实例调用自我介绍方法的demo。
+```C
+/// 现在调用方式改为：
+void (*call)(void *) = findMethod(personClsObject, "selfIntroducation");
+call(pmst);
+```
+那么问题来了，实例对象的属性变量如何修改呢？比如`name`,`age`和`sex`。现在已经不能像最开始之前那样直接访问内存地址进行修改了，尽管`personClsObject`知道这些变量的信息：变量名称，类型以及所占内存大小。
+
+其实解决方案也很简单，既然不能直接访问变量，间接总可以把！
+
+> Any problem  in computer science can be solved by anther layer of indirection.
+
+现在为每个属性变量都创建一个读写方法，通过调用这两个方法来修改实例对象内存中的变量值(Note:前8个字节保存的是类对象地址)
+```
+void setName(void *my_self, char *newName) {}
+char *getName(void *my_self) {}
+```
+注意到不同函数的传参个数也不同，如 `selfIntroducation` 传参仅 `void *my_self`一个，而 `setName` 方法传参个数为2。这其实是ok，`Method`封装的是个函数**指针**(占4或8个字节)，指向某块代码段的地址，C语言又是支持可变参数的函数，原理自行google关键字"C语言 函数 可变参数"。
+
+这里讲下我的理解，函数其实就是封装好的代码块，编译之后转成一串指令保存在代码段。
+
+* 关于函数调用：正常的调用方式 `functionName(variable1,variable2,variable3)`，编译器会把`functionName`替换成函数地址(0x12345678)，汇编可能是使用类似 `call 0x12345678` 来调用函数；
+* 关于函数入参实现：`variable1 variable2 variable3`，应该是会调用 `push` 指令一个个入栈（这里注意是先 `push variable1` 还是 `push variable3` 是由ABI决定的！）
+* 如果说函数是指令，那么栈就是给函数提供数据的源！函数实现是一串指令，使用`push`和`pop`操作栈上的数据，拿上面的函数入参来说，我们就使用 `push` 命令将`variable1 variable2 variable3`压到栈里，其中 `ebp` 寄存器指向当前函数调用上下文的栈 base address，而`esp`寄存器则是根据`push`和`pop`改变指针地址，一开始`ebp`和`esp`指针都是指向 base address。
+
+![stackFrame.png](./Aspect-Source-Code-Learning-img_3.png)
+
+上面就是简单的一个调用方式，至于`variable1`这些函数入参如何取，应该是依靠 `ebp`+ `offset`得到。
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+## 3.9 对象调用函数改进
