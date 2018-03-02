@@ -137,7 +137,7 @@ personClsObject->variableList[2] = sexVar;
 ## 3.2 使用类对象来生成实例对象
 上文说到内存中保存了一份对 `Person` 抽象描述，即`PersonClsObject`类对象，包含类名称，变量列表，方法列表等信息。此刻进一步具体到现实生活中某个具体的人，生成 “pmst” 博主我，"numbbbbb" 帮主梁杰，“mm”灵魂画师，有种God创世的赶脚。这一个个都是现实存在的，即实例对象————自然要分配一块内存给各自，填充 `name`名字，`sex`性别，`age`年龄。
 
-![Screen Shot 2018-02-26 at 11.47.52 PM.png](./Aspect-Source-Code-Learning-img_1.png)
+![Screen Shot 2018-02-26 at 11.47.52 PM.png](./CIMPRuntime_IMG1.png)
 
 ```C
 ///////////// 以下为伪代码 ////////////////////
@@ -208,7 +208,7 @@ call(pmst);
 ```
 但是这样实现 `findMethod` 的前提是知道 `pmst` 这个实例对象对应的类对象为 `personClsObject`，单纯拿到指向实例对象内存的指针（0x1000 0000）显然信息不足：
 
-![Screen Shot 2018-02-27 at 11.28.11 PM.png](./Aspect-Source-Code-Learning-img_2.png)
+![Screen Shot 2018-02-27 at 11.28.11 PM.png](./CIMPRuntime_IMG2.png)
 
 试想知晓一个实例对象的指针 `0x1000,0000`，指针类型为 `void *` ，我们可以访问这块内存的数据，但是问题来了：
 1. 这个实例对象到底占几个字节呢？
@@ -391,9 +391,101 @@ char *getName(void *my_self) {}
 * 关于函数入参实现：`variable1 variable2 variable3`，应该是会调用 `push` 指令一个个入栈（这里注意是先 `push variable1` 还是 `push variable3` 是由ABI决定的！）
 * 如果说函数是指令，那么栈就是给函数提供数据的源！函数实现是一串指令，使用`push`和`pop`操作栈上的数据，拿上面的函数入参来说，我们就使用 `push` 命令将`variable1 variable2 variable3`压到栈里，其中 `ebp` 寄存器指向当前函数调用上下文的栈 base address，而`esp`寄存器则是根据`push`和`pop`改变指针地址，一开始`ebp`和`esp`指针都是指向 base address。
 
-![stackFrame.png](./Aspect-Source-Code-Learning-img_3.png)
+![stackFrame.png](./CIMPRuntime_IMG3.png)
 
 上面就是简单的一个调用方式，至于`variable1`这些函数入参如何取，应该是依靠 `ebp`+ `offset`得到。
 
-
 ## 3.9 对象调用函数改进
+前文说到 `mallocIntance` 函数直接放在 `personClsObject` 的方法列表中不太合适，原因主要在于创建实例对象，为其分配内存地址似乎不应该由它来做，而是另外一个对象，而类似 `init` 初始化值才属于`personClsObject`类对象的行为。
+
+现在引入 metadata的概念：
+
+> Metadata is data that describes other data. Meta is a prefix that in most information technology usages means "an underlying definition or description."       
+> Metadata summarizes basic information about data, which can make finding and working with particular instances of data easier. For example, author, date created and date modified and file size are examples of very basic document metadata. Having the abilty to filter through that metadata makes it much easier for someone to locate a specific document. [更多..](https://www.jianshu.com/p/4ebaf029325d)
+
+ok，现在除了为每个类创建一个 `class object` 对象之外，再引入一个 `metaClass object` 对象，前者存储所有的实例方法和实例属性，后者存储所有的类方法和类属性。
+
+我们不需要在创建额外的MetaClass结构体，因为之前定义的 `struct Class` ，`struct Method`， `struct Variable` 都可以复用。
+
+```C
+struct object *personMetaClsObject = (Class *)malloc(sizeof(Class));
+personMetaClsObject->methodList[0] = mallocIntance;
+
+/// 填充其他的类变量和类方法...
+```
+
+实例化一个`person`对象“看似”可以这么干了：
+
+```C
+// ===================  伪代码 ===========================
+// 修改mallocIntance方法，直接传要分配的 memory size 进去
+(struct object *)mallocIntance(size_t size) {
+  return (struct object *)malloc(size);
+}
+// =======================================================
+
+// =================  实际调用如下  ======================
+// 还需要从 personClsObject 获取到变量列表中所有变量的memory size总大小
+int size = 0;
+for variable in personClsObject->variableList {
+  size = variable->memorySize;// 当然这里肯定要考虑内存对齐问题
+}
+// 从metaClsObject 中取到分配内存的方法
+void (*mallocIntance)(void *) = findMethod(personMetaClsObject, "mallocIntance");
+Person *pmst = mallocIntance(size); 
+```
+实例化一个对象需要涉及**类对象**和**metaclass元类对象**，由于两者没有关联，所以需要分开获取我们想要的信息，类对象中获取需要分配的内存大小，元类对象中获取分配内存函数的函数指针，然后调用得到一个实例。
+
+如何把类对象和元类对象关联起来，我们依葫芦画瓢，在定义的 `struct Class` 结构体中塞入一个指针变量，类型为 `Class` ———— 这个指针会指向元类对象，现在两者就关联起来了！
+
+```
+typedef struct Class {
+  class *isa;     // is a xx class
+  char *className;
+  /// Variable List 是一个数组 类型为 Variable
+  Variable *variableList;
+  /// Method List 也是一个数组 类型为 Method
+  Method *methodList
+}
+
+// 实例化一个元类对象 这里留个坑元类对象的isa指针应该指向哪个对象呢？
+struct object *personMetaClsObject = (Class *)malloc(sizeof(Class));
+
+// 实例化一个类对象
+struct object *personClsObject = (Class *)malloc(sizeof(Class));
+personClsObject->isa = personMetaClsObject;
+```
+
+回顾下实例对象关联类对象，类对象关联元类对象：
+
+![stackFrame.png](./CIMPRuntime_IMG4.png)
+
+现在谈谈如何调用实例方法以及类方法了。
+
+```
+void msg_send(struct object *instance,char *methodName){
+  Class *clsOrMetaClassObject = instance->isa;
+  void (*method)(void *) = findMethod(clsOrMetaClassObject, methodName);
+  method(instance);
+}
+```
+Note: 实例对象，类对象，元类对象都是具体存在的，都称之为实例对象，所以这里取名 `instance`，函数内部的实现很简单，取 `isa` 指针，然后查询函数指针并调用，考虑两种情况：
+* 如果传入实例对象，那么取到类对象，调用的都是实例方法；
+* 如果传入类对象，那么取到元类对象，调用的都是类方法。
+
+> 这里留下的坑很多，之后慢慢补。总之，我们总是先取到isa指针，找到当前对象的metaData进行操作的。
+
+简单解释下OC中 `NSObject *instance = [NSObject new];`，这里调用了类方法，使用 `clang -rewrite-objc` 命令查看编译器重写后的代码：
+```
+((Person *(*)(id, SEL))(void *)objc_msgSend)((id)objc_getClass("Person"), sel_registerName("new"));
+```
+其实这里 `objc_getClass("Person")` 会返回Person的类对象，而查找元类对象的方法是`objc_getMetaClass()`。
+
+当然我们写代码的时候可能为了区分实例方法和类方法，用一些关键字符区分，比如OC里实例方法都是用 `-` 打头，类方法用 `+` 打头。
+```
+- (void)instanceMethod;
++ (void)classMethod;
+```
+
+## 总结
+上述就是我的简单总结，每天晚上简单记录下，收获颇丰，至于留下的无数坑，希望之后慢慢补吧。
