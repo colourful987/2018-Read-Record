@@ -1,6 +1,6 @@
-> Theme: 暂定    
-> Source Code Read Plan: Aspect      
-> Reference Book List: 暂定
+> Theme: App Architecture & Low-programming    
+> Source Code Read Plan: Still Aspect      
+> Reference Book List: objc App Architecture
 
 # 2018/03/01 - 2018/03/02
 
@@ -22,4 +22,26 @@ Note: 编译之后压根不存在我们定义的数据结构！
 [函数调用过程（ebp，esp） ](http://blog.163.com/yichangjun1989@126/blog/static/131972028201442221956603/)
 
 [C 语言指针与汇编地址（一）](http://blog.csdn.net/lanchunhui/article/details/51366513)
+
+# 2018/03/04
+[objc App Architecture Introduction](https://www.objc.io/books/app-architecture/)     
+设计一款应用时候可以从以下五点入手：
+1. Construction: 谁创建View和Model，以及两者之间的关联；
+2. Update the model: 哪些 View Action 处理需要修改model，比如界面上的按钮点击等；
+3. Changing the view: model data 的改动又该如何反应到视图上；
+4. View-state
+5. Testing
+
+主流应用架构模式：
+* MVC
+* OO-MVC，弱Model版本的 MVC，是 Online-Only Model-View-Controller的缩写，比如网页开发中，弱化了Model层，数据源来自服务端，然后呈现到View上
+* MVVM，需要双向绑定
+* The Elm Architecture
+* Model-View-Controller+ViewState
+* ModelAdapter-ViewBinder
+
+后三者应该是借鉴其他编程语言开发中的模式，改写应用到iOS，这个应该比较有意思，待学习。
+
+
+
 

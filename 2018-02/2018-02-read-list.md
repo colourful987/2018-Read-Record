@@ -224,7 +224,7 @@ po [self convertRect:rect toView:self.superView]
 * 画线：正如最上面所说，在某个位置左右发散`width/2`方式填充，同理左右边界的像素点若无法充满最小单位1px，那么这个像素点会填充一半色值的。
 
 # 2018/02/27-2018/02/28
-[OC 运行时实现，C语言一步步推倒过程，更新中...](https://github.com/colourful987/2018-Read-Record/blob/master/2018-02/resource/Aspect-Source-Code-Learning.md)
+[OC 运行时实现，C语言一步步推倒过程，更新中...](https://github.com/colourful987/2018-Read-Record/blob/master/2018-02/resource/C_IMP_Runtime.md)
 
 
 # 二月总结
