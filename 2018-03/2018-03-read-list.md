@@ -64,7 +64,7 @@ Note: 编译之后压根不存在我们定义的数据结构！
 一条指令实际是由我们定义的一系列步骤，而不是一条指令对应一个物理层面的电路模块（有待确认）。
 
 摘自wiki的一个示例：
-![Pipeline,_4_stage.png](./resource/pipeline_4_stage.png)
+![Pipeline,_4_stage.png](quiver-image-url/BCD07DE7C6E403B80F7056CC9F5B463D.png)
 上图展示了4层流水线的示意图：
 1. 读取指令（Fetch）
 2. 指令解码（Decode）
@@ -88,3 +88,10 @@ Note: 编译之后压根不存在我们定义的数据结构！
 当然非流水线的执行方式设计简单，成本低，而且指令和指令互不影响，出错概率低吧。
 
 另外在修改译书时发现`阿姆达尔（Amdahl）定律`蛮有意思，关于内核数量和程序中并发代码比值对执行时间的影响。
+
+# 2018/03/09（编译器和解释器专题）
+Ruslan 写的[Let’s Build A Simple Interpreter](https://ruslanspivak.com/lsbasi-part1/) 专题总共有14节。
+进度：read chapter 1，过于基础，暂时没有什么感悟和理解，只当打卡。
+
+另外看评论Jack Crenshaw留言说文章貌似有“抄袭”嫌疑，没有细看，给出Jack Crenshaw 关于编译器和解释器的文章，有完整的pdf下载
+[Let's Build a Compiler](https://compilers.iecc.com/crenshaw/)
