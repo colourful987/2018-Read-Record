@@ -1,4 +1,4 @@
-> Theme: App Architecture & Low-programming    
+> Theme: App Architecture & Low-programming（Compiler & Interpreter）    
 > Source Code Read Plan: Still Aspect      
 > Reference Book List: objc App Architecture
 
@@ -95,3 +95,10 @@ Ruslan 写的[Let’s Build A Simple Interpreter](https://ruslanspivak.com/lsbas
 
 另外看评论Jack Crenshaw留言说文章貌似有“抄袭”嫌疑，没有细看，给出Jack Crenshaw 关于编译器和解释器的文章，有完整的pdf下载
 [Let's Build a Compiler](https://compilers.iecc.com/crenshaw/)
+
+# 2018/03/10
+[Let’s Build A Simple Interpreter part2](https://ruslanspivak.com/lsbasi-part2/)    
+* 借助 Scanner（扫描器）从 Source Code->Token的过程：Token 囊括了程序代码中所有的字符，比如整数，`+,-,*,/,= ...`，使用Token数据结构表示。在读入字符串parse后分别存储到一个个Token中，这一步称之为Lexical Analyzer(词法分析)；
+* Lexeme 可以是一个或多个字符串（Note:比如"+","-"，也可以是整数“123”），毕竟我们输入的代码本质还是一长串字符串，由我们“分析”输入的“词”，然后将其Map到对应的Token结构中；
+* 本节中，词法分析之后紧跟就是Interpreting(就是应用+和-)，但是目前逻辑代码是硬编码的，也就是if-else分支处理，目前仅仅只是做了空白字符串判断，一些特殊的还未判断。
+
