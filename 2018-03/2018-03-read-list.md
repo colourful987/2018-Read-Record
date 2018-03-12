@@ -102,3 +102,9 @@ Ruslan 写的[Let’s Build A Simple Interpreter](https://ruslanspivak.com/lsbas
 * Lexeme 可以是一个或多个字符串（Note:比如"+","-"，也可以是整数“123”），毕竟我们输入的代码本质还是一长串字符串，由我们“分析”输入的“词”，然后将其Map到对应的Token结构中；
 * 本节中，词法分析之后紧跟就是Interpreting(就是应用+和-)，但是目前逻辑代码是硬编码的，也就是if-else分支处理，目前仅仅只是做了空白字符串判断，一些特殊的还未判断。
 
+# 2018/03/11
+[Let’s Build A Simple Interpreter part3](https://ruslanspivak.com/lsbasi-part3/)   
+
+本节学习稍微复杂的计算器表达式，例如 “1+2-100+123”这种表达式，顺便用oc写了个demo。
+[OC-Lexical_Analyzer_UI](./resource/Lexical_Analyzer_UI)
+
