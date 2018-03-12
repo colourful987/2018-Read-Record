@@ -106,5 +106,32 @@ Ruslan 写的[Let’s Build A Simple Interpreter](https://ruslanspivak.com/lsbas
 [Let’s Build A Simple Interpreter part3](https://ruslanspivak.com/lsbasi-part3/)   
 
 本节学习稍微复杂的计算器表达式，例如 “1+2-100+123”这种表达式，顺便用oc写了个demo。
+
 [OC-Lexical_Analyzer_UI](./resource/Lexical_Analyzer_UI)
 
+[OC-Lexical_Analyzer_Terminal](./resource/Lexical_Analyzer_Terminal)
+
+oc 终端接受字符串输入有两种方式：
+```oc
+// c语言方式
+char *cstring = malloc(sizeof(char) * 100);
+scanf("%s", cstring);
+NSString *string = [NSString stringWithUTF8String:cstring];
+
+// oc 层面
+// 当然还可以继续调用 `[NSString stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]` 将接收的字符串去除空格和换行等
+NSData *data = [[NSFileHandle fileHandleWithStandardInput] availableData];
+NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+```
+
+此次在学习过程中遇到了个小坑，对于带空格的输入,`scanf`接收总是出问题，最后查了[c++官方文档说明](http://www.cplusplus.com/reference/cstdio/scanf/)：
+
+> Any number of non-whitespace characters, stopping at the first whitespace character found. A terminating null character is automatically added at the end of the stored sequence.
+
+即对于输入format为`%s`时，接收字符串直到遇到第一个为空格的字符算作结束，然后接收到的字符串后面拼接`null(\0)`。
+
+解决方法可以使用`gets()`函数，另外如何读取带空格的字符串，有一种比较有意思的格式：
+```
+scanf(” %[^\n]s”,a);
+```
+出自[How to use scanf to read Strings with Spaces](https://gpraveenkumar.wordpress.com/2009/06/10/how-to-use-scanf-to-read-string-with-space/)
