@@ -64,7 +64,7 @@ Note: 编译之后压根不存在我们定义的数据结构！
 一条指令实际是由我们定义的一系列步骤，而不是一条指令对应一个物理层面的电路模块（有待确认）。
 
 摘自wiki的一个示例：
-![Pipeline,_4_stage.png](quiver-image-url/BCD07DE7C6E403B80F7056CC9F5B463D.png)
+![Pipeline_4_stage.png](./resource/pipeline_4_stage.png)
 上图展示了4层流水线的示意图：
 1. 读取指令（Fetch）
 2. 指令解码（Decode）
@@ -135,3 +135,29 @@ NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEnco
 scanf(” %[^\n]s”,a);
 ```
 出自[How to use scanf to read Strings with Spaces](https://gpraveenkumar.wordpress.com/2009/06/10/how-to-use-scanf-to-read-string-with-space/)
+
+# 2018/03/14
+[Let’s Build A Simple Interpreter part4](https://ruslanspivak.com/lsbasi-part4/)       
+[Let’s Build A Simple Interpreter part5](https://ruslanspivak.com/lsbasi-part5/)      
+[Let’s Build A Simple Interpreter part6](https://ruslanspivak.com/lsbasi-part6/)      
+
+文章目的是为了实现一个简单的算术解释器，使用巴科斯-诺尔范式（BNF —— Backus-Naur Form）对诸如`1*2/3*4/5`的表达式求值。
+
+1. 首先引入表达式 `expr` 的概念，`1*2/3*4/5` 毫无疑问是一个`expr`；
+2. 单独一个整数 `1`，`2` 抽象意义上也是一个表达式。对于整数这种特殊的“expr”（其实就是单纯的返回值，类似于代码中的 {return value}），称之为**factor(因子)**
+
+> factor(因子)可理解为特殊的 `expr`，定义如下：任何运算符放置其任意一边都不会导致这个表达式内部其他部分分离出来，成为这个运算符的运算操作数。
+
+
+* 举例1： `1` 这个“表达式”，是一个基本单元，实际上内部无法再分割了，那么在`1`的左右两侧放置运算符（譬如 *1，或是1/），显然不会将表达式中的其他部分分离出来；
+* 反例： 而类似于 `2/3` 这种表达式，我们在左侧放置一个 `*` 号，显然会让内部的 `2` 和乘号左侧的操作数结合了；
+* 举例2：除了整数这种特殊的可称之为factor外，我们熟知的用括号括起来的表达式也称之为factor，譬如`(1*2/3*4/5)`这个整体称之为factor，我们在其左右两侧放置操作符，不会把表达式中的其他部分分离出来！这种形式的factor我们可以表示成`(expr)`，左右括号(parenthesis)包括一个expr表达式。
+
+回到正题`1*2/3*4/5`，在引入`expr` 和 `factor` 之后，表达式可写成 `factor*factor/factor*factor/factor`；进一步发现形式不过是 `factor*factor` or `factor/factor` ，借鉴正则表达式中的`|`或概念，我们可以改写成 `factor (MUL|DIV) factor (MUL|DIV) factor (MUL|DIV) `；其中 ` (MUL|DIV)factor`是重复部分，这在正则表达式中用 `()*`来表示；这样就得到了最终的 `factor ((MUL|DIV)factor)* `，其中 `factor` 此时只表示为整数 `INTEGER`。
+
+继续引入 `non-terminal` 和 `terminal` 的概念，即非终结和终结：
+
+![terminal_principle.png](resource/terminal_principle.png)
+
+> Note: factor 同样是一个表达式。首先我们要做的是重复替换一个 non-terminal 成 terminal，直到得到第一个我们想要的诸如表达式(terminal MUL|DIV terminal)，比如碰到第一个factor，它是non-terminal的，因此继续对这个factor替换，得到具体一个整数（terminal）;紧接着我们会得到一个MUL或DIV，这是terminal;继续对下一个factor做替换；最后满足（INTEGER（MUL | DIV）INTEGER)的小expr，求值得到结果作为下一个expr的输入，重复该步骤。
+
