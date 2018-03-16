@@ -161,3 +161,36 @@ scanf(” %[^\n]s”,a);
 
 > Note: factor 同样是一个表达式。首先我们要做的是重复替换一个 non-terminal 成 terminal，直到得到第一个我们想要的诸如表达式(terminal MUL|DIV terminal)，比如碰到第一个factor，它是non-terminal的，因此继续对这个factor替换，得到具体一个整数（terminal）;紧接着我们会得到一个MUL或DIV，这是terminal;继续对下一个factor做替换；最后满足（INTEGER（MUL | DIV）INTEGER)的小expr，求值得到结果作为下一个expr的输入，重复该步骤。
 
+但复杂操作时，会涉及优先级的问题，比如*和/的优先级高于+和-。如何构建优先级的语法需要涉及以下两个规则：
+
+1. 为每个优先级定义一个**non-terminal**。而定义的**non-terminal**的body也是有格式要求的：`other-non-terminal (操作符) other-non-terminal`(可以重复多个此表达式)，表达式中的操作符即当前优先级定义的符号；而other-non-terminal为更高级优先级中的non-terminal；
+2. 如果我们有N个Level的操作优先级，那么意味着我们要创建 N+1 个 **non-terminal**，每个 **non-terminal** 的body正如上面说的由当前Level的操作符加上高优先级的两个 **non-terminal**。
+
+> 再简单说下目前对 non-terminal 的理解：有点像一个表达式的别名，编码中就像是定义了一个变量`var nameOfNonTerminal = { body }`，正如上面图中所展示的，factor 是一个 non-terminal，body 为 INTEGER； expr 也是一个 non-terminal，body为 `factor ((MUL | DIV) factor) *`。
+
+四则运算+，-，*，/中有两个优先级，高优先级的 *和/，接着+和-同一级，按照上面的说定义如下几个non-terminal和terminal:
+![terminal_precedence.png](resource/terminal_precedence.png)
+
+![terminal_grammer.png](resource/terminal_grammer.png)
+
+对于 +，- 优先级我们定义了 `term ((ADD | sub) term) * `；其中 term 是更高优先级的**non-terminal**，属于 *，/ 优先级：`factor ((MUL | DIV) factor) *`；factor 为整数，优先级最高！
+
+> 表达式评估求值必须遵循一个规则：碰到一个non-terminal就必须替换成仅含terminal的表达式。
+
+因此例子中expr表达式入口第一个遇到 non-terminal term 就要开始替换，它属于高一级优先级的*和/；而term入口第一个遇到的 non-terminal又是 factor（因此又要替换！），属于更高一级的 INTEGER，；
+
+优先级的实现就这么搞定了！再回顾下上面的图，之所以把优先级低的先放在最外层，然后立马解释高一层的优先级non-terminal，”层层深入“，直至最里面优先级最高的且替换成一个 terminal，再一层层返回。
+```
+--> Level最低
+      |—-> Level稍高
+            |--> ...
+                  |--> Level最高
+```
+
+
+
+
+
+
+
+
