@@ -187,10 +187,18 @@ scanf(” %[^\n]s”,a);
                   |--> Level最高
 ```
 
+# 2018/03/17
 
+[Let’s Build A Simple Interpreter part7](https://ruslanspivak.com/lsbasi-part7/)    
 
+> Lexer -> Parser -> Parser Tree -> Interpret。
 
+Parser 到 Parser Tree 前文都是使用 BNF 范式，引入了 expr， term， factor 三个 non-terminal 和 terminal的 + - * /，每个 non-terminal 感觉就是一个表达式的别名，body就是表达式的具体内容，body会包含优先级更高的两个non-terminal以及当前优先级的符号。
 
+Parser Tree 的每个Node都是一个 non-terminal，从某种意义上来说包含了特定的语法，比如 + ，-，*，/。
 
+关于 AST 是本章刚引入的概念，Abstract Syntax Tree ———— 抽象语法树，AST 较之 Parser Tree，前者的节点可以是操作符也可以操作数，不像后者是一个 non-terminal，内涵具体的一个语法。
+
+本节简单介绍了下 AST ，我目前只觉得换了种数据结构呈现表达式而已，理解还不够深入。
 
 
