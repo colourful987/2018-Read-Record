@@ -201,4 +201,33 @@ Parser Tree 的每个Node都是一个 non-terminal，从某种意义上来说包
 
 本节简单介绍了下 AST ，我目前只觉得换了种数据结构呈现表达式而已，理解还不够深入。
 
+# 2018/03/18
+[Let’s Build A Simple Interpreter part8](https://ruslanspivak.com/lsbasi-part8/)   
+[Let’s Build A Simple Interpreter part9](https://ruslanspivak.com/lsbasi-part9/)   
 
+pascal 语法：
+
+* program :  "BEGAN END." 是一个完整的程序，注意"."DOT符号；
+* compound statement: 复合语句，即program包括的程序，同样是 “BEGAN END”(注意是没有 DOT 符号的)；
+
+```
+BEGAN   <---- program 开始
+  BEGAN  <----- compound statement 开始
+    ...
+  END
+  
+  BEGAN
+    ...
+  END
+  ...     <----- compound statement 结束
+END.    <---- program 结束
+```
+
+* statement list: 即复合语句中一个 “BEGAN END” 中包含的语句列表，列表即说明包含了多条语句 statement，而语句和语句之间用分号 “;” 隔开，当然语句列表允许为空；
+* one statement：目前只介绍赋值Assign语句，即 “varName := value” 类型，":=" 左边是变量名称 ID，右边是值或表达式expr;
+* 说到 expr 就可以联想到前面几章的 factor, term 这些术语了。
+
+目前理解 Lexer -> Token，AST新增几个Tokens：BEGAN，END，SEM(;)，ASSIGN(:=)，NoOp(空操作)等。
+Parse 过程也会遵循从 program -> compound statement -> statement list -> single statment or compound statement(注意这里有个回环) -> factor 的过程写 parse。
+
+待补充：Visitor
