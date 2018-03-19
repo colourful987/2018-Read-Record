@@ -236,3 +236,5 @@ Parse 过程也会遵循从 program -> compound statement -> statement list -> s
 [Let’s Build A Simple Interpreter part10](https://ruslanspivak.com/lsbasi-part10/) 
 
 如果说目前在创建一门新语言，那么第十节就像在赋予“新生命”，增加新规则、语法糖... 
+
+> 疑惑点:目前更想是在写一个解释器，输入一串代码字符串，通过我们写的解释器按照约定好的规则解释，“运行”得到结果。那么问题来了，用gcc llvm编译后的二进制文件，又该如何得到。
