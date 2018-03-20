@@ -238,3 +238,30 @@ Parse 过程也会遵循从 program -> compound statement -> statement list -> s
 如果说目前在创建一门新语言，那么第十节就像在赋予“新生命”，增加新规则、语法糖... 
 
 > 疑惑点:目前更想是在写一个解释器，输入一串代码字符串，通过我们写的解释器按照约定好的规则解释，“运行”得到结果。那么问题来了，用gcc llvm编译后的二进制文件，又该如何得到。
+
+* PROGRAM：以“PROGRAM”保留关键字开头，以 "." 结尾，中间包裹了代码块 BLOCK;
+* BLOCK: 包含 VAR 保留关键字开头的声明部分（可选，即可有可无），加上 `BEGAN END` 组成的 compound_statement部分；
+* DECLARATION: 声明分为两种，一种显示指定类型，另一种自然是隐式看推断类型，有点像swift，前者比如 `var name:String`，后者`var name = "pmst"`；
+
+| 名称                 | 定义                                                         | 解释                                                         |
+| -------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| program              | PROGRAM variable SEMI block DOT                              |                                                              |
+| block                | declarations compound_statement                              | 声明+复合语句                                                |
+| declarations         | VAR (variable_declaration SEMI)+  \| empty                   | 以**VAR**关键字打头，多条 **variable_declaration** 组成      |
+| variable_declaration | ID (COMMA ID)* COLON type_spec                               | 1. `a, b, c, x : INTEGER;`  2. `number     : INTEGER;` 3. `a : INTEGER;` |
+| type_spec            | INTEGER                                                      | 同上 type_spec 仅仅作为一个类型描述                          |
+| compound_statement   | BEGIN statement_list END                                     | 由多条 **statement** 组成                                    |
+| statement_list       | statement                    \| statement SEMI statement_list | 可能只有一条 `number := 2;`                                  |
+| statement            | compound_statement               \| assignment_statement               \| empty |                                                              |
+| assignment_statement | variable ASSIGN expr                                         |                                                              |
+| empty                | noOp                                                         |                                                              |
+| expr                 | term ((PLUS \| MINUS) term)*                                 |                                                              |
+| term                 | factor ((MUL \| INTEGER_DIV \| FLOAT_DIV) factor)*           |                                                              |
+| factor               | PLUS factor            \| MINUS factor            \| INTEGER_CONST            \| REAL_CONST            \| LPAREN expr RPAREN            \| variable |                                                              |
+| variable             | ID                                                           |                                                              |
+|                      |                                                              |                                                              |
+
+# 2018/03/20
+[Let’s Build A Simple Interpreter part101](https://ruslanspivak.com/lsbasi-part11/) 
+
+引入 Symbol 概念，留坑待补充
