@@ -262,6 +262,18 @@ Parse 过程也会遵循从 program -> compound statement -> statement list -> s
 |                      |                                                              |                                                              |
 
 # 2018/03/20
-[Let’s Build A Simple Interpreter part101](https://ruslanspivak.com/lsbasi-part11/) 
+[Let’s Build A Simple Interpreter part11](https://ruslanspivak.com/lsbasi-part11/) 
 
 引入 Symbol 概念，留坑待补充
+
+# 2018/03/21
+[Let’s Build A Simple Interpreter part12](https://ruslanspivak.com/lsbasi-part12/) 
+[Let’s Build A Simple Interpreter part13](https://ruslanspivak.com/lsbasi-part13/) 
+[Let’s Build A Simple Interpreter part14](https://ruslanspivak.com/lsbasi-part14/) 
+
+大致过了一遍，12章引入了procedure的概念，我理解等同于c语言的函数；13章是11章的extend，对symbol 已经symbolTable 做了更详细的解释；14章引入scope作用域和source-to-source compile的概念。这里思考了 IR （Intermediate Representation）中间表示，之后用Code-Generate生成目标代码（比如汇编？），最后生成可行执行文件。
+
+> 目前 Ruslan 仅更新到Chapter14，但不可否认这真的是非常awesome tutorial，相比较其他的博文晦涩难懂或者长篇代码亦或是跳跃式的讲解，Ruslan的文章基本都是图文并茂，知识点都是有铺垫的展开。
+
+小总结：从9号开始入坑，过去了10几天时间，从开始模仿写一个计算器解释器，起初难度不大，也用oc实现了两个，遇到的坑也填了。而第9章之后就基本在阅读和理解之间，总觉得还不是写的时候，现在看完14章，感觉还是可以Coding一波的。**这次阅读经历让我学习到技术之外的两点：1.坚持，坚持每天阅读，coding，采坑填坑；2.坚持之上的一鼓作气，如果把“战线”拉太长，会导致之前阅读的内容遗忘或模糊，返工去温习非明智之举，只有一鼓作气阅读完，同时兼顾实践才能加深印象以及收获更多额外知识！**
+
