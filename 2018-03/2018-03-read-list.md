@@ -277,3 +277,32 @@ Parse 过程也会遵循从 program -> compound statement -> statement list -> s
 
 小总结：从9号开始入坑，过去了10几天时间，从开始模仿写一个计算器解释器，起初难度不大，也用oc实现了两个，遇到的坑也填了。而第9章之后就基本在阅读和理解之间，总觉得还不是写的时候，现在看完14章，感觉还是可以Coding一波的。**这次阅读经历让我学习到技术之外的两点：1.坚持，坚持每天阅读，coding，采坑填坑；2.坚持之上的一鼓作气，如果把“战线”拉太长，会导致之前阅读的内容遗忘或模糊，返工去温习非明智之举，只有一鼓作气阅读完，同时兼顾实践才能加深印象以及收获更多额外知识！**
 
+
+# 2018/03/22
+开始从Chapter1开始Coding，这次用 Python 实现，为之后DeepLearning做好准备。
+* [x] [Let’s Build A Simple Interpreter part1](https://ruslanspivak.com/lsbasi-part1/) 
+  Python 缩进真的很蛋疼！其次调试文件 file.py 中的某个类 MyClass，可以在python的REPL中使用`from file import MyClass`；顺便回顾下chapter 9的知识：
+* program ： `compound_statement` + DOT('.') 结尾；
+* `compound_statement`： BEGAN打头 + `statement_list`(多条语句列表) + END 结尾；
+* `statement_list`：由 statement 组成，每条statement之间用“；”分号隔开；
+* `statment`：可以是 `compound_statement` 或者 `assignment_statement` 或者为空，当然也可以我们自己的语句；
+* `assignment_statement`: variable_symbol ASSIGN(:=)  expr(不单单是值，也可以是表达式的返回值)；
+* `variable`: ID
+* `factor:`
+
+* [x] [Let’s Build A Simple Interpreter part2](https://ruslanspivak.com/lsbasi-part2/) 
+  完善了第一节脚本，考虑删除空格，引入减法和多位整数的计算。遇到的坑主要是由于粗心在 `get_next_token()` 中除去我们定义的token if 条件外，我误写了 self.error()，应该是 `return Token(EOF,None)`，且作用域是最外层
+
+* [ ] [Let’s Build A Simple Interpreter part3](https://ruslanspivak.com/lsbasi-part3/) 
+* [ ] [Let’s Build A Simple Interpreter part4](https://ruslanspivak.com/lsbasi-part4/) 
+* [ ] [Let’s Build A Simple Interpreter part5](https://ruslanspivak.com/lsbasi-part5/) 
+* [ ] [Let’s Build A Simple Interpreter part6](https://ruslanspivak.com/lsbasi-part6/) 
+* [ ] [Let’s Build A Simple Interpreter part7](https://ruslanspivak.com/lsbasi-part7/) 
+* [ ] [Let’s Build A Simple Interpreter part8](https://ruslanspivak.com/lsbasi-part8/) 
+* [ ] [Let’s Build A Simple Interpreter part9](https://ruslanspivak.com/lsbasi-part9/) 
+* [ ] [Let’s Build A Simple Interpreter part10](https://ruslanspivak.com/lsbasi-part10/) 
+* [ ] [Let’s Build A Simple Interpreter part11](https://ruslanspivak.com/lsbasi-part11/) 
+* [ ] [Let’s Build A Simple Interpreter part12](https://ruslanspivak.com/lsbasi-part12/) 
+* [ ] [Let’s Build A Simple Interpreter part13](https://ruslanspivak.com/lsbasi-part13/) 
+* [ ] [Let’s Build A Simple Interpreter part14](https://ruslanspivak.com/lsbasi-part14/) 
+
