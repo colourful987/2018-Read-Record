@@ -293,7 +293,9 @@ Parse 过程也会遵循从 program -> compound statement -> statement list -> s
 * [x] [Let’s Build A Simple Interpreter part2](https://ruslanspivak.com/lsbasi-part2/) 
   完善了第一节脚本，考虑删除空格，引入减法和多位整数的计算。遇到的坑主要是由于粗心在 `get_next_token()` 中除去我们定义的token if 条件外，我误写了 self.error()，应该是 `return Token(EOF,None)`，且作用域是最外层
 
-* [ ] [Let’s Build A Simple Interpreter part3](https://ruslanspivak.com/lsbasi-part3/) 
+* [x] [Let’s Build A Simple Interpreter part3](https://ruslanspivak.com/lsbasi-part3/) 
+  对于输入的“代码”————字符串，有两个“指针”协助我们parsing（also as known syntax analyze），一个是`current_token`以`token`为单位的指针，可以是Integer、+、-符号，一个是`current_char`以字符为单位的指针。`eat` 方法从字面理解是吃掉，即吃掉当前的token，将 `current_token`指针指向下一个，但是前提必须传入要吃掉的token类型，必须和当前类型一致，否则会报error；eat操作会`get_next_token` 会间接操作`current_char`字符指针，返回下一个有效的token（这里是硬编码的，比如我们规定有+，-，整数），这里并不能按照预期去拿，而是解析器返回一个有效的给我们，并不能决定要什么类型，讲道理是这样的，要按序返回
+
 * [ ] [Let’s Build A Simple Interpreter part4](https://ruslanspivak.com/lsbasi-part4/) 
 * [ ] [Let’s Build A Simple Interpreter part5](https://ruslanspivak.com/lsbasi-part5/) 
 * [ ] [Let’s Build A Simple Interpreter part6](https://ruslanspivak.com/lsbasi-part6/) 
