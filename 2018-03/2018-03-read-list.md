@@ -306,7 +306,9 @@ Parse 过程也会遵循从 program -> compound statement -> statement list -> s
 * [x] [Let’s Build A Simple Interpreter part6](https://ruslanspivak.com/lsbasi-part6/) 
   引入了"("和")"，`(expr)`由于左右括号的存在，优先级会提高，比如(1+2)*3，这里实现不需要引入新的 `no-terminal`，而是将`(expr)`当做和 INTEGER 同一层级的东西。
 
-* [ ] [Let’s Build A Simple Interpreter part7](https://ruslanspivak.com/lsbasi-part7/) 
+* [x] [Let’s Build A Simple Interpreter part7](https://ruslanspivak.com/lsbasi-part7/) 
+  parse tree 每个节点都是grammar-reference，比如 expr，term，factor，至于+，-，*，/等操作符都涵盖在语法节点中，即每个Node是对一个语法的描述；而syntax tree的节点是不分这些的，而且是没有“(”和“)”的节点的。
+
 * [ ] [Let’s Build A Simple Interpreter part8](https://ruslanspivak.com/lsbasi-part8/) 
 * [ ] [Let’s Build A Simple Interpreter part9](https://ruslanspivak.com/lsbasi-part9/) 
 * [ ] [Let’s Build A Simple Interpreter part10](https://ruslanspivak.com/lsbasi-part10/) 
