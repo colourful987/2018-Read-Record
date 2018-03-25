@@ -296,9 +296,16 @@ Parse 过程也会遵循从 program -> compound statement -> statement list -> s
 * [x] [Let’s Build A Simple Interpreter part3](https://ruslanspivak.com/lsbasi-part3/) 
   对于输入的“代码”————字符串，有两个“指针”协助我们parsing（also as known syntax analyze），一个是`current_token`以`token`为单位的指针，可以是Integer、+、-符号，一个是`current_char`以字符为单位的指针。`eat` 方法从字面理解是吃掉，即吃掉当前的token，将 `current_token`指针指向下一个，但是前提必须传入要吃掉的token类型，必须和当前类型一致，否则会报error；eat操作会`get_next_token` 会间接操作`current_char`字符指针，返回下一个有效的token（这里是硬编码的，比如我们规定有+，-，整数），这里并不能按照预期去拿，而是解析器返回一个有效的给我们，并不能决定要什么类型，讲道理是这样的，要按序返回
 
-* [ ] [Let’s Build A Simple Interpreter part4](https://ruslanspivak.com/lsbasi-part4/) 
-* [ ] [Let’s Build A Simple Interpreter part5](https://ruslanspivak.com/lsbasi-part5/) 
-* [ ] [Let’s Build A Simple Interpreter part6](https://ruslanspivak.com/lsbasi-part6/) 
+* [x] [Let’s Build A Simple Interpreter part4](https://ruslanspivak.com/lsbasi-part4/) 
+  Lexer 承担的职责是对输入的代码字符串进行遍历解析，解析成 token。遍历————advance，token————integer，`skip_whitespace`，`get_next_token()`。
+  而Interpreter的职责是对grammer的解析，输入其实是调用lexer ”吐出“一个个token，eat其实可以放到lexer中的；process 是对语法单元的描述，包含 factor，term，expr等。
+
+* [x] [Let’s Build A Simple Interpreter part5](https://ruslanspivak.com/lsbasi-part5/) 
+  引入了算术优先级，每个优先级定义一个 non-terminal，这里为 `term` 和 `factor`，每个 non-terminal 的 body 都是独立的处理————`while(TRUE){...}`。如果有N个优先级，我们就需要定义N+1个non-terminal。
+
+* [x] [Let’s Build A Simple Interpreter part6](https://ruslanspivak.com/lsbasi-part6/) 
+  引入了"("和")"，`(expr)`由于左右括号的存在，优先级会提高，比如(1+2)*3，这里实现不需要引入新的 `no-terminal`，而是将`(expr)`当做和 INTEGER 同一层级的东西。
+
 * [ ] [Let’s Build A Simple Interpreter part7](https://ruslanspivak.com/lsbasi-part7/) 
 * [ ] [Let’s Build A Simple Interpreter part8](https://ruslanspivak.com/lsbasi-part8/) 
 * [ ] [Let’s Build A Simple Interpreter part9](https://ruslanspivak.com/lsbasi-part9/) 
