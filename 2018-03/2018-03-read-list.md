@@ -309,7 +309,24 @@ Parse 过程也会遵循从 program -> compound statement -> statement list -> s
 * [x] [Let’s Build A Simple Interpreter part7](https://ruslanspivak.com/lsbasi-part7/) 
   parse tree 每个节点都是grammar-reference，比如 expr，term，factor，至于+，-，*，/等操作符都涵盖在语法节点中，即每个Node是对一个语法的描述；而syntax tree的节点是不分这些的，而且是没有“(”和“)”的节点的。
 
-* [ ] [Let’s Build A Simple Interpreter part8](https://ruslanspivak.com/lsbasi-part8/) 
+* [x] [Let’s Build A Simple Interpreter part8](https://ruslanspivak.com/lsbasi-part8/) 
+  引入 unary operators，即“-3”和“+3”，之前接触的是binary operator的二元 “+” “-” 运算符，因此这里引入了一个新的Node，叫做`UnaryOp`，包含一个token "-" or "+"，以及下一个factor，无非就是 `Num，(expr)，UnaryOp` 这几种，这里特别注意的是：我们定的语法是第一个碰到的 +， -为双目运算符，之后跟随的“+”，“-”都是单目运算符。
+  python 中的 `getattr` 用法，感觉就是类型反射：
+```
+// 获取类变量
+class A:
+    a = 1
+getattr(A,"a") == 1
+
+// 获取类函数
+class B:
+    def funb():
+        print 'abc'
+
+getattr(B,'funb')
+```
+chapter 8中的 visitor 主要使用了获取类函数的特性，以`visit(node)`函数为入口，内部做函数派发 `visit_Num`，`visit_BinOp`，`visit_UnaryOp`。
+
 * [ ] [Let’s Build A Simple Interpreter part9](https://ruslanspivak.com/lsbasi-part9/) 
 * [ ] [Let’s Build A Simple Interpreter part10](https://ruslanspivak.com/lsbasi-part10/) 
 * [ ] [Let’s Build A Simple Interpreter part11](https://ruslanspivak.com/lsbasi-part11/) 
