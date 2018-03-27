@@ -327,7 +327,11 @@ getattr(B,'funb')
 ```
 chapter 8中的 visitor 主要使用了获取类函数的特性，以`visit(node)`函数为入口，内部做函数派发 `visit_Num`，`visit_BinOp`，`visit_UnaryOp`。
 
-* [ ] [Let’s Build A Simple Interpreter part9](https://ruslanspivak.com/lsbasi-part9/) 
+* [x] [Let’s Build A Simple Interpreter part9](https://ruslanspivak.com/lsbasi-part9/) 
+  `__str__`和`__expr__` 类似oc的`description`和`debugDescription`，前者面向用户，后者面向程序员，本质都是描述对象，[参考文章](https://blog.csdn.net/luckytanggu/article/details/53649156)
+
+从calc 直接跳到pascal的程序AST，这个跳跃还是蛮大的，不要有畏惧心理，更多的难道不应该是兴奋吗？ps: 关于Parser中逻辑还需要稍稍理一下，总体都ok
+
 * [ ] [Let’s Build A Simple Interpreter part10](https://ruslanspivak.com/lsbasi-part10/) 
 * [ ] [Let’s Build A Simple Interpreter part11](https://ruslanspivak.com/lsbasi-part11/) 
 * [ ] [Let’s Build A Simple Interpreter part12](https://ruslanspivak.com/lsbasi-part12/) 
