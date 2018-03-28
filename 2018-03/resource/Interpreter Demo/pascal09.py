@@ -104,6 +104,7 @@ class Lexer(object):
             if self.current_char.isspace():
                 self.skip_whitespace()
                 continue
+
             if self.current_char.isdigit():
                 return Token(INTEGER, self.integer())
 
@@ -122,6 +123,30 @@ class Lexer(object):
             if self.current_char == '.':
                 self.advance()
                 return Token(DOT,'.')
+
+            if self.current_char == '*':
+                self.advance()
+                return Token(MUL, '*')
+
+            if self.current_char == '/':
+                self.advance()
+                return Token(DIV, '/')
+
+            if self.current_char == '+':
+                self.advance()
+                return Token(PLUS, '+')
+
+            if self.current_char == '-':
+                self.advance()
+                return Token(MINUS, '-')
+
+            if self.current_char == "(":
+                self.advance()
+                return Token(LPAREN, "(")
+
+            if self.current_char == ")":
+                self.advance()
+                return Token(RPAREN, ")")
         return Token(EOF, None)
 
 class Parser(object):
@@ -143,6 +168,7 @@ class Parser(object):
     def program(self):
         node = self.compound_statement()
         self.eat(DOT)
+        return node
 
     def compound_statement(self):
         self.eat(BEGIN)
@@ -252,7 +278,6 @@ class Parser(object):
 
         return node
 
-
 class NodeVisitor(object):
     """docstring for NodeVisitor"""
 
@@ -263,3 +288,82 @@ class NodeVisitor(object):
 
     def generic_visit(self, node):
         raise Exception('No visit_{} method'.format(type(node).__name__))
+
+class Interpreter(NodeVisitor):
+    def __init__(self, parser):
+        self.parser = parser
+        self.GLOBAL_SCOPE = {}
+
+    def visit_BinOp(self, node):
+        if node.op.type == PLUS:
+            return self.visit(node.left) + self.visit(node.right)
+        elif node.op.type == MINUS:
+            return self.visit(node.left) - self.visit(node.right)
+        elif node.op.type == MUL:
+            return self.visit(node.left) * self.visit(node.right)
+        elif node.op.type == DIV:
+            return self.visit(node.left) / self.visit(node.right)
+
+    def visit_UnaryOp(self, node):
+        op = node.op.type
+        if op == PLUS:
+            return +self.visit(node.expr)
+        elif op == MINUS:
+            return -self.visit(node.expr)
+
+    def visit_Num(self, node):
+        return node.value
+
+    def visit_Compound(self, node):
+        for child in node.children:
+            self.visit(child)
+
+    def visit_NoOp(self, node):
+        pass
+
+    def visit_Assign(self, node):
+        var_name =  node.left.value
+        self.GLOBAL_SCOPE[var_name] = self.visit(node.right)
+
+    def visit_Var(self, node):
+        var_name = node.value
+        val = self.GLOBAL_SCOPE.get(var_name)
+        if val is None:
+            raise NameError(repr(var_name))
+        else:
+            return val
+
+    def interpret(self):
+        tree = self.parser.parse()
+        return self.visit(tree)
+
+def main():
+    # while True:
+    #     try:
+    #         try:
+    #             text = raw_input('spi> ')
+    #         except NameError:
+    #             text = input('spi> ')
+    #     except EOFError:
+    #         break
+    #     if not text:
+    #         continue
+    #     lexer = Lexer(text)
+    #     parser = Parser(lexer)
+    #     interpreter = Interpreter(parser)
+    #     interpreter.interpret()
+    #     print(interpreter.GLOBAL_SCOPE)
+    file_object = open('source_code.txt')
+    try:
+        text = file_object.read()
+        lexer = Lexer(text)
+        parser = Parser(lexer)
+        interpreter = Interpreter(parser)
+        interpreter.interpret()
+        print(interpreter.GLOBAL_SCOPE)
+    finally:
+        file_object.close()
+
+
+if __name__ == '__main__':
+    main()
