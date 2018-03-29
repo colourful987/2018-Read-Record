@@ -330,9 +330,33 @@ chapter 8中的 visitor 主要使用了获取类函数的特性，以`visit(node
 * [x] [Let’s Build A Simple Interpreter part9](https://ruslanspivak.com/lsbasi-part9/) 
   `__str__`和`__expr__` 类似oc的`description`和`debugDescription`，前者面向用户，后者面向程序员，本质都是描述对象，[参考文章](https://blog.csdn.net/luckytanggu/article/details/53649156)
 
-从calc 直接跳到pascal的程序AST，这个跳跃还是蛮大的，不要有畏惧心理，更多的难道不应该是兴奋吗？ps: 关于Parser中逻辑还需要稍稍理一下，总体都ok
+从calc 直接跳到pascal的程序AST，这个跳跃还是蛮大的，不要有畏惧心理，更多的难道不应该是兴奋吗？ps: 关于Parser中逻辑还需要稍稍理一下，总体都ok。
+> 遗留问题：
+1. variable 就是平常声明的 x, y, i等变量，而本章用一个token来实例化一个Var类型的Node，此时怎么会有值呢？
+2. 从 `Program -> compound_statement -> statement_list -> statement`,其中 statement 中的assign_statement调用 expr, factor 等是如何实现？
 
-* [ ] [Let’s Build A Simple Interpreter part10](https://ruslanspivak.com/lsbasi-part10/) 
+* [x] [Let’s Build A Simple Interpreter part10](https://ruslanspivak.com/lsbasi-part10/) 
+  python List extend和append的区别：
+  **append case:**
+```
+list1 = ['1','2','3']
+list2 = ['4','5']
+list1.append(list2)
+print list1
+>>> ['1','2','3',['4','5']]
+```
+**extend case:**
+```
+list1 = ['1','2','3']
+list2 = ['4','5']
+list1.extend(list2)
+print list1
+>>> ['1','2','3','4','5']
+```
+[python 列表解析,很强大](http://www.secnetix.de/olli/Python/list_comprehensions.hawk)
+
+本节新增了一些pascal的语法，比如Program，block，var_declaration等，在debug python demo的时候遇到点小坑，主要还是粗心导致，目前可以使用PyCharm IDE对python代码debug排查问题了，也算一个小小进步吧。
+
 * [ ] [Let’s Build A Simple Interpreter part11](https://ruslanspivak.com/lsbasi-part11/) 
 * [ ] [Let’s Build A Simple Interpreter part12](https://ruslanspivak.com/lsbasi-part12/) 
 * [ ] [Let’s Build A Simple Interpreter part13](https://ruslanspivak.com/lsbasi-part13/) 
