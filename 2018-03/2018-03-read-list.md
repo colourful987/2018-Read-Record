@@ -357,7 +357,9 @@ print list1
 
 本节新增了一些pascal的语法，比如Program，block，var_declaration等，在debug python demo的时候遇到点小坑，主要还是粗心导致，目前可以使用PyCharm IDE对python代码debug排查问题了，也算一个小小进步吧。
 
-* [ ] [Let’s Build A Simple Interpreter part11](https://ruslanspivak.com/lsbasi-part11/) 
+* [x] [Let’s Build A Simple Interpreter part11](https://ruslanspivak.com/lsbasi-part11/) 
+  引入symbol and symbol table， 即把我们的变量符号或是builtin type存储到Symbol Table中，之后通过存取更新这张表，如果按照正常思路，应该有一张Global Symbol Table 以及不同作用范围的 Symbol table
+
 * [ ] [Let’s Build A Simple Interpreter part12](https://ruslanspivak.com/lsbasi-part12/) 
 * [ ] [Let’s Build A Simple Interpreter part13](https://ruslanspivak.com/lsbasi-part13/) 
 * [ ] [Let’s Build A Simple Interpreter part14](https://ruslanspivak.com/lsbasi-part14/) 
