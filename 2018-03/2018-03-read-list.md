@@ -360,7 +360,17 @@ print list1
 * [x] [Let’s Build A Simple Interpreter part11](https://ruslanspivak.com/lsbasi-part11/) 
   引入symbol and symbol table， 即把我们的变量符号或是builtin type存储到Symbol Table中，之后通过存取更新这张表，如果按照正常思路，应该有一张Global Symbol Table 以及不同作用范围的 Symbol table
 
-* [ ] [Let’s Build A Simple Interpreter part12](https://ruslanspivak.com/lsbasi-part12/) 
-* [ ] [Let’s Build A Simple Interpreter part13](https://ruslanspivak.com/lsbasi-part13/) 
+* [x] [Let’s Build A Simple Interpreter part12](https://ruslanspivak.com/lsbasi-part12/) 
+* [x] [Let’s Build A Simple Interpreter part13](https://ruslanspivak.com/lsbasi-part13/) 
+  Procedure 可以称之为子程序，执行子程序，没有返回值，以**PROCEDURE**关键字打头，会紧跟var_declaration 变量声明和Begin End 复合声明————这两者合起来又称之为block。
+
+我认为 Procedure是一种提前声明，所以可以归纳到 declarations grammer list。
+```
+declarations: VAR(variable_declaration SEMI)+
+            | (PROCEDURE ID SEMI block SEMI)*
+            | empty
+```
+program组成不变，内容为一个block————包含declarations 和 compound_statemnt(BEGIN END 包裹)
+
 * [ ] [Let’s Build A Simple Interpreter part14](https://ruslanspivak.com/lsbasi-part14/) 
 
