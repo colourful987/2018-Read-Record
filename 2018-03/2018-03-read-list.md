@@ -1,4 +1,4 @@
-> Theme: App Architecture & Low-programming（Compiler & Interpreter）    
+> Theme: Low-programming（Compiler & Interpreter）    
 > Source Code Read Plan: Still Aspect      
 > Reference Book List: objc App Architecture
 
@@ -362,9 +362,9 @@ print list1
 
 * [x] [Let’s Build A Simple Interpreter part12](https://ruslanspivak.com/lsbasi-part12/) 
 * [x] [Let’s Build A Simple Interpreter part13](https://ruslanspivak.com/lsbasi-part13/) 
-  Procedure 可以称之为子程序，执行子程序，没有返回值，以**PROCEDURE**关键字打头，会紧跟var_declaration 变量声明和Begin End 复合声明————这两者合起来又称之为block。
+  Procedure 可以认为是子程序，具有独立作用域，执行子程序没有返回值，以**PROCEDURE**关键字打头，会紧跟var_declaration 变量声明和Begin End 复合声明————这两者合起来又称之为block。
 
-我认为 Procedure是一种提前声明，所以可以归纳到 declarations grammer list。
+我认为 Procedure是一种提前定义，所以可以归纳到 declarations grammer list。
 ```
 declarations: VAR(variable_declaration SEMI)+
             | (PROCEDURE ID SEMI block SEMI)*
@@ -372,5 +372,10 @@ declarations: VAR(variable_declaration SEMI)+
 ```
 program组成不变，内容为一个block————包含declarations 和 compound_statemnt(BEGIN END 包裹)
 
-* [ ] [Let’s Build A Simple Interpreter part14](https://ruslanspivak.com/lsbasi-part14/) 
-
+* [x] [Let’s Build A Simple Interpreter part14](https://ruslanspivak.com/lsbasi-part14/) 
+  之所以取名为`formal_parameters`形参复数形式，主要在于pascal的procedure语法有如下形式：
+```
+procedure Foo(a, b : INTEGER; c : REAL);
+```
+`a,b:INTEGER`是一个 `formal_parameters`，而整个形参列表定义为 `formal_parameters_list`。
+`formal_parameters` 其实使用一个数组持有所有形参，一个形参e.g. `a:INTEGER`
