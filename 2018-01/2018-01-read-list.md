@@ -1,16 +1,18 @@
 ### 2018/01/14
 
-原文链接：[CPU和GPU的设计区别](http://www.cnblogs.com/biglucky/p/4223565.html)
-总结：[CPU和GPU的设计区别总结](quiver-note-url/77AD7A0F-5370-4B51-B16A-ECAA399EAF7E)
+原文链接：[CPU和GPU的设计区别](http://www.cnblogs.com/biglucky/p/4223565.html)         
+总结：[CPU和GPU的设计区别总结 ](quiver-note-url/77AD7A0F-5370-4B51-B16A-ECAA399EAF7E)        
 
 ### 2018/01/15
-原文链接：[跳出面向对象思想(一) 继承](https://casatwy.com/tiao-chu-mian-xiang-dui-xiang-si-xiang-yi-ji-cheng.html)
-原文链接：[跳出面向对象思想(二) 多态](https://casatwy.com/tiao-chu-mian-xiang-dui-xiang-si-xiang-er-duo-tai.html)
-总结：[跳出面向对象思想总结](quiver-note-url/ED3A2D65-03B3-4C9C-9194-821191756BEB)
+原文链接：[跳出面向对象思想(一) 继承](https://casatwy.com/tiao-chu-mian-xiang-dui-xiang-si-xiang-yi-ji-cheng.html)       
+原文链接：[跳出面向对象思想(二) 多态](https://casatwy.com/tiao-chu-mian-xiang-dui-xiang-si-xiang-er-duo-tai.html)        
+总结：[跳出面向对象思想总结](quiver-note-url/ED3A2D65-03B3-4C9C-9194-821191756BEB)         
 
 ### 2018/01/16
 链接：[iOS应用架构谈 view层的组织和调用方案](https://casatwy.com/iosying-yong-jia-gou-tan-viewceng-de-zu-zhi-he-diao-yong-fang-an.html)
+
 主要涉及代码规范、MVC、MVVM、Mediator、strategy 设计模式等，可能是因为有了一定基础再回过头来看这篇文章，并没有太大的启发点；不过有些地方太过苛求绝对，不敢苟同（e.g. 比如所有的视图实例化都使用 `getter setter` 方法）。
+
 另外文章没有说到MVVM的重点：View-Model是业务层，View和Model其实可以复用，因此只要替换掉 View-model 我们就可以愉快的重用，想要实现MVVM，必须是双向绑定，即 View 和 ViewModel 双向绑定， Viewmodel和model双向绑定。
 
 ### 2018/01/17
@@ -32,7 +34,7 @@
 6. `delegate和notification有什么区别` 命令式和响应式的区别，很容易理解；
 
 ### 2018/01/22
-链接：[CocoaPods Guides](https://guides.cocoapods.org/)
+链接：[CocoaPods Guides](https://guides.cocoapods.org/)     
 总结：[CocoaPods Guides 初探](quiver-note-url/77FA36ED-91BE-4E1B-8244-F6B50941311F)
 
 ### 2018/01/23

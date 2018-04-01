@@ -281,7 +281,7 @@ Parse 过程也会遵循从 program -> compound statement -> statement list -> s
 # 2018/03/22
 开始从Chapter1开始Coding，这次用 Python 实现，为之后DeepLearning做好准备。
 * [x] [Let’s Build A Simple Interpreter part1](https://ruslanspivak.com/lsbasi-part1/) 
-  Python 缩进真的很蛋疼！其次调试文件 file.py 中的某个类 MyClass，可以在python的REPL中使用`from file import MyClass`；顺便回顾下chapter 9的知识：
+    Python 缩进真的很蛋疼！其次调试文件 file.py 中的某个类 MyClass，可以在python的REPL中使用`from file import MyClass`；顺便回顾下chapter 9的知识：
 * program ： `compound_statement` + DOT('.') 结尾；
 * `compound_statement`： BEGAN打头 + `statement_list`(多条语句列表) + END 结尾；
 * `statement_list`：由 statement 组成，每条statement之间用“；”分号隔开；
@@ -328,7 +328,7 @@ getattr(B,'funb')
 chapter 8中的 visitor 主要使用了获取类函数的特性，以`visit(node)`函数为入口，内部做函数派发 `visit_Num`，`visit_BinOp`，`visit_UnaryOp`。
 
 * [x] [Let’s Build A Simple Interpreter part9](https://ruslanspivak.com/lsbasi-part9/) 
-  `__str__`和`__expr__` 类似oc的`description`和`debugDescription`，前者面向用户，后者面向程序员，本质都是描述对象，[参考文章](https://blog.csdn.net/luckytanggu/article/details/53649156)
+    `__str__`和`__expr__` 类似oc的`description`和`debugDescription`，前者面向用户，后者面向程序员，本质都是描述对象，[参考文章](https://blog.csdn.net/luckytanggu/article/details/53649156)
 
 从calc 直接跳到pascal的程序AST，这个跳跃还是蛮大的，不要有畏惧心理，更多的难道不应该是兴奋吗？ps: 关于Parser中逻辑还需要稍稍理一下，总体都ok。
 > 遗留问题：
@@ -336,8 +336,8 @@ chapter 8中的 visitor 主要使用了获取类函数的特性，以`visit(node
 2. 从 `Program -> compound_statement -> statement_list -> statement`,其中 statement 中的assign_statement调用 expr, factor 等是如何实现？
 
 * [x] [Let’s Build A Simple Interpreter part10](https://ruslanspivak.com/lsbasi-part10/) 
-  python List extend和append的区别：
-  **append case:**
+    python List extend和append的区别：
+    **append case:**
 ```
 list1 = ['1','2','3']
 list2 = ['4','5']
@@ -358,7 +358,7 @@ print list1
 本节新增了一些pascal的语法，比如Program，block，var_declaration等，在debug python demo的时候遇到点小坑，主要还是粗心导致，目前可以使用PyCharm IDE对python代码debug排查问题了，也算一个小小进步吧。
 
 * [x] [Let’s Build A Simple Interpreter part11](https://ruslanspivak.com/lsbasi-part11/) 
-  引入symbol and symbol table， 即把我们的变量符号或是builtin type存储到Symbol Table中，之后通过存取更新这张表，如果按照正常思路，应该有一张Global Symbol Table 以及不同作用范围的 Symbol table
+    引入symbol and symbol table， 即把我们的变量符号或是builtin type存储到Symbol Table中，之后通过存取更新这张表，如果按照正常思路，应该有一张Global Symbol Table 以及不同作用范围的 Symbol table
 
 * [x] [Let’s Build A Simple Interpreter part12](https://ruslanspivak.com/lsbasi-part12/) 
 * [x] [Let’s Build A Simple Interpreter part13](https://ruslanspivak.com/lsbasi-part13/) 
@@ -373,7 +373,7 @@ declarations: VAR(variable_declaration SEMI)+
 program组成不变，内容为一个block————包含declarations 和 compound_statemnt(BEGIN END 包裹)
 
 * [x] [Let’s Build A Simple Interpreter part14](https://ruslanspivak.com/lsbasi-part14/) 
-  之所以取名为`formal_parameters`形参复数形式，主要在于pascal的procedure语法有如下形式：
+    之所以取名为`formal_parameters`形参复数形式，主要在于pascal的procedure语法有如下形式：
 ```
 procedure Foo(a, b : INTEGER; c : REAL);
 ```
