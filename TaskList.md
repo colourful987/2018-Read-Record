@@ -19,6 +19,8 @@
 * [ ] 源码阅读
 * [ ] 总结，理解 KVO 和 KVB 知识点
 
+[THObserversAndBinders 初窥总结](./Content/iOS/THObserversAndBinders/如何实现一个优雅的KVO和KVB中间件.md)
+
 ### 2.3 [YYModel](https://github.com/ibireme/YYModel) 和 [YYCache](https://github.com/ibireme/YYCache)
 
 - [ ] 源码阅读
