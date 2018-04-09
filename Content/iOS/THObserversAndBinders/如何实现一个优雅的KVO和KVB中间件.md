@@ -3,7 +3,7 @@
 ## KVO 基础用法
 
 API 定义如下：
-```
+```objective-c
 - (void)addObserver:(NSObject *)observer 
          forKeyPath:(NSString *)keyPath 
             options:(NSKeyValueObservingOptions)options 
@@ -16,7 +16,7 @@ API 定义如下：
 * context：注册通知时候传入的上下文信息，在触发事件回调时可以拿到，这有点类似页面跳转时用字典传值；
 
 观察者需要实现 `observeValueForKeyPath:ofObject:change:context:` 协议方法：
-```
+```objective-c
 - (void)observeValueForKeyPath:(NSString *)keyPath 
                       ofObject:(id)object 
                         change:(NSDictionary<NSKeyValueChangeKey,id> *)change 
@@ -33,7 +33,7 @@ API 定义如下：
 上述方式其实就是加了一个中间件，它作为观察者存在，负责观察某个对象的某个属性。而为了保证这个观察行为始终存在，所以我们需要持有这个中间件，当然我们也可以人为的 stop 销毁。
 
 核心代码如下：
-```
+```objective-c
 - (id)initForObject:(id)object
             keyPath:(NSString *)keyPath
             options:(NSKeyValueObservingOptions)options
@@ -105,7 +105,7 @@ THObserversAndBinders 按照源码Coding，过程中想到几个问题：
 带着这些问题我测试了下：
 1. 关于集合，调用`removeAtIndex`这些方法并不会触发通知回调，参照接口注释，如下即可触发:
 
-```
+```objective-c
 [[_observedObject mutableArrayValueForKey:@"arrayPropertyName"] addObjectsFromArray:@[@3,@4]];
 ```
 回调方法中，`change[NSKeyValueChangeKindKey]` 的值为 2 表示插入操作，而不再是 1 Setting操作。
@@ -153,9 +153,4 @@ THObserversAndBinders 按照源码Coding，过程中想到几个问题：
 
 ## Reference
 
-[THObserversAndBinders](https://github.com/th-in-gs/THObserversAndBinders)
-
-
-
-
-
+[THObserversAndBinders

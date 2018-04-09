@@ -16,8 +16,8 @@
 
 ### 2.2 [THObserversAndBinders](https://github.com/th-in-gs/THObserversAndBinders)
 
-* [x] 源码阅读
-* [x] 总结，理解 KVO 和 KVB 知识点
+* [x] 🏆 源码阅读
+* [x] 🏆 总结，理解 KVO 和 KVB 知识点
 
 [THObserversAndBinders 初窥总结](./Content/iOS/THObserversAndBinders/如何实现一个优雅的KVO和KVB中间件.md)
 
