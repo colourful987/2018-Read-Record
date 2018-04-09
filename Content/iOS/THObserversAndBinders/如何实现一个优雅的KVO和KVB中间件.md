@@ -113,9 +113,49 @@ THObserversAndBinders 按照源码Coding，过程中想到几个问题：
 2. options 相当于告诉观察者当发生改变时，你把我指定的变化值放到 change 字典中传过来。倘若你设置 options = 0，当发生变动时会触发回调方法，但是 change 字典中并没有存相应的值，唯一存的key就是 `NSKeyValueChangeKindKey` 告知你变动的类型，一般都是Setting。
 3. 只要触发回调，change 字典必定有 `NSKeyValueChangeKindKey` 键以及对应的值，至于触发类型是`NSKeyValueChangeSetting`、`NSKeyValueChangeInsertion`或是其他，就需要用 `mutableArrayValueForKey` 这种方式取到值，然后在进行`add` `remove` 操作。
 
+## Binder 基本使用
+
+应用场景：对象A的某个属性`A_property`值依赖于另外一个对象B的`B_property`属性，当 `B_property`发生变动时联动地更改 `A_property` 。
+
+解决方案：实例化一个 `PTObserver` 对象添加为  `A_property` 属性的观察者，传入一个 `Block` 的方式实例化一个 `PTObserver` 观察者对象，当事件发生时会通知观察者，在回调方法中执行上面传入的 `Block`，而代码块需要间接调用 `[b_instance setValue: forKeyPath:]`接口，这样实现联动设值。
+
+代码如下：
+
+```objective-c
+- (instancetype)initForBindingFromObject:(id)fromObject keyPath:(NSString *)fromKeyPath
+                                toObject:(id)toObject keyPath:(NSString *)toKeyPath
+                     transformationBlock:(PTBinderValueTransformerBlock)transformationBlock {
+    self = [super init];
+    
+    if (self) {
+        __weak id wToObject = toObject;
+        NSString *tokp = [toKeyPath copy];
+        PTObserverBlockWithChangeDictionary changeBlock;
+        if (transformationBlock) {
+            changeBlock = [^(NSDictionary *change){
+                // 这里的change指被观察对象的keyPath属性 值变更信息
+                [wToObject setValue:transformationBlock(change[NSKeyValueChangeNewKey]) forKey:tokp];
+            } copy];
+        } else {
+            changeBlock = [^(NSDictionary *change){
+                // 这里的change指被观察对象的keyPath属性 值变更信息
+                [wToObject setValue:change[NSKeyValueChangeNewKey] forKey:tokp];
+            } copy];
+        }
+        _observer = [PTObserver observerForObservedObject:fromObject keyPath:fromKeyPath options:NSKeyValueObservingOptionNew changeBlock:changeBlock];
+    }
+    
+    return self;
+}
+```
+
+[PTKVOUtility 注释版本](./PTKVOUtility)
+
 ## Reference
 
 [THObserversAndBinders](https://github.com/th-in-gs/THObserversAndBinders)
+
+
 
 
 
