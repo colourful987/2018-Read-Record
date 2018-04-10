@@ -86,7 +86,7 @@ digits[index4...]              // "456789"
 digits.suffix(from: index4)
 ```
 
-## 4.关于字符串多行显示
+## 4. 关于字符串多行显示
 
 ```
 let verse = """
@@ -105,3 +105,36 @@ let singleLongLine = """
     over two lines by escaping the newline.
     """
 ```
+## 5. Objc Swift Functional Programming 解析器一节例子更新 
+
+注意点只有一个 `dropFirst()` 返回的是 `Substring` 类型，所以这里使用前文说到的`String()`转成字符串类型。
+
+```
+struct Parser<Result> {
+    typealias Stream = String
+    let parser:(Stream)->(Result, Stream)?
+}
+
+extension Parser {
+    func run(_ string:String)->(Result, String)? {
+        guard let (result, remainder) = parser(string) else {
+            return nil
+        }
+        return (result, String(remainder))
+    }
+}
+
+func character(matching condition:@escaping(Character)->Bool) -> Parser<Character> {
+    return Parser(parser: { input in
+        guard let char = input.first, condition(char) else { return nil}
+        return (char, String(input.dropFirst()))
+    })
+}
+
+let one = character{$0 == "1"}
+print(one.run("123"))
+```
+## Reference
+
+* [Updating Strings For Swift 4](https://useyourloaf.com/blog/updating-strings-for-swift-4/)
+* [Swift 字符串一口闷](https://www.jianshu.com/p/956665e3a0e5)

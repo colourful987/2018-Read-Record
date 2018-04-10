@@ -44,3 +44,8 @@ THObserversAndBinders 按照源码Coding，过程中想到几个问题：
 * [x] 🏆[THObserversAndBinders](https://github.com/th-in-gs/THObserversAndBinders)源码阅读和总结
 
 [如何实现一个优雅的KVO和KVB中间件](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/THObserversAndBinders/如何实现一个优雅的KVO和KVB中间件.md)
+
+# 2018/04/10
+[Swift4.0 String 基础语法改动](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/Swift4%20String%20基础语法改动.md)
+
+改动的几个重点都写了，顺便把 Swift Functional Programming 一书中的解析器小节代码更新了一把。
