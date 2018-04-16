@@ -86,3 +86,6 @@ var p = Person(...)
 [pascal 10](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/Pascal%20Interperter/Swift%20Version/pascal10)已经基本算的上是一个pascal解释器了，能够简单支持变量类型，赋值操作等，当然类似for循环这些都不行。运行结果如下图所示：
 
 ![pascal10](./resource/pascal10-demo.png) 
+
+# 2018/04/16
+pascal11 新增一个 SymbolTable 和 SymbolTableBuilder，目的是生成一张变量映射表，不进行任何 Interpret。目前 pascal11 存在很多细节上的问题，尽管输出没有问题，但是思路上没有完全理顺。
