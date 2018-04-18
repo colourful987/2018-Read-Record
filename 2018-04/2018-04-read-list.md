@@ -1,5 +1,5 @@
-> Theme: Charts For Stock 
-> Source Code Read Plan: Charts      
+> Theme: Charts For Stock & 应用模块化和解耦
+> Source Code Read Plan: Charts | AppLord | JLRoutes ...    
 > Reference Book List: 《Just For Fun》
 
 # 2018/04/01
@@ -89,3 +89,22 @@ var p = Person(...)
 
 # 2018/04/16
 pascal11 新增一个 SymbolTable 和 SymbolTableBuilder，目的是生成一张变量映射表，不进行任何 Interpret。目前 pascal11 存在很多细节上的问题，尽管输出没有问题，但是思路上没有完全理顺。
+
+
+# 2018/04/18
+四月状态不佳，目标不够明确，专注度不够，经常一个知识点并未完全掌握或者处于效率极低的理解中，又突然抽风式地移步到另外一块领域，导致 context 切换过于频繁，造成很大程度地时间精力浪费。因此今天再次明确了下目标：
+
+* 关于 Charts，其实一直跟进状态，但是并未记录在此，若方案成熟会写一个总结；
+* 关于 SIP，投入了一定时间精力（差不多3-4天），将之前用 python 实现的解释器用 swift 重新实现了，下半月会自己定grammer，expr，symbol等实现一门“简单语言”，目标是实现var-declaration，assign-statement，for statement，while-statement等简单语法
+* 模块化和架构，感觉还是要提上日程。搜了下相关文章，筛选后罗列记录下：
+  - [ ] [模块化与解耦 --刘坤](https://blog.cnbluebox.com/blog/2015/11/28/module-and-decoupling/) 文章篇幅不长，概念也是从简阐述，适合入口篇，但是文章并未直接给出具体的一套方案。[AppLord](https://github.com/NianJi/AppLord) 和 [JLRoute](https://github.com/joeldev/JLRoutes)源码建议阅读，前者是作者写的一个简单方案，提供一种思路；后者面向应用；
+  - [ ] [iOS组件化方案探索](https://link.jianshu.com/?t=http%3A%2F%2Fblog.cnbang.net%2Ftech%2F3080%2F)  
+  - [ ] [浅析iOS组件化设计](https://link.jianshu.com/?t=https%3A%2F%2Fskyline75489.github.io%2Fpost%2F2016-3-16_ios_module_design.html) 
+  - [ ] [蘑菇街的组件化之路](https://link.jianshu.com/?t=http%3A%2F%2Flimboy.me%2Ftech%2F2016%2F03%2F10%2Fmgj-components.html)  
+  - [ ] [蘑菇街组件化之路续](https://link.jianshu.com/?t=http%3A%2F%2Flimboy.me%2Ftech%2F2016%2F03%2F14%2Fmgj-components-continued.html) 
+  - [ ] [iOS应用架构谈 组件化方案](https://link.jianshu.com/?t=https%3A%2F%2Fcasatwy.com%2FiOS-Modulization.html) 拜读过，感觉似懂非懂。ORZ... 
+  - [ ] [组件化----路由设计思路分析 ](https://www.jianshu.com/p/76da56b3bd55) 
+  - [ ] [组件架构漫谈](https://www.jianshu.com/p/67a6004f6930) 
+  - [ ] [iOS组件化思路－大神博客研读和思考 ](https://www.jianshu.com/p/afb9b52143d4) 
+
+> read a lot ≠ understand ≠ apply ≠ do whatever you want ，Talk is cheap，show me the code。当然，coding前必须要有方案，而且不是泛泛而谈的那种。
