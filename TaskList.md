@@ -23,8 +23,10 @@
 
 ### 2.3 [YYModel](https://github.com/ibireme/YYModel) 和 [YYCache](https://github.com/ibireme/YYCache)
 
-- [ ] 源码阅读
+- [x] 源码阅读
 - [ ] 总结
+
+[YYModel源码阅读](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/YYModel/YYModel源码阅读.md)
 
 ### 2.4 [YTKNetwork](https://github.com/yuantiku/YTKNetwork) 
 
