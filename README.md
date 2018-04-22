@@ -8,20 +8,14 @@
 
 # Learning Recording
 
-* [x] [2018 一月学习记录 ](./2018-01/2018-01-read-list.md)
+* [ ] [2018 四月学习记录 🕐](./2018-04/2018-04-read-list.md)
 
+> Theme: Charts For Stock 
+> Source Code Read Plan: Charts      
+> Reference Book List: 《Just For Fun》
 
-> 总结：杂记
+* [【推荐👍👍👍】Swift 实现一个 pascal interpreter](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/Pascal%20Interperter/Swift%20Version)  感谢 Ruslan Spivak 的 Python 教程，从实现一个简单计算器慢慢过渡到实现一个pascal解释器，理解 Lexer、Token、AST Parser、Interpreter 的概念
 
-
-
-* [x] [2018 二月学习记录 ](./2018-02/2018-02-read-list.md)
-
-
-> Theme: 计算机底层知识    
-> Source Code Read Plan: Aspect      
-> Reference Book List: 《Code》《程序员的自我修养》    
-> 总结：本月略感成就的是写了关于如何用 C语言实现面向对象编程，[文章传送门](./2018-02/resource/C_IMP_Runtime.md)。
 
 
 
@@ -35,11 +29,28 @@
 
 
 
-* [ ] [2018 四月学习记录 🕐](./2018-04/2018-04-read-list.md)
+* [x] [2018 二月学习记录 ](./2018-02/2018-02-read-list.md)
 
 
-> Theme: Charts For Stock 
-> Source Code Read Plan: Charts      
-> Reference Book List: 《Just For Fun》
+> Theme: 计算机底层知识    
+> Source Code Read Plan: Aspect      
+> Reference Book List: 《Code》《程序员的自我修养》    
+> 总结：本月略感成就的是写了关于如何用 C语言实现面向对象编程，[文章传送门](./2018-02/resource/C_IMP_Runtime.md)。
 
-* [【推荐👍👍👍】Swift 实现一个 pascal interpreter](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/Pascal%20Interperter/Swift%20Version)  感谢 Ruslan Spivak 的 Python 教程，从实现一个简单计算器慢慢过渡到实现一个pascal解释器，理解 Lexer、Token、AST Parser、Interpreter 的概念；
+
+
+
+* [x] [2018 一月学习记录 ](./2018-01/2018-01-read-list.md)
+
+
+> 总结：杂记
+
+
+
+
+
+
+
+
+
+
