@@ -370,5 +370,65 @@ for key in jsonDict.allKeys {
 
 
 # 3. `yy_modelSetWithDictionary` 动态解析赋值
+实现基本原理上面已经提及，即 JSON 的key经过我们自己的mapper映射之后就是属性或者Ivar名称，然后把value赋值，这里涉及到映射，类型判断，递归等，核心代码其实
 
+```objective-c
+- (BOOL)yy_modelSetWithDictionary:(NSDictionary *)dic {
+  // 省略异常情况处理....
+  
+  // 1. ❤️上下文实际就是 类描述+实例内存地址+json数据源
+  //      后面要做的就是根据json数据源根据类描述，把值填充到实例的内存中
+  ModelSetContext context = {0};
+  context.modelMeta = (__bridge void *)(modelMeta);
+  context.model = (__bridge void *)(self);
+  context.dictionary = (__bridge void *)(dic);
+  
+  
+  if (modelMeta->_keyMappedCount >= CFDictionaryGetCount((CFDictionaryRef)dic)) {
+      // 2. ❤️核心方法 `ModelSetWithDictionaryFunction`
+      //       以及 `ModelSetWithPropertyMetaArrayFunction`
+      CFDictionaryApplyFunction((CFDictionaryRef)dic, ModelSetWithDictionaryFunction, &context);
+      if (modelMeta->_keyPathPropertyMetas) {
+          CFArrayApplyFunction((CFArrayRef)modelMeta->_keyPathPropertyMetas,
+                               CFRangeMake(0, CFArrayGetCount((CFArrayRef)modelMeta->_keyPathPropertyMetas)),
+                               ModelSetWithPropertyMetaArrayFunction,
+                               &context);
+      }
+      if (modelMeta->_multiKeysPropertyMetas) {
+          CFArrayApplyFunction((CFArrayRef)modelMeta->_multiKeysPropertyMetas,
+                               CFRangeMake(0, CFArrayGetCount((CFArrayRef)modelMeta->_multiKeysPropertyMetas)),
+                               ModelSetWithPropertyMetaArrayFunction,
+                               &context);
+      }
+  } else {
+      CFArrayApplyFunction((CFArrayRef)modelMeta->_allPropertyMetas,
+                           CFRangeMake(0, modelMeta->_keyMappedCount),
+                           ModelSetWithPropertyMetaArrayFunction,
+                           &context);
+  }
+  
+  if (modelMeta->_hasCustomTransformFromDictionary) {
+      return [((id<YYModel>)self) modelCustomTransformFromDictionary:dic];
+  }
+  return YES;
+}
+```
+上面用了 Core Foundation 的字典和数据接口，即对字典每个key-value pair应用 `ModelSetWithDictionaryFunction` 方法，对数组每个元素应用 `ModelSetWithPropertyMetaArrayFunction` 方法。 这么做可能就是为了效率吧。
+
+```objective-c
+static void ModelSetWithDictionaryFunction(const void *_key, const void *_value, void *_context) {
+    ModelSetContext *context = _context;
+    __unsafe_unretained _YYModelMeta *meta = (__bridge _YYModelMeta *)(context->modelMeta);
+    __unsafe_unretained _YYModelPropertyMeta *propertyMeta = [meta->_mapper objectForKey:(__bridge id)(_key)];
+    __unsafe_unretained id model = (__bridge id)(context->model);
+    while (propertyMeta) {
+        if (propertyMeta->_setter) {
+            // ❤️ 核心方法：可理解为做数据派发，将值赋值给对应的实例变量
+            // 内部采用了 objc_msgSend 方法进行消息发送赋值
+            ModelSetValueForProperty(model, (__bridge __unsafe_unretained id)_value, propertyMeta);
+        }
+        propertyMeta = propertyMeta->_next;
+    };
+}
+```
 
