@@ -113,3 +113,17 @@ pascal11 新增一个 SymbolTable 和 SymbolTableBuilder，目的是生成一张
 YYModel 我思考了两点：一：JSON 数据流，苹果API提供了一套接口帮助我们将json数据流转成字典类型，这里建议自己写一个简单的 JSON Parser有助于理解，规则也很简单：`{ }` 中括号标识字典，`[]`标识数组，`{`或者`[`后读入的第一个`"`双引号标识一个key键名称，直到读入下一个`"`双引号，而`:`冒号标识之后读入值，`String`类型依旧以`""`双引号包括，而`Number`类型则直接以数字表示，当然可能依然是字典`{}`或者数组`[]`；二：YYModel 能够避免我们自定义Model的构造方法中写满一堆 key 取值，然后赋值给属性的语句，这里用到的类型反射，前提是我们定义的类必须和JSON数据流中的描述保持一致，比如json数据中 `{"lastName":"John"}`，那么对应的属性名称也是`lastName`，这样在动态解析中我们才能反射然后赋值 `John` 给 `self.lastName`。当然有时候JSON数据流中的定义的名称并不是我们想要的，可能后端用缩写`ln`表示`lastName`，我们可不想在Model也用`ln`，因此我们需要一个映射表，`ln->lastName`。
 
 [YYModel源码阅读](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/YYModel/YYModel源码阅读.md)，暂时撸了第一节，参考意义不大。
+
+# 2018/04/23
+[Making your iOS application easy to read with these simple steps.](https://medium.com/ios-os-x-development/making-your-ios-application-easy-to-read-with-these-simple-steps-b63067900b72)
+文章并未过多提及编码规范，主要举例说明如何提高代码阅读性，使用如下四种形式分割代码，达到函数遵循单一职责的目的：
+
+```
+1. Informer   functions
+2. Management functions
+3. Router     functions
+4. Execution  functions
+```
+关于其他：
+1. 尽量避免 `ifNeeded` 这种模棱两可，“暧昧”的措辞，毕竟要让其他代码阅读者去猜不是件好事；
+2. 关于 `is` 前缀问题，在内部使用时，不建议加，而对外开放接口时，建议加上，原因是外部调用经常以 `if containView.isHidden` 形式，代码可读性高，而内部是`if isHidden` 就没意义了；
