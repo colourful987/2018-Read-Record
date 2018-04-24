@@ -127,3 +127,11 @@ YYModel 我思考了两点：一：JSON 数据流，苹果API提供了一套接�
 关于其他：
 1. 尽量避免 `ifNeeded` 这种模棱两可，“暧昧”的措辞，毕竟要让其他代码阅读者去猜不是件好事；
 2. 关于 `is` 前缀问题，在内部使用时，不建议加，而对外开放接口时，建议加上，原因是外部调用经常以 `if containView.isHidden` 形式，代码可读性高，而内部是`if isHidden` 就没意义了；
+
+# 2018/04/24
+YYModel UML 类图
+![YYModel UML Image](./resource/YYModel UML.png)
+
+完整的 YYModel gliffy 文件地址[请点击这里](./resource/YYModel.gliffy)。
+
+简单总结下：1. Model类的 `YYModelMeta`，`YYClassInfo` 实例信息都是采用字典缓存存储，取的时候都是调用两者的类方法，内部会拿 Key 从字典缓存取，若没有取到则调用构造方法实例化一份；`YYClassIVarInfo`等三者是对已有的 `Ivar`，`Method`等的二次封装。
