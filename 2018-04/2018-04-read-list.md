@@ -130,7 +130,7 @@ YYModel 我思考了两点：一：JSON 数据流，苹果API提供了一套接�
 
 # 2018/04/24
 YYModel UML 类图
-![YYModel UML Image](./resource/YYModel UML.png)
+![YYModel UML Image](./resource/YYModel_UML.png)
 
 完整的 YYModel gliffy 文件地址[请点击这里](./resource/YYModel.gliffy)。
 
