@@ -97,7 +97,7 @@ pascal11 新增一个 SymbolTable 和 SymbolTableBuilder，目的是生成一张
 * 关于 Charts，其实一直跟进状态，但是并未记录在此，若方案成熟会写一个总结；
 * 关于 SIP，投入了一定时间精力（差不多3-4天），将之前用 python 实现的解释器用 swift 重新实现了，下半月会自己定grammer，expr，symbol等实现一门“简单语言”，目标是实现var-declaration，assign-statement，for statement，while-statement等简单语法
 * 模块化和架构，感觉还是要提上日程。搜了下相关文章，筛选后罗列记录下：
-  - [ ] [模块化与解耦 --刘坤](https://blog.cnbluebox.com/blog/2015/11/28/module-and-decoupling/) 文章篇幅不长，概念也是从简阐述，适合入口篇，但是文章并未直接给出具体的一套方案。[AppLord](https://github.com/NianJi/AppLord) 和 [JLRoute](https://github.com/joeldev/JLRoutes)源码建议阅读，前者是作者写的一个简单方案，提供一种思路；后者面向应用；
+  - [x] [模块化与解耦 --刘坤](https://blog.cnbluebox.com/blog/2015/11/28/module-and-decoupling/) 文章篇幅不长，概念也是从简阐述，适合入口篇，但是文章并未直接给出具体的一套方案。[AppLord](https://github.com/NianJi/AppLord) 和 [JLRoute](https://github.com/joeldev/JLRoutes)源码建议阅读，前者是作者写的一个简单方案，提供一种思路；后者面向应用；
   - [ ] [iOS组件化方案探索](https://link.jianshu.com/?t=http%3A%2F%2Fblog.cnbang.net%2Ftech%2F3080%2F)  
   - [ ] [浅析iOS组件化设计](https://link.jianshu.com/?t=https%3A%2F%2Fskyline75489.github.io%2Fpost%2F2016-3-16_ios_module_design.html) 
   - [ ] [蘑菇街的组件化之路](https://link.jianshu.com/?t=http%3A%2F%2Flimboy.me%2Ftech%2F2016%2F03%2F10%2Fmgj-components.html)  
@@ -130,8 +130,18 @@ YYModel 我思考了两点：一：JSON 数据流，苹果API提供了一套接�
 
 # 2018/04/24
 YYModel UML 类图
-![YYModel UML Image](./resource/YYModel_UML.png)
+![YYModel UML Image](./resource/YYModel UML.png)
 
 完整的 YYModel gliffy 文件地址[请点击这里](./resource/YYModel.gliffy)。
 
-简单总结下：1. Model类的 `YYModelMeta`，`YYClassInfo` 实例信息都是采用字典缓存存储，取的时候都是调用两者的类方法，内部会拿 Key 从字典缓存取，若没有取到则调用构造方法实例化一份；`YYClassIVarInfo`等三者是对已有的 `Ivar`，`Method`等的二次封装。
+简单总结下：1. Model类的 YYModelMeta，YYClassInfo 实例信息都是采用字典缓存存储，取的时候都是调用两者的类方法，内部会拿 Key 从字典缓存取，若没有取到则调用构造方法实例化一份；YYClassIVarInfo等三者是对已有的 Ivar，Method等的二次封装。
+
+# 2018/04/25
+> 刚开始接触模块化和解耦概念，必定在某些知识点上会有误解或者理解不到位，恳请大家指正。
+
+有因必有果，工程师在日常编码中不断遇到问题，解决问题，其中模块化和解耦我认为是解决问题的两种手段，前者为了复用，后者为了减少文件依赖（其实就是减少import xxx这种）：
+
+1. 场景一：日常编码中，我们会对重复代码封装成方法，若进一步发现该函数可以在其他地方（比如不同的 ViewController）用到，为此我们将类似的方法都封装到一个工具类中，这是最初步的；
+2. 场景二：如果类之间有依赖，比如A需要从B、C和D取数据，分别都是`[b_instance getData]`，`[c_instance getData]`，`[d_instance getData]`，这样的话 A就要依赖 `B，C，D`三个类，更好的做法是A中定义一个协议 `@protocol DataService<NSObject> -(void)getData @end;` 这样 A 就只依赖于接口`DataService`。
+3. 场景三：WebView 中的 JSBridge 服务，一开始业务少，所以直接在`WebViewController`写死某个Key对应某个处理Block，但随着需求迭代，问题就出现了，可能某个webView只要处理业务1和业务2，但是此时你拿到的webview确是所有业务。 正确做法是采用注册的方式添加逻辑，业务将自己业务相关的代码放在自己的模块里面，然后通过设计的API注册到WebView模块中。
+4. 场景四：关于Route，即从页面A push 或者 present 到页面B，一般做法是在A中 `#import <B.h>`，然后在触发跳转代码： `B *b = [B new]; [self present:b]`，如果A要跳转十个，二十个页面，import 那么多头文件岂不是爽歪歪，一旦业务变更，还得移除代码，ps:这还只是一个页面的跳转。解决方法有多种，比如搞个中间件（单例对象），如果你要跳转页面，告诉中间件去帮忙实例化一个对应类视图控制器（返回UIViewController，这样当前类不用依赖目标VC类），然后你直接present就可以了，这种方式在于中间件依赖所有的VC类；还有种方式，配置文件，为所有VC给定一个数字id，以及注明VC的Class，应用启动时会加载这份配置文件，然后我们在某个页面跳转到另外一个页面，直接调用 [中间件 gotoPageId:1234] 就ok了。
