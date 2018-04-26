@@ -98,8 +98,8 @@ pascal11 新增一个 SymbolTable 和 SymbolTableBuilder，目的是生成一张
 * 关于 SIP，投入了一定时间精力（差不多3-4天），将之前用 python 实现的解释器用 swift 重新实现了，下半月会自己定grammer，expr，symbol等实现一门“简单语言”，目标是实现var-declaration，assign-statement，for statement，while-statement等简单语法
 * 模块化和架构，感觉还是要提上日程。搜了下相关文章，筛选后罗列记录下：
   - [x] [模块化与解耦 --刘坤](https://blog.cnbluebox.com/blog/2015/11/28/module-and-decoupling/) 文章篇幅不长，概念也是从简阐述，适合入口篇，但是文章并未直接给出具体的一套方案。[AppLord](https://github.com/NianJi/AppLord) 和 [JLRoute](https://github.com/joeldev/JLRoutes)源码建议阅读，前者是作者写的一个简单方案，提供一种思路；后者面向应用；
-  - [ ] [iOS组件化方案探索](https://link.jianshu.com/?t=http%3A%2F%2Fblog.cnbang.net%2Ftech%2F3080%2F)  
-  - [ ] [浅析iOS组件化设计](https://link.jianshu.com/?t=https%3A%2F%2Fskyline75489.github.io%2Fpost%2F2016-3-16_ios_module_design.html) 
+  - [x] [iOS组件化方案探索](https://link.jianshu.com/?t=http%3A%2F%2Fblog.cnbang.net%2Ftech%2F3080%2F)  bang 写的非常浅显易懂，且配合代码讲解，不过对于protocol-class方式，不知道是因为本身这种方式让人难以理解还是我自己理解问题，暂时不太清晰；
+  - [x] [浅析iOS组件化设计](https://link.jianshu.com/?t=https%3A%2F%2Fskyline75489.github.io%2Fpost%2F2016-3-16_ios_module_design.html) 
   - [ ] [蘑菇街的组件化之路](https://link.jianshu.com/?t=http%3A%2F%2Flimboy.me%2Ftech%2F2016%2F03%2F10%2Fmgj-components.html)  
   - [ ] [蘑菇街组件化之路续](https://link.jianshu.com/?t=http%3A%2F%2Flimboy.me%2Ftech%2F2016%2F03%2F14%2Fmgj-components-continued.html) 
   - [ ] [iOS应用架构谈 组件化方案](https://link.jianshu.com/?t=https%3A%2F%2Fcasatwy.com%2FiOS-Modulization.html) 拜读过，感觉似懂非懂。ORZ... 
@@ -139,9 +139,40 @@ YYModel UML 类图
 # 2018/04/25
 > 刚开始接触模块化和解耦概念，必定在某些知识点上会有误解或者理解不到位，恳请大家指正。
 
+  - [x] [模块化与解耦 --刘坤](https://blog.cnbluebox.com/blog/2015/11/28/module-and-decoupling/)
+  - [x] [iOS组件化方案探索](https://link.jianshu.com/?t=http%3A%2F%2Fblog.cnbang.net%2Ftech%2F3080%2F)
+
 有因必有果，工程师在日常编码中不断遇到问题，解决问题，其中模块化和解耦我认为是解决问题的两种手段，前者为了复用，后者为了减少文件依赖（其实就是减少import xxx这种）：
 
 1. 场景一：日常编码中，我们会对重复代码封装成方法，若进一步发现该函数可以在其他地方（比如不同的 ViewController）用到，为此我们将类似的方法都封装到一个工具类中，这是最初步的；
 2. 场景二：如果类之间有依赖，比如A需要从B、C和D取数据，分别都是`[b_instance getData]`，`[c_instance getData]`，`[d_instance getData]`，这样的话 A就要依赖 `B，C，D`三个类，更好的做法是A中定义一个协议 `@protocol DataService<NSObject> -(void)getData @end;` 这样 A 就只依赖于接口`DataService`。
 3. 场景三：WebView 中的 JSBridge 服务，一开始业务少，所以直接在`WebViewController`写死某个Key对应某个处理Block，但随着需求迭代，问题就出现了，可能某个webView只要处理业务1和业务2，但是此时你拿到的webview确是所有业务。 正确做法是采用注册的方式添加逻辑，业务将自己业务相关的代码放在自己的模块里面，然后通过设计的API注册到WebView模块中。
 4. 场景四：关于Route，即从页面A push 或者 present 到页面B，一般做法是在A中 `#import <B.h>`，然后在触发跳转代码： `B *b = [B new]; [self present:b]`，如果A要跳转十个，二十个页面，import 那么多头文件岂不是爽歪歪，一旦业务变更，还得移除代码，ps:这还只是一个页面的跳转。解决方法有多种，比如搞个中间件（单例对象），如果你要跳转页面，告诉中间件去帮忙实例化一个对应类视图控制器（返回UIViewController，这样当前类不用依赖目标VC类），然后你直接present就可以了，这种方式在于中间件依赖所有的VC类；还有种方式，配置文件，为所有VC给定一个数字id，以及注明VC的Class，应用启动时会加载这份配置文件，然后我们在某个页面跳转到另外一个页面，直接调用 [中间件 gotoPageId:1234] 就ok了。
+
+# 2018/04/26
+- [x] [浅析iOS组件化设计](https://link.jianshu.com/?t=https%3A%2F%2Fskyline75489.github.io%2Fpost%2F2016-3-16_ios_module_design.html) 
+
+![模块简单分层示意图.png](./resource/模块简单分层示意图.png)
+
+底层稳定部分很好理解，这里提及的网络请求库，Masonry，YYModel等都是稳定，具有职责专一，业务无关等特性，是工程中较为稳定，修改频次极低的部分，通常这些可以下沉作为模块存在。再细想一下，你不是在开发一个项目，而是多个项目，那么这些模块我们希望按需载入，而不是一股脑的从一个项目中 copy 到另外一个项目中，通常package manager用 cocoapods 来管理。
+
+接着来说下业务层，业务页面1中有按钮可以跳转到页面2，那么我们通常会在业务1的VC中`#import "业务2.h"`，接着实例化一个业务2 VC实例，然后调用present方法；问题是如果业务1页面可以跳转到业务2，业务3，业务n，那么业务1 的 VC 就要导入除底层库之外的，横向业务的所有VC的头文件，产生各种混乱的依赖关系。
+
+而对于 MGJRouter 亦或是 Target-Action 的处理方式，前者是以Class为键 保存处理 Block 的方式，后者是借助runtime的 `NSClassFromString`的方式，本质还是因为oc在启动时，已经加载了所有类的类对象和元类对象，因此我们可以在运行时进行反射行为，通过字符串得到对应的类Class Object，然后实例化一个对象。
+
+那么如果只是为了减少几行 `#import` 代码，似乎有点大费周章，其实不然：
+1. 首先业务页面1在需求定下来的时候已经确定跳转其他页面的行为了，所以依赖业务2 3 4头文件无可厚非，问题在于一旦依赖过多管理会相当头疼，倘若突然跳转行为发生变化，还要剥离代码和删除导入的头文件，以及还要移植到iPad端的话，难度不小；
+2. 自己在实现需求时，你的依赖应该只会是几个模块，而并非全部，因此模块化的好处时，在能跑起需求的前提下尽量少的引入依赖，要知道iOS的编译还是很让人头疼的。
+3. 从整体来看，模块化开发肯定是利大于弊，解决现有问题，应对未来变化。
+
+
+
+
+> 关于一个业务中如果有很多的VC，View，Model 的管理问题，如果你的View并没有依赖业务，可以在其他业务需求中被复用，说明它就是一个稳定的”模块“——尽管可能只有一个文件，此时进行”下沉“。其他问题貌似也只能用设计模式来clean代码，尽量遵循单一职责原则，在重构代码过程中慢慢发现有些部分已经不依赖业务，可以作为一个小模块分离出去。
+
+
+
+
+
+
+
