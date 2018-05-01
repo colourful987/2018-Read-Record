@@ -6,9 +6,17 @@
 >
 > 不过遇到问题就要解决问题，计划可以实时校准修正；效率不高对于我来说是因为喜欢分屏Coding，目前可能会摒弃这一做法，我的注意力总是不自觉地会被吸引过去；周六周末少睡会懒觉出去泡泡图书馆，找个安静的咖啡馆Coding，既可以增加可利用时间，又能够养成好的生物钟。—— pmst  2018.04.01 
 
-# Learning Recording
+# Learning Recording Timeline
+* [ ] [2018 五月学习记录 🕐](./2018-05/2018-05-read-list.md)
 
-* [ ] [2018 四月学习记录 🕐](./2018-04/2018-04-read-list.md)
+> Theme: 待定
+> Source Code Read Plan:   待定   
+> Reference Book List: 待定
+
+
+
+
+* [x] [2018 四月学习记录 🕐](./2018-04/2018-04-read-list.md)
 
 > Theme: Charts For Stock 
 > Source Code Read Plan: Charts      
@@ -44,12 +52,6 @@
 
 
 > 总结：杂记
-
-
-
-
-
-
 
 
 
