@@ -102,10 +102,10 @@ pascal11 新增一个 SymbolTable 和 SymbolTableBuilder，目的是生成一张
   - [x] [浅析iOS组件化设计](https://link.jianshu.com/?t=https%3A%2F%2Fskyline75489.github.io%2Fpost%2F2016-3-16_ios_module_design.html) 
   - [ ] [蘑菇街的组件化之路](https://link.jianshu.com/?t=http%3A%2F%2Flimboy.me%2Ftech%2F2016%2F03%2F10%2Fmgj-components.html)  
   - [ ] [蘑菇街组件化之路续](https://link.jianshu.com/?t=http%3A%2F%2Flimboy.me%2Ftech%2F2016%2F03%2F14%2Fmgj-components-continued.html) 
-  - [ ] [iOS应用架构谈 组件化方案](https://link.jianshu.com/?t=https%3A%2F%2Fcasatwy.com%2FiOS-Modulization.html) 拜读过，感觉似懂非懂。ORZ... 
-  - [ ] [组件化----路由设计思路分析 ](https://www.jianshu.com/p/76da56b3bd55) 
-  - [ ] [组件架构漫谈](https://www.jianshu.com/p/67a6004f6930) 
-  - [ ] [iOS组件化思路－大神博客研读和思考 ](https://www.jianshu.com/p/afb9b52143d4) 
+  - [x] [iOS应用架构谈 组件化方案](https://link.jianshu.com/?t=https%3A%2F%2Fcasatwy.com%2FiOS-Modulization.html) 拜读过，感觉似懂非懂。ORZ... 
+  - [x] [组件化----路由设计思路分析 ](https://www.jianshu.com/p/76da56b3bd55) 
+  - [x] [组件架构漫谈](https://www.jianshu.com/p/67a6004f6930) 
+  - [x] [iOS组件化思路－大神博客研读和思考 ](https://www.jianshu.com/p/afb9b52143d4) 
 
 > read a lot ≠ understand ≠ apply ≠ do whatever you want ，Talk is cheap，show me the code。当然，coding前必须要有方案，而且不是泛泛而谈的那种。
 
@@ -165,14 +165,6 @@ YYModel UML 类图
 2. 自己在实现需求时，你的依赖应该只会是几个模块，而并非全部，因此模块化的好处时，在能跑起需求的前提下尽量少的引入依赖，要知道iOS的编译还是很让人头疼的。
 3. 从整体来看，模块化开发肯定是利大于弊，解决现有问题，应对未来变化。
 
-
-
-
 > 关于一个业务中如果有很多的VC，View，Model 的管理问题，如果你的View并没有依赖业务，可以在其他业务需求中被复用，说明它就是一个稳定的”模块“——尽管可能只有一个文件，此时进行”下沉“。其他问题貌似也只能用设计模式来clean代码，尽量遵循单一职责原则，在重构代码过程中慢慢发现有些部分已经不依赖业务，可以作为一个小模块分离出去。
-
-
-
-
-
 
 
