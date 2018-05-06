@@ -1,7 +1,12 @@
 > Theme: 待定 
-> Source Code Read Plan:待定    
-> Reference Book List:待定    
-
+> Source Code Read Plan:
+- [ ] [AppLord](https://github.com/NianJi/AppLord)
+- [ ] [JLRoute](https://github.com/joeldev/JLRoutes)
+- [ ] Block
+> Reference Book List:  
+- [ ] 《THE INNOVATORS》Doing
+- [x] 《Curious git》
+- [ ] 《Git教程（廖雪峰）》
 
 # 2018/05/01
 [我是一个“栈”](https://www.itcodemonkey.com/article/3033.html)
@@ -139,3 +144,46 @@ typedef void (^componentBlock) (id param);
 那么我们规定每个组件必须统一要有一个 `+initComponent` 类方法进行组件注册不就ok了吗，问题是谁来 call 这个方法？估摸就是搞一份配置文件，然后在`didFinishLaunch`方法中读取了组件类信息，然后还是调用runtime进行注册。
 
 关于蘑菇街的`protocol-class`还没有看。另外关于大神们一直诟病于蘑菇街的本地调用和远程调用混用，也暂时不太理解。
+
+#2018/05/06
+[A curious tale](https://matthew-brett.github.io/curious-git/curious_journey.html)
+
+git 实现原理比喻版本，通俗易懂。其实从大学写论文我们就已经在接触版本管理了。XX论文初稿->XX论文修订版->XX论文完整版->XX论文终极版->XX论文终极无敌版...
+
+文章分为了11小节，主要讲述了 `workspace`工作区、为什么要有`commit`、`checkout`该命令的设计目的、为何要引入 `stage` 区等方面。
+
+### Gitwards 1: make regular snapshots
+未引入版本管理之前，我们就在一份work上进行修改，添加，删除等操作，但这些都是不可逆的，一旦发现之前的才是正确的，需要我们回想然后再次修改。因此一旦我们认为此次修改是一次里程碑，那么就会把工作目录下的文件移动到另外一个文件夹，命名成 snapshotX。ps：其实应该大部分写过论文都会这么干过吧。
+
+### Gitwards 2: reminding yourself of what you did
+为了记起每次提交的信息，我们会添加一个 `message.txt` 文件记录提交者、日期以及描述
+
+### Gitwards 3: breaking up work into chunks
+由于每个人的工作习惯不同，导致有些人喜欢一次性在工作区进行多个不同方面的改动，然后作为一次提交命名成一个snapshot，如果我们想要分功能依次提交，该怎么做？
+
+这时候就要引入 staging 区，它其实就是作为每次提交的内容文件夹，我们一旦认为工作区的修改可以作为下一次提交，就把它们add到staging区，一旦提交，staging区就打包成一个新的snapshot。
+
+### Gitwards 4: getting files from previous commits
+从之前版本中获取文件，即 checkout 操作，一旦检出某个文件，就是把那个snapshot中的文件替换掉工作区的相同文件，此时肯定有改动，但是你想要提交，那么按照add到stage区后commit下就ok了。
+
+### Gitwards 5: two people working at the same time
+阐述 git branch 和 git merge 的操作
+
+### Gitwards 6: how should you name your commit directories
+但是在多人合作的情况下回出现命名文件，所以我们寻求一个唯一identifier，即hash操作，easy get hard reverse。此时只是用hash值重命名snapshotN文件夹以及文件内的message.txt文件，至于其他的都未改动
+
+### Gitwards 7: naming commits from hashes
+现在所有的snapshot都以hash命名，导致从阅读性上不太人性化，首当其冲就是我们无法得知提交的顺序，之前还可以从文件命名获取序号1、2、3...
+
+为此我们在message.txt中新记录 parent field，即上一次的提交hash，如果是merge则会是两个。
+
+### Gitwards 8: the development history is a graph
+### Gitwards 9: saving space with file hashes
+### Gitwards 10: making the commits unique
+### Gitwards 11: away with the snapshot directories
+8-11总结：以上面的方式进行版本管理，内存问题是我们需要优化，毕竟每次都会重新copy一份，迟早会爆掉。
+注意到其实每次提交我们并非修改全部文件，有些文件压根都没动过，但是它们还是会被重新copy多次。
+
+为此我们会新建一个 repo 目录，每个文件就是一个object存在，计算它的hash值，然后以hash值命名放到repo下，如果这个文件修改过，那么重新计算hash，此时作为一个新的object（命名自然也是新hash）放到repo目录下，这么做的好处在于减少无谓的内存开销。
+
+至于我们怎么知道某次snapshot中囊括的文件版本，我们可以新加一个directory.txt文件，里面记录此次提交的文件名称对应的hash，这样每次恢复的时候就会从repo下去拿了，而message中我们新加一条 directory: directory.txt的hash记录。
