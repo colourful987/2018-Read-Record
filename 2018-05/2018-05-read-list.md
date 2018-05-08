@@ -192,3 +192,89 @@ git 实现原理比喻版本，通俗易懂。其实从大学写论文我们就�
 [git-from-the-inside-out](https://codewords.recurse.com/issues/two/git-from-the-inside-out)，配合[A curious tale](https://matthew-brett.github.io/curious-git/curious_journey.html)简直就是神作。
 
 补了下 git 基础知识
+
+## 2018/05/09
+关于Bridge桥接模式、Adapter适配器模式和Facade外观模式的简单理解：
+
+> 接口是现有设计好的，只能用**适配器模式**去包裹源接口，开放适配接口调用; 而桥接模式是在一切都未设计之前，将抽象和实现分离，这样讲其实很抽象。
+
+![bridge_pattern.png](./resource/bridge_pattern.png)
+
+上面是桥接模式的一种展示，中间的“Bridge”就是桥，两端（输入输出）都用接口定义，所以它是抽象的，输入端必须传入一个具体实现IBridge的对象，在内部调用其方法，而开放的接口时钟是 method1和method2。
+
+> 这座桥的两端内容是可以更换的，比如左边可以更换成对象2，右边是Object2具体实现类。记住右侧是输入端，传入一个遵循接口的具体实现对象，“桥”所要干的事情就是调用输入对象的接口方法；左侧会输出端，会开辟接口供外部调用，而这些接口通常会间接调用传入的具体实现对象的方法。
+
+Demo:
+```Objective-c
+/** "Implementor" */
+interface DrawingAPI {
+    public void drawCircle(final double x, final double y, final double radius);
+}
+
+/** "ConcreteImplementor"  1/2 */
+class DrawingAPI1 implements DrawingAPI {
+    public void drawCircle(final double x, final double y, final double radius) {
+        System.out.printf("API1.circle at %f:%f radius %f\n", x, y, radius);
+    }
+}
+
+/** "ConcreteImplementor" 2/2 */
+class DrawingAPI2 implements DrawingAPI {
+    public void drawCircle(final double x, final double y, final double radius) {
+        System.out.printf("API2.circle at %f:%f radius %f\n", x, y, radius);
+    }
+}
+
+/** "Abstraction" */
+abstract class Shape {
+    protected DrawingAPI drawingAPI;
+
+    protected Shape(final DrawingAPI drawingAPI){
+        this.drawingAPI = drawingAPI;
+    }
+
+    public abstract void draw();                                 // low-level
+    public abstract void resizeByPercentage(final double pct);   // high-level
+}
+
+/** "Refined Abstraction" */
+class CircleShape extends Shape {
+    private double x, y, radius;
+    public CircleShape(final double x, final double y, final double radius, final DrawingAPI drawingAPI) {
+        super(drawingAPI);
+        this.x = x;  this.y = y;  this.radius = radius;
+    }
+
+    // low-level i.e. Implementation specific
+    public void draw() {
+        drawingAPI.drawCircle(x, y, radius);
+    }
+    // high-level i.e. Abstraction specific
+    public void resizeByPercentage(final double pct) {
+        radius *= (1.0 + pct/100.0);
+    }
+}
+
+/** "Client" */
+class BridgePattern {
+    public static void main(final String[] args) {
+        Shape[] shapes = new Shape[] {
+            new CircleShape(1, 2, 3, new DrawingAPI1()),
+            new CircleShape(5, 7, 11, new DrawingAPI2())
+        };
+
+        for (Shape shape : shapes) {
+            shape.resizeByPercentage(2.5);
+            shape.draw();
+        }
+    }
+}
+```
+
+这里`CircleShape`就是一个**桥**，传入的是遵循接口 `DrawingAPI` 的对象，开辟了 `draw` 和 `resizeByPercentage` 方法供外部使用，而其中`draw`又间接调用传入对象的 drawCircle 方法。
+
+而 `class BridgePattern` 的main方法中就是在调用桥 `Shape` 开放的接口`resizeByPercentage` 和 `draw` 方法
+
+> 这么看来，上面说的抽象和具体实现分离就很清楚了。
+
+而外观模式不过是二次封装接口，使得 API 接口更加友好罢了。
