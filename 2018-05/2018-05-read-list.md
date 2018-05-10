@@ -1,6 +1,6 @@
 > Theme: 待定 
 > Source Code Read Plan:
-- [ ] [AppLord](https://github.com/NianJi/AppLord)
+- [x] [AppLord](https://github.com/NianJi/AppLord)
 - [ ] [JLRoute](https://github.com/joeldev/JLRoutes)
 - [ ] Block
 > Reference Book List:  
@@ -278,3 +278,121 @@ class BridgePattern {
 > 这么看来，上面说的抽象和具体实现分离就很清楚了。
 
 而外观模式不过是二次封装接口，使得 API 接口更加友好罢了。
+
+
+## 2018/05/10
+[AppLord](https://github.com/NianJi/AppLord)
+
+### 关于 AppLord 模块注册方式的理解
+关于路由、模块的信息收集，常规操作就是**集中**在某个地方(比如 AppDelegate 的 `didFinishLaunchingWithOptions` 方法)`register`注册所有模块，比如：
+
+```objective-c
+// pseudo 伪代码
+ModuleShareInstance.register("ClassName1");
+ModuleShareInstance.register("ClassName2");
+ModuleShareInstance.register("ClassName3");
+ModuleShareInstance.register("ClassName4");
+...
+```
+这种做法优点是集中注册，缺点是`didFinishLaunchingWithOptions`会随着模块增加而行数增加,最后你会看到一长排拉不到底的注册方法列表。因此有人会搞一个配置文件`Module.conf`，里面定义模块名称和对应的模块类名，以及其他一些信息。现在`didFinishLaunchingWithOptions`只需要从本地读取就可以了。
+
+> 上述两种方式注册行为和模块关系分离了 —— 我们可能更希望在模块各自地方进行注册。
+
+那么如何在模块各自的底盘注册自己呢？
+
+```
+//.h文件
+@interface Module : NSObject 
+// 属性和方法声明
+@end
+
+//.m文件
+@implementation Module
+
+@end
+
+```
+
+1. 模块 `+ (void)load` 或 `+ (void)initial`方法中进行 `ModuleSharedInstance.register` 操作。**存在的问题：**一、加载时序？二、要知道所有模块都调用load方法会导致启动时间延长；
+2. 宏定义 or 全局变量？ 待研究，关键还是注册的时机和代码放置位置。
+3. 在引入AppLord中用的方式，就是引入section段，其实我们可以在模块各自的文件定义`__attribute__((used, section(".mySection"))) char *moduleName="XXXXXX"`，之后会把所有这些定义加载到 `mySection` 段中。
+
+> 其实大家熟知的就是代码段，数据段，BSS段（Block Started by Symbol）等，其实我们编码的代码最后加载到内存中都成为01，但是为了更好的区分和工作，我们进行了内存分类，比如这块区域是数据段，那块区域是代码段（就是放置指令，毕竟任何语言最后都是机器码），这里也是这样，我们自己开辟了一个内存段叫做mySection，定义的内容会在ld的时候移动到这个段中。之后我们可以从这个段中读取出来。
+
+// 从段中读取module信息的定义
+```objective-c
+NSArray<NSString *>* AppLordReadConfigFromSection(const char *sectionName){
+    
+#ifndef __LP64__
+    const struct mach_header *mhp = NULL;
+#else
+    const struct mach_header_64 *mhp = NULL;
+#endif
+    
+    NSMutableArray *configs = [NSMutableArray array];
+    Dl_info info;
+    if (mhp == NULL) {
+        dladdr(AppLordReadConfigFromSection, &info);
+#ifndef __LP64__
+        mhp = (struct mach_header*)info.dli_fbase;
+#else
+        mhp = (struct mach_header_64*)info.dli_fbase;
+#endif
+    }
+    
+#ifndef __LP64__
+    unsigned long size = 0;
+    uint32_t *memory = (uint32_t*)getsectiondata(mhp, SEG_DATA, sectionName, & size);
+#else /* defined(__LP64__) */
+    unsigned long size = 0;
+    uint64_t *memory = (uint64_t*)getsectiondata(mhp, SEG_DATA, sectionName, & size);
+#endif /* defined(__LP64__) */
+    
+    for(int idx = 0; idx < size/sizeof(void*); ++idx){
+        char *string = (char*)memory[idx];
+        
+        NSString *str = [NSString stringWithUTF8String:string];
+        if(!str)continue;
+        
+        if(str) [configs addObject:str];
+    }
+    
+    return configs;
+}
+```
+其实上述做法蛮有意思的，脱离了常规的注册，虽然我们在不同的文件里进行`__attribute__((used, section(".mySection"))) char *moduleName="XXXXXX"` 的声明，但实际它们都写入到指定的段中，然后统一在读出来。
+
+上面的代码需要一定编译基础知识，建议阅读《程序员的自我修养》一书。
+
+##2018/05/11
+[深入理解RunLoop](https://link.jianshu.com/?t=http://blog.ibireme.com/2015/05/18/runloop/)
+
+[关于Runloop的原理探究及基本使用](https://www.jianshu.com/p/911549ae4bf8)
+
+[Threading Programming Guide](https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html#//apple_ref/doc/uid/10000057i-CH16-SW23)
+
+RunLoop 目前理解为 `do{}while(1)` ，起到线程保活的作用。iOS 我们大部分时间只和主线程打交道，一些关于异步操作，我们会使用封装好的 GCD来实现，所以避免和线程相关的工作接触，比如开辟线程（fork）、保活、接收事件（system level的或者是进程间通信等）。
+
+RunLoop是一个对象，没有问题，设计思路大概是通过配置（Mode和Mode中的ModeItem）来实例化一个RunLoop对象，实际上我们无法自己创建，而是通过 `CFRunLoopGetCurrent` 来获取，这步操作其实很简单，调用这行代码必定在某个线程中，有个线程id，那么全局存了一个字典，key=线程id，value=runloop实例，有点懒加载的意思，有则直接取缓存，没有则创建一份并且存储到cache中。
+
+重点来了：RunLoop 有个实例方法叫做 `CFRunLoopRunInMode` 方法，方法实现就是`do{}while(1)`的形式。就像这样：
+
+```
+void CFRunLoopRun(void) { 
+    int32_t result;
+    do {
+        result = CFRunLoopRunSpecific(CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 1.0e10, false);
+        CHECK_FOR_FORK();
+    } while (kCFRunLoopRunStopped != result && kCFRunLoopRunFinished != result);
+}
+```
+
+所以开辟的子线程执行一段实例化runloop对象，然后runInMode的代码，那么代码实际上就一直无休止的运行在那里了，线程永远不会结束。当然线程并非一直处于100%工作状态，满足条件就会退出，或者休眠。
+
+> 为何要保活一个线程，这么做有什么好处？如果一项工作很耗时，我们会开辟一个线程然后放到后台去执行，一旦执行完毕，线程就会销毁退出；而这项工作可能同时有多个会到来需要我们执行，为此我们会开辟对应个数的线程分别执行，假设10个，20个甚至100个？开一百个线程，想想都觉得可怕，所以我们希望专门有个线程做这件事，维护一个队列，设定优先级，即使同样的工作，可能考虑到时效性我们只进行最后一项，而之前的就摒弃掉。
+
+接着讨论如何添加一项工作到线程中，即如何让`do{ // block 代码块 }while(1)` 中的 block 代码中执行我们随时加入的任务呢？
+
+其实需要我们预先定义，比如block中有段代码逻辑是从某个全局队列pop一项工作执行，没有则休眠。而主线程如果想要在这个线程中添加工作项，只需要往这个队列加任务就可以了。
+
+就现在而言，对Runloop理解不深，源码也没怎么看过。上述是我的浅显理解，可能有不对之处，尽请谅解。
