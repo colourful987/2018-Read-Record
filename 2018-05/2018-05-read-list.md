@@ -200,9 +200,11 @@ git 实现原理比喻版本，通俗易懂。其实从大学写论文我们就�
 
 ![bridge_pattern.png](./resource/bridge_pattern.png)
 
-上面是桥接模式的一种展示，中间的“Bridge”就是桥，两端（输入输出）都用接口定义，所以它是抽象的，输入端必须传入一个具体实现IBridge的对象，在内部调用其方法，而开放的接口时钟是 method1和method2。
+上面是桥接模式的一种展示，桥接最重要区分 **事物对象** 和 **行为或特征**，红色框出的方法就是桥 “**Bridge**”，这座桥连接了不同的实例对象，而这些对象是具体实现行为。Note: 这座桥的定义是抽象的，Java 中的 Interface，OC中的 Protocol，左侧输入端必须传入一个遵循 IBridge 的对象，内部调用实现类的接口方法，对外开放了另外一组接口方法——method1和method2。
 
-> 这座桥的两端内容是可以更换的，比如左边可以更换成对象2，右边是Object2具体实现类。记住右侧是输入端，传入一个遵循接口的具体实现对象，“桥”所要干的事情就是调用输入对象的接口方法；左侧会输出端，会开辟接口供外部调用，而这些接口通常会间接调用传入的具体实现对象的方法。
+> Client 就是事物对象，这里有两种分支：一、先定义一个Client的抽象类（Abstract Class 而非接口），具体类继承并实现抽象方法：method1和method2，重点来了，不同的client子类可能间接调用外部传入的 Imp类，但是不同子类具体实现视情况不同；二、可能没有抽象类，直接定义一个具体的类，有一个设置 “桥”的方法，对外开放一组接口。
+
+ [Gang of Four](https://en.wikipedia.org/wiki/Design_Patterns) 定义的桥接模式应该是方式一，而方式二我认为是一种变种，简化。
 
 Demo:
 ```Objective-c
@@ -271,9 +273,9 @@ class BridgePattern {
 }
 ```
 
-这里`CircleShape`就是一个**桥**，传入的是遵循接口 `DrawingAPI` 的对象，开辟了 `draw` 和 `resizeByPercentage` 方法供外部使用，而其中`draw`又间接调用传入对象的 drawCircle 方法。
+这里`CircleShape`就是 Client，桥接口是遵循 `DrawingAPI` 接口的对象，开辟了 `draw` 和 `resizeByPercentage` 方法供外部使用，而其中`draw`又间接调用传入对象的 drawCircle 方法。
 
-而 `class BridgePattern` 的main方法中就是在调用桥 `Shape` 开放的接口`resizeByPercentage` 和 `draw` 方法
+而 `class BridgePattern` 的main方法中就是在调用 `Shape` 开放的接口`resizeByPercentage` 和 `draw` 方法
 
 > 这么看来，上面说的抽象和具体实现分离就很清楚了。
 
