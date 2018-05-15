@@ -1,7 +1,7 @@
-### 1. CFRunLoopRun
+### 1.CFRunLoopRun
 总流程图：其中 `CFRunLoopRunSpecific` 方法实现是一套设计好的工作流程，针对不同的事件作出对应的响应处理，用枚举标识处理结果，可以看到结果状态为 `kCFRunLoopRunStopped` 或 `kCFRunLoopRunFinished` 时退出 while 循环：
 
-![RunLoop_MainEntry.png](quiver-image-url/890BFAE0D6584340C0C6C676542672E4.png)
+![RunLoop_MainEntry.png](./resource/RunLoop_MainEntry.png)
 
 当然类似：
 ```
@@ -30,3 +30,5 @@ for (int i = 0;i<1000;i++){
 
 **遗留问题：**
 1. `CFRunLoopRun` 的 caller 是谁？
+
+
