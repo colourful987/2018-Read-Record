@@ -145,7 +145,7 @@ typedef void (^componentBlock) (id param);
 
 关于蘑菇街的`protocol-class`还没有看。另外关于大神们一直诟病于蘑菇街的本地调用和远程调用混用，也暂时不太理解。
 
-#2018/05/06
+# 2018/05/06
 [A curious tale](https://matthew-brett.github.io/curious-git/curious_journey.html)
 
 git 实现原理比喻版本，通俗易懂。其实从大学写论文我们就已经在接触版本管理了。XX论文初稿->XX论文修订版->XX论文完整版->XX论文终极版->XX论文终极无敌版...
@@ -188,12 +188,12 @@ git 实现原理比喻版本，通俗易懂。其实从大学写论文我们就�
 
 至于我们怎么知道某次snapshot中囊括的文件版本，我们可以新加一个directory.txt文件，里面记录此次提交的文件名称对应的hash，这样每次恢复的时候就会从repo下去拿了，而message中我们新加一条 directory: directory.txt的hash记录。
 
-## 2018/05/08
+# 2018/05/08
 [git-from-the-inside-out](https://codewords.recurse.com/issues/two/git-from-the-inside-out)，配合[A curious tale](https://matthew-brett.github.io/curious-git/curious_journey.html)简直就是神作。
 
 补了下 git 基础知识
 
-## 2018/05/09
+# 2018/05/09
 关于Bridge桥接模式、Adapter适配器模式和Facade外观模式的简单理解：
 
 > 接口是现有设计好的，只能用**适配器模式**去包裹源接口，开放适配接口调用; 而桥接模式是在一切都未设计之前，将抽象和实现分离，这样讲其实很抽象。
@@ -282,7 +282,7 @@ class BridgePattern {
 而外观模式不过是二次封装接口，使得 API 接口更加友好罢了。
 
 
-## 2018/05/10
+# 2018/05/10
 [AppLord](https://github.com/NianJi/AppLord)
 
 ### 关于 AppLord 模块注册方式的理解
@@ -366,7 +366,7 @@ NSArray<NSString *>* AppLordReadConfigFromSection(const char *sectionName){
 
 上面的代码需要一定编译基础知识，建议阅读《程序员的自我修养》一书。
 
-##2018/05/11
+# 2018/05/11
 [深入理解RunLoop](https://link.jianshu.com/?t=http://blog.ibireme.com/2015/05/18/runloop/)
 
 [关于Runloop的原理探究及基本使用](https://www.jianshu.com/p/911549ae4bf8)
@@ -398,3 +398,8 @@ void CFRunLoopRun(void) {
 其实需要我们预先定义，比如block中有段代码逻辑是从某个全局队列pop一项工作执行，没有则休眠。而主线程如果想要在这个线程中添加工作项，只需要往这个队列加任务就可以了。
 
 就现在而言，对Runloop理解不深，源码也没怎么看过。上述是我的浅显理解，可能有不对之处，尽请谅解。
+
+# 2018/05/12 - 2018/05/17
+这段时间学习[RunLoop源码](https://github.com/apple/swift-corelibs-foundation)，同时写点源码[阅读笔记](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/RunLoop/RunLoop源码解析.md)，其实网上已经有很多剖析深入的RunLoop博文，但是仍有一些知识点没有谈及，这也是我要学习和记录的。
+
+[每天进步一点点——Linux中的线程局部存储（一）](https://blog.csdn.net/cywosp/article/details/26469435)
