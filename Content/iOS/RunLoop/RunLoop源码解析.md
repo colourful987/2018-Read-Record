@@ -56,5 +56,83 @@ CFRunLoopRef CFRunLoopGetCurrent(void) {
 这里涉及的知识点不多，1. `__CFRunLoops` 静态字典变量作为cache，key=线程ID(pthread_t type) value=runloop；2.懒加载？其实也不算 3.所有的实现都是基于结构体，结构体比平常用到复杂一些，主要是成员多是函数指针;4.runloop结构体我觉得更像是一份配置描述：`CFMutableSetRef _modes`，内含多个运行mode配置，在不同事件下以配置好的mode加载运行，运行在那个`do{}while(1)` 代码块中，代码块要做的工作就是根据这个mode配置和处理流程做事罢了。
 
 ![RunLoop_GetCurrentRunLoop.png](./resource/RunLoop_GetCurrentRunLoop.png)
+
 # 3. CFRunLoopRunSpecific
+
+> Q: 何为运行(调起)一个 RunLoop ？
+> A: RunLoop 是一系列配置+事件响应处理，`do {} while(1)`中的 代码块就是按照预先设定好的处理流程，来响应不同的事件。`CFRunLoopRunSpecific`函数 就是一次处理流程（除了网上说的7个步骤，其实还包括mode切换等），处理结果为 CFRunLoopRunResult 类型：
+
+```
+typedef CF_ENUM(SInt32, CFRunLoopRunResult) {
+    kCFRunLoopRunFinished = 1,
+    kCFRunLoopRunStopped = 2,
+    kCFRunLoopRunTimedOut = 3,
+    kCFRunLoopRunHandledSource = 4
+};
+```
+
+`CFRunLoopRunSpecific` 函数定义如下，外部决定唤起rl中的哪个mode设置为当前运行模式：
+
+```objective-c
+SInt32 CFRunLoopRunSpecific(CFRunLoopRef rl, CFStringRef modeName, CFTimeInterval seconds, Boolean returnAfterSourceHandled){
+SInt32 CFRunLoopRunSpecific(CFRunLoopRef rl, CFStringRef modeName, CFTimeInterval seconds, Boolean returnAfterSourceHandled) {     /* DOES CALLOUT */
+    CHECK_FOR_FORK();
+    // 1. 对于异常传参判断处理
+    if (modeName == NULL || modeName == kCFRunLoopCommonModes || CFEqual(modeName, kCFRunLoopCommonModes)) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            CFLog(kCFLogLevelError, CFSTR("invalid mode '%@' provided to CFRunLoopRunSpecific - break on _CFRunLoopError_RunCalledWithInvalidMode to debug. This message will only appear once per execution."), modeName);
+            _CFRunLoopError_RunCalledWithInvalidMode();
+        });
+        return kCFRunLoopRunFinished;
+    }
+    // 2. 如果runloop已经释放掉了，标识为结束且退出
+    if (__CFRunLoopIsDeallocating(rl)) return kCFRunLoopRunFinished;
+    __CFRunLoopLock(rl);
+    
+    // 3. 从rl中寻找是否有预先设定的modeName
+    CFRunLoopModeRef currentMode = __CFRunLoopFindMode(rl, modeName, false);
+    if (NULL == currentMode || __CFRunLoopModeIsEmpty(rl, currentMode, rl->_currentMode)) {
+        Boolean did = false;
+        if (currentMode) __CFRunLoopModeUnlock(currentMode);
+        __CFRunLoopUnlock(rl);
+        return did ? kCFRunLoopRunHandledSource : kCFRunLoopRunFinished;
+    }
+    
+    // 4. 这里是runloop的模式切换，比如之前是defaultRunloop 现在切换成trackingMode
+    volatile _per_run_data *previousPerRun = __CFRunLoopPushPerRunData(rl);
+    CFRunLoopModeRef previousMode = rl->_currentMode;
+    rl->_currentMode = currentMode;
+    int32_t result = kCFRunLoopRunFinished;
+    
+    // ====================== 5.Runloop Core Handle Flow ====================
+    // 5.1 通知观察者 进入核心Runloop处理前的事件
+	if (currentMode->_observerMask & kCFRunLoopEntry ) __CFRunLoopDoObservers(rl, currentMode, kCFRunLoopEntry);
+    // 5.2 进入 RunLoop Core Handle Flow
+	result = __CFRunLoopRun(rl, currentMode, seconds, returnAfterSourceHandled, previousMode);
+    // 5.3 通知观察者 进入核心Runloop处理退出的事件
+	if (currentMode->_observerMask & kCFRunLoopExit ) __CFRunLoopDoObservers(rl, currentMode, kCFRunLoopExit);
+    // =====================================================================
+    
+    // 6. 处理完外部要求的runloop 模式后，还得恢复到之前的运行模式
+    __CFRunLoopModeUnlock(currentMode);
+    __CFRunLoopPopPerRunData(rl, previousPerRun);
+	rl->_currentMode = previousMode;
+    __CFRunLoopUnlock(rl);
+    return result;
+}
+```
+
+1. 对于异常传参判断处理
+2. 如果runloop已经释放掉了，标识为结束且退出
+3. 从rl中寻找是否有预先设定的modeName
+4. 这里是runloop的模式切换，比如之前是defaultRunloop 现在切换成trackingMode
+5. Runloop Core Handle Flow
+  5.1 通知观察者 进入核心Runloop处理前的事件
+  5.2 进入 RunLoop Core Handle Flow
+  5.3 通知观察者 进入核心Runloop处理退出的事件
+6. 处理完外部要求的runloop 模式后，还得恢复到之前的运行模式
+
+## 3.1 __CFRunLoopRun 
+
 

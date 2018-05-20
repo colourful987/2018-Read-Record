@@ -403,3 +403,21 @@ void CFRunLoopRun(void) {
 这段时间学习[RunLoop源码](https://github.com/apple/swift-corelibs-foundation)，同时写点源码[阅读笔记](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/RunLoop/RunLoop源码解析.md)，其实网上已经有很多剖析深入的RunLoop博文，但是仍有一些知识点没有谈及，这也是我要学习和记录的。
 
 [每天进步一点点——Linux中的线程局部存储（一）](https://blog.csdn.net/cywosp/article/details/26469435)
+
+# 2018/05/20
+
+更新[RunLoop源码阅读笔记](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/RunLoop/RunLoop源码解析.md)
+
+封装好的 RunLoop 调用：
+`CFRunLoopRun -> CFRunLoopRunSpecific(默认运行kCFRunLoopDefaultMode模式) -> __CFRunLoopRun(一套具体的处理流程)` 其中 `do{}while(ret)`执行主体代码块就是 `CFRunLoopRunSpecific`，这个函数就是处理流程。
+
+当然如果想要一开始就运行在某个模式下，调用 `SInt32 CFRunLoopRunInMode(CFStringRef modeName, CFTimeInterval seconds, Boolean returnAfterSourceHandled)` 接口，不过呢，最终本质还是调用`CFRunLoopRunSpecific`。
+
+另外对于 [`volatile`](https://en.wikipedia.org/wiki/Volatile_variable) 关键字，一旦一个共享变量用 `volatile` 修饰，那么就具备了两层语义：
+
+1. 保证了不同线程对这个变量进行操作时的可见性，即一个线程修改了某个变量的值，这新值对其他线程来说是立即可见的。
+2. 禁止进行指令重排序。
+
+其他参考文章：
+* [详解C中volatile关键字](https://www.cnblogs.com/yc_sunniwell/archive/2010/06/24/1764231.html)
+* [你真的了解volatile关键字吗？](http://www.importnew.com/24082.html)
