@@ -134,5 +134,19 @@ SInt32 CFRunLoopRunSpecific(CFRunLoopRef rl, CFStringRef modeName, CFTimeInterva
 6. 处理完外部要求的runloop 模式后，还得恢复到之前的运行模式
 
 ## 3.1 __CFRunLoopRun 
+__CFRunLoopRun 函数的处理流程如下：
 
+![RunLoop_CFRunLoop.png](./resource/RunLoop_CFRunLoop.png)
 
+而内部又集成了一个 `do{}while(1)` ，处理流程如下：
+
+![RunLoop_CFRunLoop2.png](./resource/RunLoop_CFRunLoop2.png)
+
+流程已经很详细的列出，但是并没有细致到某个函数，这里罗列几个认为比较有意思的函数：
+1. `__CFRunLoopDoObservers` 观察者模式，派发事件给注册通知的对象，Run Loop Observer Activities 有6个事件，详情见CFRunLoopActivity枚举；
+2. `__CFRunLoopDoBlocks` 执行绑定在RunLoop中的block事件处理代码块；
+3. `__CFRunLoopDoSources0` 处理source0事件；
+4. `__CFRunLoopServiceMachPort` 猜测是source1事件，就是machport事件；
+5. `__CFRunLoopSetSleeping` 休眠机制了解下
+6. `__CFPortSetInsert` , `_dispatch_runloop_root_queue_perform_4CF` , `__CFPortSetRemove`
+7. `livePort，rl->_wakeUpPort，modeQueuePort，rlm->_timerPort`两两之间比较为何可以得出各类事件：`CFRUNLOOP_WAKEUP_FOR_NOTHING`,`CFRUNLOOP_WAKEUP_FOR_WAKEUP`,`CFRUNLOOP_WAKEUP_FOR_TIMER`,`CFRUNLOOP_WAKEUP_FOR_TIMER`,`CFRUNLOOP_WAKEUP_FOR_DISPATCH`,`CFRUNLOOP_WAKEUP_FOR_SOURCE`，这里就是唤醒后的事件处理，但是可以看到唤醒也有不同原因的。
