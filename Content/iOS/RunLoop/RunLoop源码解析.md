@@ -297,8 +297,84 @@ static void __CFRUNLOOP_IS_CALLING_OUT_TO_A_BLOCK__(void (^block)(void)) {
 > 疑问：这些 Block_item 链表是何时何地绑定到 RunLoop 中的呢？
 
 ## 3.4 `__CFRunLoopDoSources0`
+
+Runloop Mode 不仅允许注册 observers，也允许 source0 事件注册，source0事件可以是多个，因此要用容器数据结构存储，也就是`CFMutableSetRef`，而成员结构为`CFRunLoopSourceRef`，看下定义：
+
+```c
+struct __CFRunLoopSource {
+    CFRuntimeBase _base;
+    uint32_t _bits;
+    pthread_mutex_t _lock;
+    CFIndex _order;			/* immutable */
+    CFMutableBagRef _runLoops;
+    union {
+	      CFRunLoopSourceContext version0;	/* immutable, except invalidation */
+        CFRunLoopSourceContext1 version1;	/* immutable, except invalidation */
+    } _context;
+};
+```
+
+学习过runloop的同学知道，source0之外还有source1，注意到两者的数据结构都为 `__CFRunLoopSource`，区别是source0 的上下文用 version0，source1的上下文用 version1，这里巧妙的用联合实现，如果仔细看`__CFRunLoopSource`定义，你应该立马注意到source0,1事件对应的处理函数指针呢？答案是在 `CFRunLoopSourceContext`中：
+
+```
+typedef struct {
+    CFIndex	version;
+    void *	info;
+    const void *(*retain)(const void *info);
+    void	(*release)(const void *info);
+    CFStringRef	(*copyDescription)(const void *info);
+    Boolean	(*equal)(const void *info1, const void *info2);
+    CFHashCode	(*hash)(const void *info);
+    void	(*schedule)(void *info, CFRunLoopRef rl, CFRunLoopMode mode);
+    void	(*cancel)(void *info, CFRunLoopRef rl, CFRunLoopMode mode);
+    void	(*perform)(void *info);
+} CFRunLoopSourceContext;
+
+typedef struct {
+    CFIndex	version;
+    void *	info;
+    const void *(*retain)(const void *info);
+    void	(*release)(const void *info);
+    CFStringRef	(*copyDescription)(const void *info);
+    Boolean	(*equal)(const void *info1, const void *info2);
+    CFHashCode	(*hash)(const void *info);
+#if (TARGET_OS_MAC && !(TARGET_OS_EMBEDDED || TARGET_OS_IPHONE)) || (TARGET_OS_EMBEDDED || TARGET_OS_IPHONE)
+    mach_port_t	(*getPort)(void *info);
+    void *	(*perform)(void *msg, CFIndex size, CFAllocatorRef allocator, void *info);
+#else
+    void *	(*getPort)(void *info);
+    void	(*perform)(void *info);
+#endif
+} CFRunLoopSourceContext1;
+```
+
+> source0 事件可能是Apple预先帮我注册进去，比如屏幕触摸产生的事件，底层通过Mach Port传递过来的source1事件，然后Apple觉得让我们自己来处理这些太麻烦了，干脆对这些系统级别的事件封装了一层，就是source0，注册到runloop mode中。
+
+> 上面source1对应的处理函数就是 `perform` 函数指针。
+
+核心代码还是遍历所有的 source1 对象，然后分别调用 `perform` 函数指针：
+
+```c
+__CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__(rls->_context.version0.perform, rls->_context.version0.info);
+
+static void __CFRUNLOOP_IS_CALLING_OUT_TO_A_SOURCE0_PERFORM_FUNCTION__(void (*perform)(void *), void *info) {
+    if (perform) {
+        perform(info);
+    }
+    asm __volatile__(""); // thwart tail-call optimization
+}
+```
+
+当然source0还是有优先级的，为此执行前先排序下：
+
+```c
+CFArraySortValues((CFMutableArrayRef)sources, CFRangeMake(0, cnt), (__CFRunLoopSourceComparator), NULL);
+```
+
+> 疑惑：`CFGetTypeID(sources) == CFRunLoopSourceGetTypeID()` 这个条件的代码块中，只调用第一个 source1 的 `perform` 函数指针，why?
+
+
 ## 3.5 `__CFRunLoopServiceMachPort`
 ## 3.6 `__CFRunLoopSetSleeping`
-## 3.7 `__CFRunLoopSetSleeping`
-## 3.8 `__CFPortSetInsert` , `_dispatch_runloop_root_queue_perform_4CF` , `__CFPortSetRemove`
-## 3.9 `runloop wakeup` 的6种情况
+## 3.7 `__CFPortSetInsert` , `_dispatch_runloop_root_queue_perform_4CF` , `__CFPortSetRemove`
+## 3.8 `runloop wakeup` 的6种情况
