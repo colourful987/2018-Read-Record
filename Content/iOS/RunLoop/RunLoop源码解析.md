@@ -150,3 +150,155 @@ __CFRunLoopRun 函数的处理流程如下：
 5. `__CFRunLoopSetSleeping` 休眠机制了解下
 6. `__CFPortSetInsert` , `_dispatch_runloop_root_queue_perform_4CF` , `__CFPortSetRemove`
 7. `livePort，rl->_wakeUpPort，modeQueuePort，rlm->_timerPort`两两之间比较为何可以得出各类事件：`CFRUNLOOP_WAKEUP_FOR_NOTHING`,`CFRUNLOOP_WAKEUP_FOR_WAKEUP`,`CFRUNLOOP_WAKEUP_FOR_TIMER`,`CFRUNLOOP_WAKEUP_FOR_TIMER`,`CFRUNLOOP_WAKEUP_FOR_DISPATCH`,`CFRUNLOOP_WAKEUP_FOR_SOURCE`，这里就是唤醒后的事件处理，但是可以看到唤醒也有不同原因的。
+
+## 3.2 `__CFRunLoopDoObservers`
+关于 `STACK_BUFFER_DECL` 宏:
+```
+#define STACK_BUFFER_DECL(T, N, C) T N[C]
+
+STACK_BUFFER_DECL(CFRunLoopObserverRef, buffer, (cnt <= 1024) ? cnt : 1);
+// 展开其实就是如下声明，注意1024个观察者以下，我们希望在栈上分配内存，而大于1024则是在堆上
+CFRunLoopObserverRef *buffer[cnt]; 
+```
+
+> Window宏下面是使用 `_alloca`函数，内存分配函数，与malloc,calloc,realloc类似·，但是注意一个重要的区别，_alloca是在栈(stack)上申请空间，用完马上就释放。
+
+```
+for (CFIndex idx = 0; idx < cnt; idx++) {
+    CFRunLoopObserverRef rlo = (CFRunLoopObserverRef)CFArrayGetValueAtIndex(rlm->_observers, idx);
+    if (0 != (rlo->_activities & activity) && __CFIsValid(rlo) && !__CFRunLoopObserverIsFiring(rlo)) {
+        collectedObservers[obs_cnt++] = (CFRunLoopObserverRef)CFRetain(rlo);
+    }
+}
+```
+上面将 runloop mode 中绑定 observers 都保存到数组中，retain一次，应该是为了方便之后的操作。
+
+Note: 一般我们会在一个runloop mode 下，将自己订阅（subscribe）成观察者（observer），RunLoop开放的接口调用方式如下：
+
+```objective-c
+/* Run Loop Observer Activities */
+typedef CF_OPTIONS(CFOptionFlags, CFRunLoopActivity) {
+    kCFRunLoopEntry = (1UL << 0),
+    kCFRunLoopBeforeTimers = (1UL << 1),
+    kCFRunLoopBeforeSources = (1UL << 2),
+    kCFRunLoopBeforeWaiting = (1UL << 5),
+    kCFRunLoopAfterWaiting = (1UL << 6),
+    kCFRunLoopExit = (1UL << 7),
+    kCFRunLoopAllActivities = 0x0FFFFFFFU
+};
+
+// 创建observer 
+CFRunLoopObserverRef observer = CFRunLoopObserverCreateWithHandler(CFAllocatorGetDefault(), kCFRunLoopAllActivities, YES, 0, ^(CFRunLoopObserverRef observer, CFRunLoopActivity activity) {
+    
+});
+// 添加观察者到当前RunLoop的默认模式(kCFRunLoopDefaultMode)
+CFRunLoopAddObserver(CFRunLoopGetCurrent(), observer, kCFRunLoopDefaultMode);   
+// 释放Observer
+CFRelease(observer);
+```
+
+最后就是派发当前特定事件给所有观察者：
+```objective-c
+for (CFIndex idx = 0; idx < obs_cnt; idx++) {
+    CFRunLoopObserverRef rlo = collectedObservers[idx];
+    __CFRunLoopObserverLock(rlo);
+    if (__CFIsValid(rlo)) {
+        Boolean doInvalidate = !__CFRunLoopObserverRepeats(rlo);
+        __CFRunLoopObserverSetFiring(rlo);
+        __CFRunLoopObserverUnlock(rlo);
+        // Note: 遍历所有的观察者rlo，当activity事件发生时，调用rlo的callout 即函数指针，也就是前面注册的回调处理
+        // 当前还要穿上下文给回调函数
+        __CFRUNLOOP_IS_CALLING_OUT_TO_AN_OBSERVER_CALLBACK_FUNCTION__(rlo->_callout, rlo, activity, rlo->_context.info);
+        if (doInvalidate) {
+            CFRunLoopObserverInvalidate(rlo);
+        }
+        __CFRunLoopObserverUnsetFiring(rlo);
+    } else {
+        __CFRunLoopObserverUnlock(rlo);
+    }
+    CFRelease(rlo);
+}
+```
+
+> rlo 同样是一个结构体，内部持有一个函数指针`CFRunLoopObserverCallBack _callout;`，这个就是回调处理；而 `__CFRUNLOOP_IS_CALLING_OUT_TO_AN_OBSERVER_CALLBACK_FUNCTION__` 的实现更是简单的要命，就是调用rlo的函数指针，然后传入对应的参数：当前观察者 observer，context上下文，事件activity：
+
+```objective-c
+static void __CFRUNLOOP_IS_CALLING_OUT_TO_AN_OBSERVER_CALLBACK_FUNCTION__(CFRunLoopObserverCallBack func, CFRunLoopObserverRef observer, CFRunLoopActivity activity, void *info) {
+    if (func) {
+        // 核心代码只有一行
+        func(observer, activity, info);
+    }
+    asm __volatile__(""); // thwart tail-call optimization
+}
+```
+
+> 总结：RunLoop 是必须运行在某个配置下（类型为`CFRunLoopModeRef`），允许你注册观察者到 Mode 中，本质观察者也是一个数据结构，内部持有一个回调的函数指针，然后观察者因为注册被Mode持有。
+
+## 3.3 `__CFRunLoopDoBlocks`
+
+RunLoop 绑定了两个 `struct _block_item` 数据结构的指针：head和tail，定义如下：
+
+```
+struct _block_item {
+    struct _block_item *_next;
+    CFTypeRef _mode;	// CFString or CFSet
+    void (^_block)(void);
+};
+```
+看定义可认为这是一个链表，而一个 block item 内部持有一个函数指针，然后指向下一个 block item。
+
+看函数名称 `__CFRunLoopDoBlocks` 就知道这个函数的作用是执行Block，那么执行哪些 Block 就是个关键问题，遍历block_item链表的源码如下：
+
+```c
+CFSetRef commonModes = rl->_commonModes;
+CFStringRef curMode = rlm->_name;
+// ...省略
+while (item) {
+    struct _block_item *curr = item;
+    item = item->_next;
+    Boolean doit = false;
+    // ==============条件匹配==================
+    if (CFStringGetTypeID() == CFGetTypeID(curr->_mode)) {
+        doit = CFEqual(curr->_mode, curMode) || (CFEqual(curr->_mode, kCFRunLoopCommonModes) && CFSetContainsValue(commonModes, curMode));
+    } else {
+        doit = CFSetContainsValue((CFSetRef)curr->_mode, curMode) || (CFSetContainsValue((CFSetRef)curr->_mode, kCFRunLoopCommonModes) && CFSetContainsValue(commonModes, curMode));
+    }
+    // =========================================
+    if (!doit) prev = curr;
+    if (doit) {
+        if (prev) prev->_next = item;
+        if (curr == head) head = item;
+        if (curr == tail) tail = prev;
+        void (^block)(void) = curr->_block;
+            CFRelease(curr->_mode);
+            free(curr);
+        if (doit) {
+                __CFRUNLOOP_IS_CALLING_OUT_TO_A_BLOCK__(block);
+            did = true;
+        }
+        Block_release(block); // do this before relocking to prevent deadlocks where some yahoo wants to run the run loop reentrantly from their dealloc
+    }
+}
+```
+
+关键点：先获取当前Runloop绑定的 commonModes ，这是一个集合 Set；接着获取到当前RunLoop运行的Mode名称，因为接下来要比较；试想，我们的链表是一串的 `block_item` 对象，内部持有一个函数指针以及在何种模式下允许调用(`CFTypeRef _mode`)，找到匹配项后，就是 `__CFRUNLOOP_IS_CALLING_OUT_TO_A_BLOCK__`，这个函数实现更加简单，就是调用下函数指针，甚至不需要传参给它：
+
+```c
+static void __CFRUNLOOP_IS_CALLING_OUT_TO_A_BLOCK__(void (^block)(void)) {
+    if (block) {
+        block();
+    }
+    asm __volatile__(""); // thwart tail-call optimization
+}
+```
+
+> 总结：这里的知识点是链表的使用和条件匹配。
+
+> 疑问：这些 Block_item 链表是何时何地绑定到 RunLoop 中的呢？
+
+## 3.4 `__CFRunLoopDoSources0`
+## 3.5 `__CFRunLoopServiceMachPort`
+## 3.6 `__CFRunLoopSetSleeping`
+## 3.7 `__CFRunLoopSetSleeping`
+## 3.8 `__CFPortSetInsert` , `_dispatch_runloop_root_queue_perform_4CF` , `__CFPortSetRemove`
+## 3.9 `runloop wakeup` 的6种情况
