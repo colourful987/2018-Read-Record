@@ -4,7 +4,7 @@
 - [ ] [JLRoute](https://github.com/joeldev/JLRoutes)
 - [ ] Block
 > Reference Book List:  
-- [ ] 《THE INNOVATORS》Doing
+- [x] 《THE INNOVATORS》本月看了三分之二
 - [x] 《Curious git》
 - [ ] 《Git教程（廖雪峰）》
 
@@ -421,3 +421,7 @@ void CFRunLoopRun(void) {
 其他参考文章：
 * [详解C中volatile关键字](https://www.cnblogs.com/yc_sunniwell/archive/2010/06/24/1764231.html)
 * [你真的了解volatile关键字吗？](http://www.importnew.com/24082.html)
+
+# 2018/05/24 - 2018/06/08
+* [swissland Honeymoon]()，瑞士的风景真的是无可挑剔，生活节奏巨慢，从 Luzern 到 Lungern， Gridewald ，Spiez，上几座山（ps：只知道 Jungfrau...），参观几座 museum，风景看到审美疲劳。。。当然也感受了 Geneva 和 Zurich 大城市的魅力。不过最享受的是住在 Gridelwald 小镇的一家 Hotel 里，下午5、6点钟坐在 Hotel 阳台面朝几座大山，看着《THE INNOVATORS》，喝着奶茶耗时间的日子，真的很喜欢这份惬意。 反正除了物价无力吐槽以及晚上娱乐几乎为0之外，其他都很赞！ 接下去到努力加倍投入到工作中创造价值了！
+* [x] 《THE INNOVATORS》一书看了三分之二
