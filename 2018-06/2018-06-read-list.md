@@ -137,4 +137,13 @@ def loadCommand(module, command, directory, filename, extension):
     name=name))
 ```
 
-上面函数简单理解就是先拼接出一串能在终端执行的命令，接着调用`lldb.debugger.HandleCommand` load 命令到 lldb.debugger，关于代码 2 `command script add --help` 就是把命令添加进来，同时还给出了帮助说明。但是代码 1 暂时未理解
+上面函数简单理解就是先拼接出一串能在终端执行的命令，接着调用`lldb.debugger.HandleCommand` load 命令到 lldb.debugger，关于代码 2 `command script add --help` 就是把命令添加进来，同时还给出了帮助说明。但是代码 1 输出命令为：
+
+```
+script __FBTextInputCommands_settext = sys.modules['FBTextInputCommands']._loadedFunctions['FBTextInputCommands_settext']
+script __FBTextInputCommands_setinput = sys.modules['FBTextInputCommands']._loadedFunctions['FBTextInputCommands_setinput']
+script __FBDebugCommands_wivar = sys.modules['FBDebugCommands']._loadedFunctions['FBDebugCommands_wivar']
+...
+```
+
+> sys.modules是一个全局字典，该字典是python启动后就加载在内存中。每当程序员导入新的模块，sys.modules都将记录这些模块。字典sys.modules对于加载模块起到了缓冲的作用。当某个模块第一次导入，字典sys.modules将自动记录该模块。当第二次再导入该模块时，python会直接到字典中查找，从而加快了程序运行的速度。
