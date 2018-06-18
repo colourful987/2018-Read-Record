@@ -151,7 +151,7 @@ script __FBDebugCommands_wivar = sys.modules['FBDebugCommands']._loadedFunctions
 # 2018/06/15
 关于 sunnyxx 出的面试题：
 
-![sunnyxx面试题.jpg](quiver-image-url/5D0B9EF42E2E6FCADDC675A0600B65F7.jpg)
+![sunnyxx面试题.jpg](resource/sunnyxx面试题.jpg)
 
 针对第一题，只是替换 Block 的实现为输出 “Hello world”，其实第一反应是替换掉Block内的函数指针就行，但是必须先由一定Block基础知识，知道它的数据结构：
 
@@ -248,4 +248,100 @@ void HookBlockToPrintArguments(id block) {
 
 ```
 
+后面我借助c语言的 va_list 试着修改了下 `printParams` 函数：
+```
+
+NSMethodSignature *methodSignature = nil;
+void (*g_invoke)(void *, ...) = nil;
+// Self 是闭包自己
+void printParams(void *Self, ...) {
+    
+    NSInteger count = methodSignature.numberOfArguments;
+    void *ap = ((void *)&Self) + sizeof(Self);
+    va_list va;
+    va_start(va, Self);
+    
+    // 遍历block的参数列表 第一个是Self 指向 Block 本身
+    for (int index = 1; index < count; index++) {
+        const char *argType = [methodSignature getArgumentTypeAtIndex:index];
+        int offset = 0;
+
+        if (strcmp(argType, @encode(id)) == 0 || strcmp(argType, @encode(Class)) == 0) {
+            void *args = va_arg(va, void *);
+            NSLog(@"%@",args);
+        } else if (argType[0] == '@') {
+            void *args = va_arg(va, void *);
+            NSLog(@"%@",args);
+        } else if (strcmp(argType, @encode(char)) == 0) {
+            char args = va_arg(va, char);
+            NSLog(@"%c",args);
+        } else if (strcmp(argType, @encode(int)) == 0) {
+            int args = va_arg(va, int);
+            NSLog(@"%d",args);
+        } else if (strcmp(argType, @encode(short)) == 0) {
+            short args = va_arg(va, short);
+            NSLog(@"%d",args);
+        } else if (strcmp(argType, @encode(long)) == 0) {
+            long args = va_arg(va, long);
+            NSLog(@"%d",args);
+        } else if (strcmp(argType, @encode(float)) == 0) {
+            float args = va_arg(va, float);
+            NSLog(@"%f",args);
+        } else if (strcmp(argType, @encode(double)) == 0) {
+            double args = va_arg(va, double);
+            NSLog(@"%f",args);
+        } else if (strcmp(argType, @encode(BOOL)) == 0) {
+            BOOL args = va_arg(va, BOOL);
+            NSLog(@"%d",args);
+        } else if (strcmp(argType, @encode(char *)) == 0) {
+            char *args = va_arg(va, char *);
+            NSLog(@"%x",args);
+        }
+        ap += offset;
+    }
+    
+    va_end(va);
+    
+    g_invoke(Self);
+}
+
+void HookBlockToPrintHelloWorld(id block) {
+    PTBlockRef layout = (__bridge void *)block;
+    void (*hookedFunc)(void *,...) = printParams;
+
+    layout->invoke = hookedFunc;
+}
+
+
+void HookBlockToPrintArguments(id block) {
+    PTBlockRef layout = (__bridge void *)block;
+    void (*hookedFunc)(void *,...) = (void (*)(void *, ...))printParams;
+
+    // 为了获取block参数类型
+    const char *_Block_signature(void *);
+    const char *signature = _Block_signature((__bridge void *)block);
+    
+    methodSignature = [NSMethodSignature signatureWithObjCTypes:signature];
+    g_invoke = layout->invoke;
+    layout->invoke = hookedFunc;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    
+    void (^originBlock2)(int , NSString *) = ^(int a,NSString *b){
+        NSLog(@"Hello World");
+    };
+    HookBlockToPrintArguments(originBlock2);
+    originBlock2(1,@"aaa");
+
+}
+```
+
+输出：
+
+![sunnyxx面试题第二题.png](./resource/sunnyxx面试题第二题.png)
+
+这样就可以正常输出闭包参数了，但是感觉哪里怪怪的。
 
