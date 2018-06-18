@@ -147,3 +147,105 @@ script __FBDebugCommands_wivar = sys.modules['FBDebugCommands']._loadedFunctions
 ```
 
 > sys.modules是一个全局字典，该字典是python启动后就加载在内存中。每当程序员导入新的模块，sys.modules都将记录这些模块。字典sys.modules对于加载模块起到了缓冲的作用。当某个模块第一次导入，字典sys.modules将自动记录该模块。当第二次再导入该模块时，python会直接到字典中查找，从而加快了程序运行的速度。
+
+# 2018/06/15
+关于 sunnyxx 出的面试题：
+
+![sunnyxx面试题.jpg](quiver-image-url/5D0B9EF42E2E6FCADDC675A0600B65F7.jpg)
+
+针对第一题，只是替换 Block 的实现为输出 “Hello world”，其实第一反应是替换掉Block内的函数指针就行，但是必须先由一定Block基础知识，知道它的数据结构：
+
+```objective-c
+typedef struct _PT_Block {
+    __unused Class isa;
+    volatile int flags; // contains ref count
+    __unused int reserved;
+    void (*invoke)(void *, ...); // 这个就是要替换的函数指针
+    struct {
+        unsigned long int reserved;
+        unsigned long int size;
+        void (*copy)(void *dst, const void *src);
+        void (*dispose)(const void *);
+        const char *signature;
+        const char *layout;
+    } *descriptor;
+} *PTBlockRef;
+```
+
+然后在 `HookBlockToPrintHelloWorld` 将 Block 中的 invoke 函数指针指向我们的 `printHelloWorld`。
+
+```objective-c
+void printHelloWorld(){
+    printf("Hello World");
+}
+
+void HookBlockToPrintHelloWorld(id block) {
+    PTBlockRef layout = (__bridge void *)block;
+    void (*hookedFunc)(void *,...) = printHelloWorld;
+    layout->invoke = hookedFunc;
+}
+```
+
+第二题，思路应该是在 `HookBlockToPrintArguments` 同样替换掉实现，然后新的实现会输出参数和再次执行闭包，我一开始是想通过获得第一个入参的栈上地址，然后取偏移量，结果发现貌似和我想的有出路，没法实现。。。。贴下代码：
+
+```objective-c
+NSMethodSignature *methodSignature = nil;
+// Self 是闭包自己
+void printParams(void *Self, ...) {
+    
+    NSInteger count = methodSignature.numberOfArguments;
+    void *ap = ((void *)&Self) + sizeof(Self);
+    
+    // 遍历block的参数列表 第一个是Self 指向 Block 本身
+    for (int index = 1; index < count; index++) {
+        const char *argType = [methodSignature getArgumentTypeAtIndex:index];
+        int offset = 0;
+
+        if (strcmp(argType, @encode(id)) == 0 || strcmp(argType, @encode(Class)) == 0) {
+            NSLog(@"%@",(__bridge id)ap);
+            offset = sizeof(id);
+        } else if (strcmp(argType, @encode(char)) == 0) {
+            NSLog(@"%c",*(char *)ap);
+            offset = sizeof(id);
+        } else if (strcmp(argType, @encode(int)) == 0) {
+            NSLog(@"%d",*(int *)ap);
+            offset = sizeof(int);
+        } else if (strcmp(argType, @encode(short)) == 0) {
+            NSLog(@"%d",*(short *)ap);
+            offset = sizeof(short);
+        } else if (strcmp(argType, @encode(long)) == 0) {
+            NSLog(@"%ld",*(long *)ap);
+            offset = sizeof(long);
+        } else if (strcmp(argType, @encode(float)) == 0) {
+            NSLog(@"%f",*(float *)ap);
+            offset = sizeof(float);
+        } else if (strcmp(argType, @encode(double)) == 0) {
+            NSLog(@"%f",*(double *)ap);
+            offset = sizeof(double);
+        } else if (strcmp(argType, @encode(BOOL)) == 0) {
+            NSLog(@"%d",*(BOOL *)ap);
+            offset = sizeof(BOOL);
+        } else if (strcmp(argType, @encode(char *)) == 0) {
+            NSLog(@"%s",*(char **)ap);
+            offset = sizeof(char *);
+        }
+        ap += offset;
+    }
+}
+
+void HookBlockToPrintArguments(id block) {
+    PTBlockRef layout = (__bridge void *)block;
+    void (*hookedFunc)(void *,...) = (void (*)(void *, ...))printParams;
+
+    // 为了获取block参数类型
+    const char *_Block_signature(void *);
+    const char *signature = _Block_signature((__bridge void *)block);
+    
+    methodSignature = [NSMethodSignature signatureWithObjCTypes:signature];
+    
+    layout->invoke = hookedFunc;
+}
+
+```
+
+
