@@ -345,3 +345,80 @@ void HookBlockToPrintArguments(id block) {
 
 这样就可以正常输出闭包参数了，但是感觉哪里怪怪的。
 
+# 2018/06/19
+上面代码中 `_Block_signature` 实际上runtime中是 export 出来的方法，但是因为是 `_block_private.h`，意味着是私有的API，但是又因为它是全局export，所以你只要先声明就可以调用了，获取block的签名
+```objective-c
+const char *_Block_signature(void *);
+const char *signature = _Block_signature((__bridge void *)block);
+```
+
+如果不能用私有API，我们可以用如下方式实现，即用 block 结构体中的 signature 参照 Aspect 的源码取block的签名（其实就是获取结构体中的 descriptor）：
+
+```
+static NSMethodSignature *aspect_blockMethodSignature(id block, NSError **error) {
+    AspectBlockRef layout = (__bridge void *)block;
+	if (!(layout->flags & AspectBlockFlagsHasSignature)) {
+        NSString *description = [NSString stringWithFormat:@"The block %@ doesn't contain a type signature.", block];
+        AspectError(AspectErrorMissingBlockSignature, description);
+        return nil;
+    }
+	void *desc = layout->descriptor;
+	desc += 2 * sizeof(unsigned long int);
+	if (layout->flags & AspectBlockFlagsHasCopyDisposeHelpers) {
+		desc += 2 * sizeof(void *);
+    }
+	if (!desc) {
+        NSString *description = [NSString stringWithFormat:@"The block %@ doesn't has a type signature.", block];
+        AspectError(AspectErrorMissingBlockSignature, description);
+        return nil;
+    }
+	const char *signature = (*(const char **)desc);
+	return [NSMethodSignature signatureWithObjCTypes:signature];
+}
+
+static id invokeBlock(id block ,NSArray *arguments) {
+    if (block == nil) return nil;
+    id target = [block copy];
+    
+    NSMethodSignature *methodSignature =aspect_blockMethodSignature(block,nil);
+    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSignature];
+    invocation.target = target;
+    
+    // invocation 有1个隐藏参数，所以 argument 从1开始
+    if ([arguments isKindOfClass:[NSArray class]]) {
+        NSInteger count = MIN(arguments.count, methodSignature.numberOfArguments - 1);
+        for (int i = 0; i < count; i++) {
+            const char *type = [methodSignature getArgumentTypeAtIndex:1 + i];
+            NSString *typeStr = [NSString stringWithUTF8String:type];
+            if ([typeStr containsString:@"\""]) { 
+                type = [typeStr substringToIndex:1].UTF8String;
+            }
+            
+            // 需要做参数类型判断然后解析成对应类型，这里默认所有参数均为OC对象
+            if (strcmp(type, "@") == 0) {
+                id argument = arguments[i];
+                [invocation setArgument:&argument atIndex:1 + i];
+            }
+        }
+    }
+    
+    [invocation invoke];
+    
+    id returnVal;
+    const char *type = methodSignature.methodReturnType;
+    NSString *returnType = [NSString stringWithUTF8String:type];
+    if ([returnType containsString:@"\""]) {
+        type = [returnType substringToIndex:1].UTF8String;
+    }
+    if (strcmp(type, "@") == 0) {
+        [invocation getReturnValue:&returnVal];
+    }
+    // 需要做返回类型判断。比如返回值为常量需要包装成对象，这里仅以最简单的`@`为例
+    return returnVal;
+}
+```
+
+上面遇到了 signature 返回的描述，如果是 NSString *，返回的是 "@\NSString\". 
+
+invocation.target 设成了闭包，我猜测内部会判断target类型，如果是闭包，就执行调用里面的函数指针，然后传入参数值，至于怎么变参注入比较疑惑。
+
