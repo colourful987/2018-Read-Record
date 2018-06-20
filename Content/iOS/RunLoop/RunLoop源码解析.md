@@ -375,6 +375,280 @@ CFArraySortValues((CFMutableArrayRef)sources, CFRangeMake(0, cnt), (__CFRunLoopS
 
 
 ## 3.5 `__CFRunLoopServiceMachPort`
+
+调用如下：
+
+```c
+uint8_t msg_buffer[3 * 1024]; // 栈上
+mach_msg_header_t *msg = NULL;
+mach_port_t livePort = MACH_PORT_NULL;
+
+//... 省略
+msg = (mach_msg_header_t *)msg_buffer; 
+if (__CFRunLoopServiceMachPort(dispatchPort, &msg, sizeof(msg_buffer), &livePort, 0, &voucherState, NULL)) {
+    goto handle_msg;
+}
+
+//... 省略
+```
+
+> 注意到函数传入的是 `&msg`，即指针的指针。注意到代码中一句注释:"In that sleep of death what nightmares may come ..."
+
+```c
+static Boolean __CFRunLoopServiceMachPort(mach_port_name_t port, mach_msg_header_t **buffer, size_t buffer_size, mach_port_t *livePort, mach_msg_timeout_t timeout, voucher_mach_msg_state_t *voucherState, voucher_t *voucherCopy) {
+    Boolean originalBuffer = true;
+    kern_return_t ret = KERN_SUCCESS;
+    for (;;) {		/* In that sleep of death what nightmares may come ... */
+        /// 1
+        mach_msg_header_t *msg = (mach_msg_header_t *)*buffer;
+        msg->msgh_bits = 0;
+        msg->msgh_local_port = port;
+        msg->msgh_remote_port = MACH_PORT_NULL;
+        msg->msgh_size = buffer_size;
+        msg->msgh_id = 0;
+        
+        /// 2
+        if (TIMEOUT_INFINITY == timeout) { CFRUNLOOP_SLEEP(); } else { CFRUNLOOP_POLL(); }
+        
+        /// 3
+        ret = mach_msg(msg, MACH_RCV_MSG|(voucherState ? MACH_RCV_VOUCHER : 0)|MACH_RCV_LARGE|((TIMEOUT_INFINITY != timeout) ? MACH_RCV_TIMEOUT : 0)|MACH_RCV_TRAILER_TYPE(MACH_MSG_TRAILER_FORMAT_0)|MACH_RCV_TRAILER_ELEMENTS(MACH_RCV_TRAILER_AV), 0, msg->msgh_size, port, timeout, MACH_PORT_NULL);
+
+        /// 4        
+        // Take care of all voucher-related work right after mach_msg.
+        // If we don't release the previous voucher we're going to leak it.
+        voucher_mach_msg_revert(*voucherState);
+        
+        // Someone will be responsible for calling voucher_mach_msg_revert. This call makes the received voucher the current one.
+        *voucherState = voucher_mach_msg_adopt(msg);
+        
+        if (voucherCopy) {
+            *voucherCopy = NULL;
+        }
+        
+        /// 5
+        CFRUNLOOP_WAKEUP(ret);
+        
+        /// 6
+        if (MACH_MSG_SUCCESS == ret) {
+            *livePort = msg ? msg->msgh_local_port : MACH_PORT_NULL;
+            return true;
+        }
+        
+        if (MACH_RCV_TIMED_OUT == ret) {
+            if (!originalBuffer) free(msg);
+            *buffer = NULL;
+            *livePort = MACH_PORT_NULL;
+            return false;
+        }
+        if (MACH_RCV_TOO_LARGE != ret) break;
+        buffer_size = round_msg(msg->msgh_size + MAX_TRAILER_SIZE);
+        if (originalBuffer) *buffer = NULL;
+        originalBuffer = false;
+        *buffer = realloc(*buffer, buffer_size);
+    }
+    HALT;
+    return false;
+}
+```
+
+1. msg 为 `mach_msg_header_t` 结构体，一一赋值；
+2. `CFRUNLOOP_SLEEP` 和 `CFRUNLOOP_POLL` 宏定义其实并不做任何事情，它的定义是 `do { } while (0)`，这里的作用我认为仅是提高代码可读性;
+3. 代码片段3就是调用 `msg` 函数的API，是进程间消息**收发**函数，定义如下：
+    ```
+    extern mach_msg_return_t	mach_msg(
+    				mach_msg_header_t *msg,
+    				mach_msg_option_t option,  
+    				mach_msg_size_t send_size,
+    				mach_msg_size_t rcv_size,
+    				mach_port_name_t rcv_name,
+    				mach_msg_timeout_t timeout,
+    				mach_port_name_t notify);
+    				
+    //查看函数调用对应关系
+    option -> MACH_RCV_MSG|(voucherState ? MACH_RCV_VOUCHER : 0)|MACH_RCV_LARGE|((TIMEOUT_INFINITY != timeout) ? MACH_RCV_TIMEOUT : 0)|MACH_RCV_TRAILER_TYPE(MACH_MSG_TRAILER_FORMAT_0)|MACH_RCV_TRAILER_ELEMENTS(MACH_RCV_TRAILER_AV) //可以设置为收消息还是发消息等类型
+    send_size -> 0
+    rcv_size -> msg->msgh_size
+    rev_name -> port
+    timeout ->  timeout
+    notify -> MACH_PORT_NULL
+    ```
+4. `voucher_mach_msg_revert` 和 `voucher_mach_msg_adopt` 成对出现，不太了解作用；
+5. `CFRUNLOOP_WAKEUP` 和上面的 `CFRUNLOOP_SLEEP` 、 `CFRUNLOOP_POLL` 宏定义一样都不做任何事，需要确认第三步是否会等待消息；
+6. 后面是对接收到信息的处理
+
 ## 3.6 `__CFRunLoopSetSleeping`
+
+```
+__CFRunLoopSetSleeping(rl);
+```
+
+设置runloop实例的状态。
+
 ## 3.7 `__CFPortSetInsert` , `_dispatch_runloop_root_queue_perform_4CF` , `__CFPortSetRemove`
 ## 3.8 `runloop wakeup` 的6种情况
+
+同样采用了宏定义方式增加代码阅读性：
+* `CFRUNLOOP_WAKEUP_FOR_NOTHING` 正常唤醒
+* `CFRUNLOOP_WAKEUP_FOR_TIMER`定时器唤醒
+* `CFRUNLOOP_WAKEUP_FOR_DISPATCH` GCD 唤醒
+* `CFRUNLOOP_WAKEUP_FOR_SOURCE` source 唤醒
+
+```
+if (MACH_PORT_NULL == livePort) {
+    CFRUNLOOP_WAKEUP_FOR_NOTHING();
+    // handle nothing
+} else if (livePort == rl->_wakeUpPort) {
+    CFRUNLOOP_WAKEUP_FOR_WAKEUP();
+    // do nothing on Mac OS
+} else if (modeQueuePort != MACH_PORT_NULL && livePort == modeQueuePort) {
+    CFRUNLOOP_WAKEUP_FOR_TIMER();
+    if (!__CFRunLoopDoTimers(rl, rlm, mach_absolute_time())) {
+        // Re-arm the next timer, because we apparently fired early
+        __CFArmNextTimerInMode(rlm, rl);
+    }
+} else if (rlm->_timerPort != MACH_PORT_NULL && livePort == rlm->_timerPort) {
+    CFRUNLOOP_WAKEUP_FOR_TIMER();
+
+    if (!__CFRunLoopDoTimers(rl, rlm, mach_absolute_time())) {
+        // Re-arm the next timer
+        __CFArmNextTimerInMode(rlm, rl);
+    }
+} else if (livePort == dispatchPort) {
+    CFRUNLOOP_WAKEUP_FOR_DISPATCH();
+    __CFRunLoopModeUnlock(rlm);
+    __CFRunLoopUnlock(rl);
+    _CFSetTSD(__CFTSDKeyIsInGCDMainQ, (void *)6, NULL);
+
+    __CFRUNLOOP_IS_SERVICING_THE_MAIN_DISPATCH_QUEUE__(msg);
+    _CFSetTSD(__CFTSDKeyIsInGCDMainQ, (void *)0, NULL);
+    __CFRunLoopLock(rl);
+    __CFRunLoopModeLock(rlm);
+    sourceHandledThisLoop = true;
+    didDispatchPortLastTime = true;
+} else {
+    CFRUNLOOP_WAKEUP_FOR_SOURCE();
+    // Despite the name, this works for windows handles as well
+    CFRunLoopSourceRef rls = __CFRunLoopModeFindSourceForMachPort(rl, rlm, livePort);
+    if (rls) {
+    	mach_msg_header_t *reply = NULL;
+		sourceHandledThisLoop = __CFRunLoopDoSource1(rl, rlm, rls, msg, msg->msgh_size, &reply) || sourceHandledThisLoop;
+		if (NULL != reply) {
+		    (void)mach_msg(reply, MACH_SEND_MSG, reply->msgh_size, 0, MACH_PORT_NULL, 0, MACH_PORT_NULL);
+		    CFAllocatorDeallocate(kCFAllocatorSystemDefault, reply);
+		}
+	}
+}
+```
+
+根据上面不同情况下唤醒 RunLoop， 然后执行一些列操作后，会调用 `__CFRunLoopDoBlocks(rl, rlm);` 来处理之前注入的处理事务。通过if-else分支赋值当前runloop的状态：
+
+```
+{
+  // 省略一堆代码。。。。
+  // 省略一堆代码。。。。
+  // 省略一堆代码。。。。
+	if (sourceHandledThisLoop && stopAfterHandle) {
+	    retVal = kCFRunLoopRunHandledSource;
+    } else if (timeout_context->termTSR < mach_absolute_time()) {
+        retVal = kCFRunLoopRunTimedOut;
+	} else if (__CFRunLoopIsStopped(rl)) {
+        __CFRunLoopUnsetStopped(rl);
+	    retVal = kCFRunLoopRunStopped;
+	} else if (rlm->_stopped) {
+	    rlm->_stopped = false;
+	    retVal = kCFRunLoopRunStopped;
+	} else if (__CFRunLoopModeIsEmpty(rl, rlm, previousMode)) {
+	    retVal = kCFRunLoopRunFinished;
+	} 
+}while( 0 == retVal)
+```
+
+至此整个 runloop 的处理到此结束， 最后返回 retVal 作为 `__CFRunLoopRun` 的返回值。
+
+4. Mach消息发送机制初探
+
+> Darwin 是 Apple 的开源操作系统，简单理解就是一个能处理各项事务的软件程序，它既能开放API接口给上层应用使用，也能操作硬件接口，以“模块化”划分:我们可以封装一些常用的函数接口成为系统库 libSystem.B.sylib 等，然后 IOKit 负责 IO 读写、Mach 是轻量级内核），仅提供了诸如处理器调度、IPC (进程间通信)等非常少量的基础服务，但都是至关重要的：线程管理、线程资源分配、虚拟内存分配及管理、底层物理资源的分配。
+> IOKit/BSD/Mach 又称之为“XNU” 内核， XNU Not Unix。
+
+这里引用 ibireme 深入理解 RunLoop 的图：
+
+![](https://blog.ibireme.com/wp-content/uploads/2015/05/RunLoop_4.png)
+
+Mach 中 IPC 采用消息发送方式，不允许直接调用另外一个对象的接口，而是传递消息给这个对象，消息会加入到目标对象的队列中等待处理。
+
+既然要用到消息传递通信方式，那么自然会规定“消息”的数据结构，总不能发送字符串“hello world”来通信吧...
+
+一个简单消息由三个部分组成：
+
+* 消息头(`mach_msg_header_t`) required
+* 消息主体(`mach_msg_body_t`) optional
+* 数据 data 这里应该用到了c语言中的变长结构体
+* 尾消息(`mach_msg_trailer_t`) optional 只与接收端有关系
+
+图片引自 [Mach消息发送机制](https://www.jianshu.com/p/a764aad31847)
+
+![](https://upload-images.jianshu.io/upload_images/2670078-12cb53722c69ac35.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/307)
+
+端口是一个32位的整型标识符，消息在端口之间传递。消息从某一个端口发送到另一个端口，每一个端口都可以接收来自任意发送者的消息，但是每一个消息只能有一个接收者。向一个端口发送消息实际上是将消息放在队列中，直到消息被处理。
+
+所有的Mach原生对象都是通过端口访问的，换句话说，我们要查找一个对象的句柄(标识应用程序中的不同对象和同类中的不同的实例的值)，实际上查找的是这个对象端口的句柄。
+
+ipc_port 数据结构定义如下：
+
+```c
+struct ipc_port {
+
+    /*
+     * Initial sub-structure in common with ipc_pset
+     * First element is an ipc_object second is a
+     * message queue
+     */
+    struct ipc_object ip_object;
+    struct ipc_mqueue ip_messages;
+
+    natural_t ip_sprequests:1,  /* send-possible requests outstanding */
+          ip_spimportant:1, /* ... at least one is importance donating */
+          ip_impdonation:1, /* port supports importance donation */
+          ip_tempowner:1,   /* dont give donations to current receiver */
+          ip_guarded:1,         /* port guarded (use context value as guard) */
+          ip_strict_guard:1,    /* Strict guarding; Prevents user manipulation of context values directly */
+          ip_reserved:2,
+          ip_impcount:24;   /* number of importance donations in nested queue */
+
+    union {
+        struct ipc_space *receiver;
+        struct ipc_port *destination;
+        ipc_port_timestamp_t timestamp;
+    } data;
+
+    union {
+        ipc_kobject_t kobject;
+        ipc_importance_task_t imp_task;
+        uintptr_t alias;
+    } kdata;
+        
+    struct ipc_port *ip_nsrequest;
+    struct ipc_port *ip_pdrequest;
+    struct ipc_port_request *ip_requests;
+    struct ipc_kmsg *ip_premsg;
+
+    mach_vm_address_t ip_context;
+
+    mach_port_mscount_t ip_mscount;
+    mach_port_rights_t ip_srights;
+    mach_port_rights_t ip_sorights;
+
+#if MACH_ASSERT
+#define IP_NSPARES      4
+#define IP_CALLSTACK_MAX    16
+/*  queue_chain_t   ip_port_links;*//* all allocated ports */
+    thread_t    ip_thread;  /* who made me?  thread context */
+    unsigned long   ip_timetrack;   /* give an idea of "when" created */
+    uintptr_t   ip_callstack[IP_CALLSTACK_MAX]; /* stack trace */
+    unsigned long   ip_spares[IP_NSPARES]; /* for debugging */
+#endif  /* MACH_ASSERT */
+} __attribute__((__packed__));
+```
+
+> 引用“Mach原语：一切以消息为媒介”一文：在用户态下，消息传递都是通过`mach_msg()`函数实现的，这个函数会触发一个mach陷阱`mach_msg_trap()`，接下来`mach_msg_trap()`又会调用`mach_msg_overwrite_trap()`，它会通过`MACH_SEND_MSG`和`MACH_RCV_MSG`来判断是发送操作，还是接收操作。
+

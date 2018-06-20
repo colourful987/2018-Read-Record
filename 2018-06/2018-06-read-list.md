@@ -422,3 +422,6 @@ static id invokeBlock(id block ,NSArray *arguments) {
 
 invocation.target 设成了闭包，我猜测内部会判断target类型，如果是闭包，就执行调用里面的函数指针，然后传入参数值，至于怎么变参注入比较疑惑。
 
+# 2018/06/20
+
+完善 [RunLoop源码解析](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/RunLoop/RunLoop源码解析.md) 一文
