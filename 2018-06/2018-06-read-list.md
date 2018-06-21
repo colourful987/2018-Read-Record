@@ -424,4 +424,42 @@ invocation.target 设成了闭包，我猜测内部会判断target类型，如�
 
 # 2018/06/20
 
-完善 [RunLoop源码解析](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/RunLoop/RunLoop源码解析.md) 一文
+完善 [RunLoop源码解析](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/RunLoop/RunLoop源码解析.md) 一文。
+
+# 2018/06/21
+
+日常开发中对导航栏 navigationItem 的 leftBarButtonItem 和 rightBarButtonItem 修改频繁，试想我们在同一个 navigationController push 多个视图控制器，而每个视图控制器又对自定义导航栏样式，要知道 navigationController 的 childViewControllers 共享同一个导航栏视图，所以鬼知道什么时候上一个视图控制器对导航栏的修改会影响到其他视图控制器导航栏的显示。
+
+> 回归问题的本质，我们想要什么？1. 自定义每个视图控制器顶部一块视图区域(“导航栏”)的样式 2. 视图控制器自定义样式不会影响到其他视图控制器的修改 3.视图控制器转场要类似 navigationController push pop那种。
+
+针对上面提出的，我们可以自定义顶部视图控件，不过感觉成本太高；第二点只要一个视图控制器各自管理一个顶部视图控件，完美解决互相影响的问题；第三点自定义转场动画，还是成本太高的问题。。。
+
+我们可以在已有的 navigationController 上做文章，比如第二点每个视图控制器管理顶部视图控件，我们可以用 `UINavigationController` 有且仅包裹一个 ViewController，调用 `[[UINavigationController alloc] initWithRootViewController:]`，这样被封装的视图控制器“独有”一个顶部导航栏修改的权益，调用 `self.navigationController` 和 `self.navigationItem.leftBarButtonItem` 就能对顶部做修改啦。
+
+现在问题来了，关于第三点，UINavigationController 无法 push 一个 UINavigationController 的，只能是 UIViewController！
+
+> Any problem  in computer science can be solved by anther layer of indirection.
+
+因此我们为上面封装了 ViewController 的 NavigationController 在封装一层
+
+```
+// WrappedViewController.m 示意代码
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    UIViewController *yourController = [UIViewController new];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:yourController]；
+    
+    [self addChildViewController:nav];
+    [self.view addSubView:nav.view];
+    [nav didMoveToParentViewController:self]; // ? 是否要加这句话
+}
+```
+
+代码理解：首先 nav 本身就是一个视图控制器，现在作为 `WrappedViewController` 子控制器罢了，nav 的view 就是它 childViewControllers 堆栈中唯一的视图控制器的view————也就是我们的业务视图控制器。
+
+现在我们可以愉快的用根视图控制器(同样是一个 NavigationControlle) 去 push 一个又一个的 `WrappedViewController` 了。
+
+从调用上来看是非常不友好的，原因很简单，触发push的地方我们都需要依赖 `WrappedViewController` 类，maybe我么用 `[[WrappedViewController alloc] initWithVC:YourCustomViewController]`,然后调用 `[self.navigationController pushViewController:wrappedVC animated:YES]` push 我们想要的视图控制器。
+
+因为我们需要在已有方案上修改下：
+
