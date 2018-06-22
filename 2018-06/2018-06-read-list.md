@@ -426,7 +426,7 @@ invocation.target 设成了闭包，我猜测内部会判断target类型，如�
 
 完善 [RunLoop源码解析](https://github.com/colourful987/2018-Read-Record/blob/master/Content/iOS/RunLoop/RunLoop源码解析.md) 一文。
 
-# 2018/06/21
+# 2018/06/21 - 2018/06/22
 
 日常开发中对导航栏 navigationItem 的 leftBarButtonItem 和 rightBarButtonItem 修改频繁，试想我们在同一个 navigationController push 多个视图控制器，而每个视图控制器又对自定义导航栏样式，要知道 navigationController 的 childViewControllers 共享同一个导航栏视图，所以鬼知道什么时候上一个视图控制器对导航栏的修改会影响到其他视图控制器导航栏的显示。
 
@@ -459,7 +459,92 @@ invocation.target 设成了闭包，我猜测内部会判断target类型，如�
 
 现在我们可以愉快的用根视图控制器(同样是一个 NavigationControlle) 去 push 一个又一个的 `WrappedViewController` 了。
 
-从调用上来看是非常不友好的，原因很简单，触发push的地方我们都需要依赖 `WrappedViewController` 类，maybe我么用 `[[WrappedViewController alloc] initWithVC:YourCustomViewController]`,然后调用 `[self.navigationController pushViewController:wrappedVC animated:YES]` push 我们想要的视图控制器。
+从调用上来看是非常不友好的，原因很简单，触发push的地方我们都需要依赖 `WrappedViewController` 类，maybe我们可以用 `[[WrappedViewController alloc] initWithVC:YourCustomViewController]`封装好，然后调用 `[self.navigationController pushViewController:wrappedVC animated:YES]` push 我们想要的视图控制器。
 
-因为我们需要在已有方案上修改下：
+这部分代码可以抽象成一个方法：
+
+```objc
+- (void)pushViewController:(UIViewController *)vc {
+  WrappedViewController * wrapped = [[WrappedViewController alloc] initWithVC:vc];
+  [self.navigationController pushViewController:wrappedVC animated:YES];
+}
+```
+
+这个方法我们可以放到一个基类 ViewController 中提供服务，然后所有的业务VC必须继承这个基类ViewController，在push的地方我们调用 `[self pushViewController:YourCustomViewController]`;
+
+还有一个方法是在 `self.navigationController` 上做文章，我们可以继承 UINavigationController 自定义一个 Nav，然后重写 `pushViewController:animated: ` 方法，实现如上。
+
+但是前提要保证，每个业务视图控制器的 navigationController 要统一为自定义Nav，这里可以在 `WrappedViewController` 类中进行封装，修改如下：
+
+```objc
+// WrappedViewController.m 示意代码
+
+- (instancetype)initWithVC:(UIViewController *)vc {
+  self = [super init];
+  
+  if(self) {
+    self.yourController =  vc;
+  }
+  
+  return self;
+}
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    YourNavigationController *nav = [[YourNavigationController alloc] initWithRootViewController:self.yourController]；
+    
+    [self addChildViewController:nav];
+    [self.view addSubView:nav.view];
+    [nav didMoveToParentViewController:self]; 
+}
+```
+
+> 上面应该考虑生命周期的问题。
+
+最后只剩下对 Window RootViewController 的设计考虑了
+
+```
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    
+    // 创建Keywindow
+    UIWindow *window = [UIWindow new];
+    window.frame = [UIScreen mainScreen].bounds;
+    [window makeKeyAndVisible];
+    self.window = window;
+
+    // 创建导航控制器
+    WrappedViewController *wrappedRootView = [WrappedViewController alloc] initWithRootViewController:[FirtstViewController new]];
+    UINavigationViewController *rootNav = [[UINavigationController alloc] initWithRootViewController:wrappedRootView];
+    
+    // 创建标签控制器
+    UITabBarController *tab = [UITabBarController new];
+    // 为标签控制器添加一个Item
+    tab.viewControllers = @[rootNav];
+    UITabBarItem *item = [[UITabBarItem alloc] initWithTabBarSystemItem:UITabBarSystemItemFavorites tag:0];
+    rootNav.tabBarItem = item;
+    
+    // 设置window的根控制器为标签控制器
+    self.window.rootViewController = tab;
+    
+    return YES;
+}
+```
+
+之后 `FirtstViewController` 视图控制器发生的 `push` 跳转都会调用 `[self.navigationController pushViewController:vc animated:YES];`接口，要知道 FirstViewController 是被封装了一层，`self.navigationController` 是我们的自定义navigationController，要知道我们重写了push接口：
+
+```
+- (void)pushViewController:(UIViewController *)viewController animated:(BOOL)animated {
+    if (self.navigationController) {
+        WrappedViewController *wrapperViewController = [[WrappedViewController alloc] initWithRootViewController:viewController];
+        // 1
+        [self.navigationController pushViewController:wrapperViewController animated:animated];
+        return;
+    }
+    [super pushViewController:viewController animated:animated];
+}
+```
+
+注意我们这里居然还调用了 `self.navigationController`，实际上这个 nav 是最外层的导航栏控制器。
+
 
