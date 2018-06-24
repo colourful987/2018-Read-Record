@@ -547,4 +547,12 @@ invocation.target 设成了闭包，我猜测内部会判断target类型，如�
 
 注意我们这里居然还调用了 `self.navigationController`，实际上这个 nav 是最外层的导航栏控制器。
 
+# 2018/06/24
 
+iOS 缓存策略简单来说就是先读内存(因为速度最快，但内存大小有限)，内存没有数据读本地，本地读取的同时存入内存中，本地还没有可能就需要网络请求远端数据。
+
+[YYCache](https://github.com/colourful987/YYCache) 支持本地和sqlite3存储，支持内存读取。代码量不大，目前读了部分源码，以下是 UML 类图：
+
+
+
+![](./resource/YYCacheUML.png)
