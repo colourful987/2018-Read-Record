@@ -1,8 +1,15 @@
 > Theme: 待定 
 > Source Code Read Plan:
-- [ ] [RunLoop 源码]()
+- [x] [RunLoop 源码]()
 - [ ] [JLRoute](https://github.com/joeldev/JLRoutes)
-- [ ] Block
+- [x] Block
+- [ ] Method Forward
+- [ ] GCD 底层libdispatch
+- [ ] Aspect 温顾
+- [ ] YYModel 温顾
+- [ ] YYCache
+- [ ] SwiftJson
+- [ ] SDWebImage
 > Reference Book List:
 - [ ] 《Git教程（廖雪峰）》
 
@@ -548,11 +555,11 @@ invocation.target 设成了闭包，我猜测内部会判断target类型，如�
 注意我们这里居然还调用了 `self.navigationController`，实际上这个 nav 是最外层的导航栏控制器。
 
 # 2018/06/24
-
 iOS 缓存策略简单来说就是先读内存(因为速度最快，但内存大小有限)，内存没有数据读本地，本地读取的同时存入内存中，本地还没有可能就需要网络请求远端数据。
 
 [YYCache](https://github.com/colourful987/YYCache) 支持本地和sqlite3存储，支持内存读取。代码量不大，目前读了部分源码，以下是 UML 类图：
 
-
-
 ![](./resource/YYCacheUML.png)
+
+# 2018/06/25
+YYCache MemoryCache 内存管理基于 LRU 算法(least-recently-used），数据结构为链表，实现机制也很简单：最新需要缓存的数据推入链表的头部(head)，随着一个个数据加入，始终保持最新数据在链表的第一个，而旧数据已经沉入底部（tail），如果旧数据最近又重用过，把它bring到头部，设定一个 throttle value（阈值），达到这个值时释放旧数据（从链条尾部开始删起）
