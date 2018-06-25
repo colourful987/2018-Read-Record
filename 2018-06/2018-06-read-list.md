@@ -563,3 +563,7 @@ iOS 缓存策略简单来说就是先读内存(因为速度最快，但内存大
 
 # 2018/06/25
 YYCache MemoryCache 内存管理基于 LRU 算法(least-recently-used），数据结构为链表，实现机制也很简单：最新需要缓存的数据推入链表的头部(head)，随着一个个数据加入，始终保持最新数据在链表的第一个，而旧数据已经沉入底部（tail），如果旧数据最近又重用过，把它bring到头部，设定一个 throttle value（阈值），达到这个值时释放旧数据（从链条尾部开始删起）
+
+LRU 和 MRU 算法基于链表，但是涉及旧对象重用时要求我们去从head寻起到tail，但是每次这样效率太低，所以这里使用了 dict+链表，dict 存的是所有 node 的指针，这样key-value存取值复杂度为O(1)，每个Node 记录prev和next指向下一个节点。而 `_YYLinkedMap` 会记录 `_YYLinkedMapNode *_head` 和 `_YYLinkedMapNode *_tail`。
+
+
