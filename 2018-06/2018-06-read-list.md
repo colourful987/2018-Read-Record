@@ -7,7 +7,7 @@
 - [ ] GCD 底层libdispatch
 - [ ] Aspect 温顾
 - [ ] YYModel 温顾
-- [ ] YYCache
+- [x] YYCache
 - [ ] SwiftJson
 - [ ] SDWebImage
 > Reference Book List:
@@ -565,5 +565,182 @@ iOS 缓存策略简单来说就是先读内存(因为速度最快，但内存大
 YYCache MemoryCache 内存管理基于 LRU 算法(least-recently-used），数据结构为链表，实现机制也很简单：最新需要缓存的数据推入链表的头部(head)，随着一个个数据加入，始终保持最新数据在链表的第一个，而旧数据已经沉入底部（tail），如果旧数据最近又重用过，把它bring到头部，设定一个 throttle value（阈值），达到这个值时释放旧数据（从链条尾部开始删起）
 
 LRU 和 MRU 算法基于链表，但是涉及旧对象重用时要求我们去从head寻起到tail，但是每次这样效率太低，所以这里使用了 dict+链表，dict 存的是所有 node 的指针，这样key-value存取值复杂度为O(1)，每个Node 记录prev和next指向下一个节点。而 `_YYLinkedMap` 会记录 `_YYLinkedMapNode *_head` 和 `_YYLinkedMapNode *_tail`。
+
+# 2018/06/27
+如果让我们来实现一个缓存库，先理顺思路然后罗列出库需要解决的问题：Cache ≠ 持久化存储
+1. 首先缓存就是数据交换的缓冲区，将使用频繁的数据存入缓存中，等下次读取数据时，首先从缓存中获取，获取不到再根据情况去获取(可以请求服务端)；
+2. 其次缓存的数据存于内存中，并不能无限往内存中“塞”数据以备后续使用，因此达到一定内存大小或者缓存个数条件时，我们需要清理缓存数据，将最不常用的剔除出去；
+3. 内存中的缓存数据掉电后就会“消散”，为此我们可能还需要在本地存储数据。
+
+比如我们要实现一个 PTCache 缓存类，必定要有 save-read 缓存数据的 API：
+
+```objc
+- (id<NSCoding>)objectForKey:(NSString *)key { }
+- (void)setObject:(id<NSCoding>)object forKey:(NSString *)key {}
+```
+
+而 PTCache 内部实际上会有一个 PTMemoryCache 和 PTDiskCache 对象，前者用于缓存数据到内存，后者用于将数据存入本地，而本地存储的方式可以是 file ，也可以是 sqlite3 数据库。
+
+前面讨论过读取缓存的数据，先从内存中读，若没有找到则从 Disk 读取，同时写入内存中，因此实现如下：
+
+```objc
+- (id<NSCoding>)objectForKey:(NSString *)key {
+    // 先从memory读取 有就直接返回 否则从disk读取，同时缓存到memory中
+    id<NSCoding> object = [_memoryCache objectForKey:key];
+    if (!object) {
+        object = [_diskCache objectForKey:key];
+        if (object) {
+            [_memoryCache setObject:object forKey:key];
+        }
+    }
+    return object;
+}
+
+- (void)setObject:(id<NSCoding>)object forKey:(NSString *)key {
+    // 本地总是会存一份 保持本地和内存总是相同
+    [_memoryCache setObject:object forKey:key];
+    [_diskCache setObject:object forKey:key];
+}
+```
+
+memoryCache 的实现 lru 算法(least recently used)，那么就要自己封装一个链表 `_PTLinkedList`，单个缓存对象都用一个 `_PTLinkedListNode` 实例表示，和 C 语言链表节点差不多：
+
+```objc
+@interface _PTLinkedListNode : NSObject {
+    @package
+    __unsafe_unretained _PTLinkedListNode *_prev;
+    __unsafe_unretained _PTLinkedListNode *_next;
+    id _key;
+    id _value;
+    NSUInteger _cost;
+    NSTimeInterval _time;
+}
+@end
+
+@implementation _PTLinkedListNode
+
+@end
+```
+
+![链表Node示意图.png](./resource/链表Node示意图.png)
+
+现在我们的 lru 应该设计哪些 API 接口：
+
+```objc
+@interface _PTLinkedList : NSObject {
+    @package
+    CFMutableDictionaryRef _dic;
+    NSUInteger _totalCost;
+    NSUInteger _totalCount;
+    _PTLinkedListNode *_head;
+    _PTLinkedListNode *_tail;
+}
+
+- (void)insertNodeAtHead:(_PTLinkedListNode *)node;
+
+- (void)bringNodeToHead:(_PTLinkedListNode *)node;
+
+- (void)removeNode:(_PTLinkedListNode *)node;
+
+- (_PTLinkedListNode *)removeTailNode;
+
+- (void)removeAll;
+@end
+```
+
+* `insertNodeAtHead` ： 新的缓存对象会插入到链表的头部；
+* `bringNodeToHead` ： 如果要插入的对象已经存在链表中，只需要把对象从链表中间移动到头部更新即可；
+* `removeNode` 和 `removeTailNode` 简单的移除缓存对象；
+
+实现如下：
+
+```objc
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _dic = CFDictionaryCreateMutable(CFAllocatorGetDefault(), 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    }
+    return self;
+}
+
+- (void)dealloc {
+    CFRelease(_dic);
+}
+
+- (void)insertNodeAtHead:(_PTLinkedListNode *)node {
+    // 字典作为 cache 中存储所有的节点
+    CFDictionarySetValue(_dic, (__bridge const void *)(node->_key), (__bridge const void *)(node));
+    _totalCost += node->_cost;
+    _totalCount++;
+    if (_head) {
+        node->_next = _head;
+        _head->_prev = node;
+        _head = node;
+    } else {
+        _head = _tail = node;
+    }
+}
+
+- (void)bringNodeToHead:(_PTLinkedListNode *)node {
+    if (_head == node) {
+        return;
+    }
+    
+    if (_tail == node) {
+        _tail = _tail->_prev;
+        _tail->_next = nil;
+    } else {
+        node->_next->_prev = node->_prev;
+        node->_prev->_next = node->_next;
+    }
+    node->_next = _head;
+    node->_prev = nil;
+    _head->_prev = node;
+    _head = node;
+}
+
+- (void)removeNode:(_PTLinkedListNode *)node {
+    CFDictionaryRemoveValue(_dic, (__bridge const void *)(node->_key));
+    _totalCost -= node->_cost;
+    _totalCount--;
+    if (node->_next) {
+        node->_next->_prev = node->_prev;
+        node->_prev->_next = node->_next;
+    }
+    
+    if (_head == node) {
+        _head = node->_next;
+    }
+    
+    if (_tail == node) {
+        _tail = node->_prev;
+    }
+}
+
+- (_PTLinkedListNode *)removeTailNode {
+    if (!_tail) {
+        return nil;
+    }
+    
+    // 先保存最后一个节点
+    _PTLinkedListNode *tail = _tail;
+    CFDictionaryRemoveValue(_dic, (__bridge const void *)(_tail->_key));
+    _totalCost -= _tail->_cost;
+    _totalCount --;
+    if (_head == _tail) {
+        _head = _tail = nil;
+    } else {
+        _tail = _tail->_prev;
+        _tail->_next = nil;
+    }
+    return tail;
+}
+```
+
+`_PTLinkedListNode` 真正存储在一个字典 `_dic` 实例中，这样做是为了提高查询某个节点是否存在于链表中效率，时间复杂度为O(1)。
+
+下面图片展示 `insertNodeAtHead` 、`bringNodeToHead` 等操作的图解：
+
+![链表Node插入.png](./resource/链表Node插入.png)
 
 
