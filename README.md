@@ -8,7 +8,7 @@
 
 # Learning Recording Timeline
 
-- [ ] [2018 六月学习记录 🕐](./2018-05/2018-05-read-list.md)
+- [ ] [2018 六月学习记录 🕐](./2018-05/2018-06-read-list.md)
 
 > Theme: 待定 
 > Source Code Read Plan:

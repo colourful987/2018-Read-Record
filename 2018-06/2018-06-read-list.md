@@ -10,6 +10,7 @@
 - [x] YYCache
 - [ ] SwiftJson
 - [ ] SDWebImage
+- [x] Communication Between JS and Native 
 > Reference Book List:
 - [ ] 《Git教程（廖雪峰）》
 
@@ -743,4 +744,17 @@ memoryCache 的实现 lru 算法(least recently used)，那么就要自己封装
 
 ![链表Node插入.png](./resource/链表Node插入.png)
 
+# 2018/06/30
 
+js native 交互目前了解四种，也是网上教程中最多的：
+
+1. 拦截 UIWebview(WKWebview) 的请求URL，比如首次加载页面的时候，或者点击某个按钮发生页面跳转，或发送数据请求，本质其实就是UIWebview发送所有的请求前，会询问delegate是否允许load，方法为 `- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationTyp` 
+2. JavaScriptCore，相当于苹果提供了一个通讯中间者，客户端原生端的实现一个遵循 `JSExport` 协议的对象，从字面理解就是暴露(Export)给web端的接口，在 UIWebView 加载完成后把这个对象注入到网页中，我猜测JavaScriptCore会把oc的对象映射到 js 代码，然后生成 js 类，变量等，这样网页端就可以用和客户端约定好的 key 取到值来调用客户端接口了；
+3. WKScriptMessageHandler 还没细看
+4. WebViewJavascriptBridge 是第三方库，实现本质其实也是拦截请求 URL，However，网页页面行为部分并非请求，而是普通的点击弹个对话框之类的行为。而网页端调用客户端显然不是http或https请求，所以不会触发webview的代理方法，因此 WebViewJavascriptBridge 非常提供了一种方法巧妙的方法，就是网页端调用 `callHandler(objcNativeMethodName, callBackBlock)`，这个 js 方法内部会封装该调用为 `https://__id_message__` 类似这种，然后参数context字典会带上方法名字，消息唯一标示，但是**回调可传不过！**，为此，网页端自己会搞个字典存储回调，key为id。这么做是基于客户端可以直接调用网页端js代码，客户端执行完方法后，调用js代码告诉网页端我执行完了，结果和`callback_id`告诉你网页端，你自己从网页端的字典存储中取到刚才的回调方法
+
+上面就是简单的理解，之后进一步学习：
+
+* [ ] JavaScriptCore 实现原理，热更新如何做到？
+* [ ] WebViewJavascriptBridge 实现写博文；
+* [ ] WKWebview 之后是趋势，简单研究下使用
