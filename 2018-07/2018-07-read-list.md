@@ -75,7 +75,7 @@ Multi delegate message dispatch 设计要点在于message可能各式各样，�
 
 iOS 客户端使用 Objective-c 语言，而 Web 端用到了 html 标记语言和 javascript 脚本语言，前者和页面样式相关，后者则是给页面添加交互行为，现在的问题是两者之间如何交互，如下图所示：
 
-![native-js-reletation.png](quiver-image-url/F4EAB3F79EA356974264FB5AB030D4C4.png)
+![native-js-reletation.png](./resource/native-js-reletation.png)
 
 oc代码和js代码通常如下定义：
 
