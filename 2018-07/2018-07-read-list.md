@@ -1,7 +1,7 @@
 > Theme: JS Native Communication
 > Source Code Read Plan:
 > - [ ] JavaScriptCore 实现原理，热更新如何做到？
-> - [ ] WebViewJavascriptBridge 实现写博文；
+> - [x] WebViewJavascriptBridge 实现写博文；
 > - [ ] WKWebview 之后是趋势，简单研究下使用
 > - [ ] [JLRoute](https://github.com/joeldev/JLRoutes)
 > - [ ] Method Forward
@@ -218,4 +218,10 @@ if (responseId) {
 
 注意responseCallback我们构造的代码块中 `[self _queueMessage:msg]` 就是oc 告诉 js 这个unique id。
 
+2018/07/04 新增oc->js图：
 
+![](./resource/oc->js.png)
+
+知识点主要两点：
+* 客户端和js都有 messageHandlers 和 responseCallbacks 字典，以 iOS 客户端为例，前者是oc端开放给js的接口，需要业务方往 UIWebView和 WKWebview 中注册，调用 registerHandler 方法；后者存储客户端调用js方法后的回调block，调用 callHandler 方法，ps：换句话说就是oc告诉js执行一个js方法，js执行完了，通知oc结果，oc对结果再做一些处理。
+* 客户端调用js基于 webview 的 `stringByEvaluatingJavaScriptFromString` 方法；而 js 调用 oc 方法，是将任何页面的 action 都构造成一个 https:// 请求（构造一个iframe http element，设置它的src即可），oc客户端拦截解析分发处理接口。
