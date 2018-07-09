@@ -233,3 +233,57 @@ if (responseId) {
 * [iOS土味儿讲义（二）--弹窗的前世今生](https://juejin.im/post/5ab360d66fb9a028d14101e7)
 
 展示了很多 runtime 的应用场景，当然并非真正应用到实际需求中，但是我觉得这种提供了很好的思路。“弹窗”一文解决方式个人顾虑影响范围，推荐自己单独搞一个 UIWindow 司职显示弹窗，同样是队列管理弹窗 present 顺序，设定不同弹窗的 level 等等特性
+
+# 2018/07/09
+[Video Streaming Tutorial for iOS: Getting Started](https://www.raywenderlich.com/188867/video-streaming-tutorial-for-ios-getting-started)
+
+语音视频播放的基础入门文章，值得推荐，初始项目已经搭建完毕，只需要跟着文章填充关键代码即可，每一步都会介绍基础知识，最后完成基于 AVFoundation 的视频播放Demo。
+
+![](https://koenig-media.raywenderlich.com/uploads/2018/04/Screen-Shot-2018-04-03-at-12.06.53-AM-650x256.png)
+
+主要文章介绍两种：一、使用系统封装好的 AVPlayerViewController，我们只需要依赖注入一个 player 就可以播放视频了；二，自定义播放控件。
+
+1. UI 方面，必定要有显示层，就是 AVPlayerLayer，当然我们一开始想到的可能是 UIView，实际UIView只是 Layer的代理，真正负责渲染的是 Layer，这里 AVPlayerLayer 会负责把一帧一帧的内容显示出来。我们如果要自定义一个播放器视图View，只需要明确自身持有的 layer 的 Class，如下：
+  ```objc
+  class VideoPlayerView: UIView {
+    // 重写了基类的 layerClass 这样实例化一个 UIView 的同时实例化一个 layerClass 的图层
+    override class var layerClass: AnyClass {
+      return AVPlayerLayer.self
+    }
+    
+    var playerLayer: AVPlayerLayer {
+      return layer as! AVPlayerLayer
+    }
+  }
+  ```
+
+2. 接着从实际考虑，AVPlayerLayer 图层显示内容来源播放器，因此必定要关联一个 player 为其源源不断的输出一帧帧的画面，所以图层会绑定一个 player 播放器实例：
+  ```objc
+  var player: AVPlayer? {
+    get {
+      return playerLayer.player
+    }
+  
+    set {
+      playerLayer.player = newValue
+    }
+  }
+  ```
+
+3. 那播放器从何而来，播放必定要有资源吧，本地的视频？或者远端的视频？ 因此从设计角度来说，player 播放的单个内容我们封装成一个 AVPlayerItem，上面说的，然后对资源再细分一层 `AVAsset` 抽象不可变类，接触多的是 `AVURLAsset` 子类：
+
+  ```objc
+  let asset = AVURLAsset(url: video.url)
+  let item = AVPlayerItem(asset: asset)
+  
+  // 这里展示把播放item “换碟” 给队列 player 中
+  player.insert(item, after: player.items().last)
+  ```
+
+4. 至于播放器的控制，其实就是 play 和 pause 两个方法，其他属性包括音量(volume)，播放速度(rate)等等
+
+> 总结步骤：先要有 `AVAsset` 资源(e.g.传一个url链接进去) --->  然后以此基础实例化一个 `AVPlayerItem` ----> 然后依赖注入到一个播放器实例 player 中，就好比放碟到 DVD 中 ---> 而 player 和硬件的屏幕是绑定的，player 输出一帧又一帧的画面传递给屏幕显示，这里屏幕就是我们的 AVPlayerLayer
+
+
+
+
