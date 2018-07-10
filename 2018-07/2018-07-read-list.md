@@ -285,5 +285,97 @@ if (responseId) {
 > 总结步骤：先要有 `AVAsset` 资源(e.g.传一个url链接进去) --->  然后以此基础实例化一个 `AVPlayerItem` ----> 然后依赖注入到一个播放器实例 player 中，就好比放碟到 DVD 中 ---> 而 player 和硬件的屏幕是绑定的，player 输出一帧又一帧的画面传递给屏幕显示，这里屏幕就是我们的 AVPlayerLayer
 
 
+# 2018/07/10
 
+[Operation and OperationQueue Tutorial in Swift](https://www.raywenderlich.com/190008/operation-and-operationqueue-tutorial-in-swift)
 
+GCD VS. Operation 
+
+* GCD ，Grand Center Of Dispatch，轻量级支持多线程任务执行的方式之一，我们仅需要传入一个代码块 block，明确表示在哪个队列中(主队列【串行】、四个全局调度队列【并发】、自定义队列【串行or并发】)执行，你不需要自己创建子线程，不需要手动去触发这个代码块。GCD 会非常智能地从不同队列中取出任务然后调用，至于某些队列中的任务，GCD 需要创建新的线程，或者直接在已有的线程中执行，视情况而定，再说说GCD的缺点，依赖关系不好控制，cancel和suspend block又会增加额外工作；
+* Operation 是基于 GCD 上构建的，但是相对于GCD 稍微设置工作量多点，但是我们可以轻松在Operation间设定依赖关系，以及执行取消或挂起操作。
+
+本文也算是入门好文，简单说下 Operation 的使用当做记忆：
+
+```
+ // 首先构建操作队列
+ lazy var downloadQueue: OperationQueue = {
+    var queue = OperationQueue()
+    queue.name = "Download queue"
+    queue.maxConcurrentOperationCount = 1
+    return queue
+  }()
+```
+队列中的操作无非就是add和remove，队列元素是 Operation，这是个抽象类，我们自定义的话就需要继承它：
+```
+class ImageDownloader: Operation {
+  //1
+  let photoRecord: PhotoRecord
+  
+  //2
+  init(_ photoRecord: PhotoRecord) {
+    self.photoRecord = photoRecord
+  }
+  
+  //3
+  override func main() {
+    //4
+    if isCancelled {
+      return
+    }
+
+    //5
+    guard let imageData = try? Data(contentsOf: photoRecord.url) else { return }
+    
+    //6
+    if isCancelled {
+      return
+    }
+    
+    //7
+    if !imageData.isEmpty {
+      photoRecord.image = UIImage(data:imageData)
+      photoRecord.state = .downloaded
+    } else {
+      photoRecord.state = .failed
+      photoRecord.image = UIImage(named: "Failed")
+    }
+  }
+}
+```
+
+OperationQueue 队列中添加 Operation
+
+```
+// 貌似会执行
+pendingOperations.filtrationQueue.addOperation(filterer)
+```
+
+挂起：
+
+```
+pendingOperations.downloadQueue.isSuspended = false
+```
+
+添加依赖：
+
+```
+// MyDownloadOperation is a subclass of Operation
+let downloadOperation = MyDownloadOperation()
+// MyFilterOperation  is a subclass of Operation
+let filterOperation = MyFilterOperation()
+
+filterOperation.addDependency(downloadOperation)
+
+```
+为 Operation 添加 completionBlock:
+
+```
+downloader.completionBlock = {
+    if downloader.isCancelled{return}
+    
+    DispatchQueue.main.async {
+        self.pendingOperations.downloadsInProcess.removeValue(forKey: indexPath)
+        self.tableView.reloadRows(at: [indexPath], with: .fade)
+    }
+}
+```
