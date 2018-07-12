@@ -379,3 +379,116 @@ downloader.completionBlock = {
     }
 }
 ```
+
+# 2018/07/12
+
+在 Swift 中使用马尔可夫链生成文本 [Friday Q&A 2018-04-27: Generating Text With Markov Chains in Swift](https://www.mikeash.com/pyblog/friday-qa-2018-04-27-generating-text-with-markov-chains-in-swift.html)
+
+说实话看完本文我还不知道马尔科夫链是什么东西，但是文章提供了以链表方式存储词和词之间的关系，然后随机生成一条语句。
+
+链表中的Node结构一般定义如下：
+
+```
+// C 数据结构
+typedef struct Node {
+  void *content;
+  Node *next；
+}Node;
+
+// swift 数据结构
+Class Node {
+  var content;
+  var next:Node;
+}
+```
+
+以我们说到的单词为例，比如 "You are great, You are the best one, one of you maybe have chance to talk with Liangjie"。这里的"You","are" 都是一个个单词，封装成 Word 类；
+
+```
+class Word {
+   let str: String?
+   var links: [Word] = []
+}
+```
+
+Node 内容变量 str 类型为 String，存储诸如 "You","are" 单词，至于links为什么是个数组，请见上面句中 “you” 和 “are” ，“you” 和 “maybe” 从某种角度来说是上下文关联的，所以 “You” 作为主单词，关联词可以有很多个，随着更多句子导入分析，我们会得到更多和单词 “you” 结合的单词，当然样本越多，我们就知道哪些单词和 “you” 的关联更频繁，这就是词频。
+
+至于随机语句是怎么生成的，从 links 中随机取一个单词和 str 结合就可以。然后再从这个单词的 links 中再随机选一个。至于可靠性，还是得靠样本，比如样本中多次出现 ”you are“ 这种结合，那么 Word “you” 的links中 “are” 会出现很多次，比如`["are","are","are","maybe","are","are","are","get"]`，随机里面选一个，显然取到 "are" 的概率高很多。
+
+```
+class Word {
+    let str:String?
+    var links:[Word] = []
+    
+    init(str:String?) {
+        self.str = str
+    }
+    
+    func randomNext()->Word {
+        let index =  arc4random_uniform(UInt32(links.count))
+        return links[Int(index)]
+    }
+}
+
+
+class Chain {
+    var words:[String?:Word] = [:]
+    deinit {
+        for word in words.values {
+            word.links = []
+        }
+    }
+   
+    func add(_ words:[String]) {
+        if words.isEmpty {
+            return
+        }
+        let words = words as [String?]
+        
+        let wordPairs = zip([nil] + words, words + [nil])
+        
+        for (first, second) in wordPairs {
+            let firstWord = word(first)
+            let secondWord = word(second)
+            
+            firstWord.links.append(secondWord)
+        }
+    }
+    
+    func word(_ str: String?) -> Word {
+        if let word = words[str] {
+            return word
+        } else {
+            let word = Word(str: str)
+            words[str] = word
+            return word
+        }
+    }
+    
+    func generate() -> [String] {
+        var result: [String] = []
+        
+        while true {
+            let currentWord = word(result.last)
+            
+            let nextWord = currentWord.randomNext()
+            
+            if let str = nextWord.str {
+                result.append(str)
+            } else {
+                break
+            }
+        }
+        return result
+    }
+}
+
+extension Optional: Hashable where Wrapped: Hashable {
+    public var hashValue: Int {
+        switch self {
+        case let wrapped?: return wrapped.hashValue
+        case .none: return 42
+        }
+    }
+}
+```
