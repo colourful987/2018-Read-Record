@@ -269,7 +269,7 @@ if (responseId) {
     }
   }
   ```
-
+  
 3. 那播放器从何而来，播放必定要有资源吧，本地的视频？或者远端的视频？ 因此从设计角度来说，player 播放的单个内容我们封装成一个 AVPlayerItem，上面说的，然后对资源再细分一层 `AVAsset` 抽象不可变类，接触多的是 `AVURLAsset` 子类：
 
   ```objc
@@ -279,7 +279,7 @@ if (responseId) {
   // 这里展示把播放item “换碟” 给队列 player 中
   player.insert(item, after: player.items().last)
   ```
-
+  
 4. 至于播放器的控制，其实就是 play 和 pause 两个方法，其他属性包括音量(volume)，播放速度(rate)等等
 
 > 总结步骤：先要有 `AVAsset` 资源(e.g.传一个url链接进去) --->  然后以此基础实例化一个 `AVPlayerItem` ----> 然后依赖注入到一个播放器实例 player 中，就好比放碟到 DVD 中 ---> 而 player 和硬件的屏幕是绑定的，player 输出一帧又一帧的画面传递给屏幕显示，这里屏幕就是我们的 AVPlayerLayer
@@ -492,3 +492,7 @@ extension Optional: Hashable where Wrapped: Hashable {
     }
 }
 ```
+
+# 2018/07/16
+
+[Debugging with C-Reduce](https://www.mikeash.com/pyblog/friday-qa-2018-06-29-debugging-with-c-reduce.html)调试 xcodeproj 感觉还是个问题 毕竟编译需要一定时间，另外文中给出的脚本也不太明确，不好实践，不过还是蛮有意思的，总结来说这个工具就是平常我们遇到bug或者崩溃，将手动一行行删代码这种操作转为自动化脚本来跑。
