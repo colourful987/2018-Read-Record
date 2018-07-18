@@ -269,7 +269,7 @@ if (responseId) {
     }
   }
   ```
-  
+
 3. 那播放器从何而来，播放必定要有资源吧，本地的视频？或者远端的视频？ 因此从设计角度来说，player 播放的单个内容我们封装成一个 AVPlayerItem，上面说的，然后对资源再细分一层 `AVAsset` 抽象不可变类，接触多的是 `AVURLAsset` 子类：
 
   ```objc
@@ -279,7 +279,7 @@ if (responseId) {
   // 这里展示把播放item “换碟” 给队列 player 中
   player.insert(item, after: player.items().last)
   ```
-  
+
 4. 至于播放器的控制，其实就是 play 和 pause 两个方法，其他属性包括音量(volume)，播放速度(rate)等等
 
 > 总结步骤：先要有 `AVAsset` 资源(e.g.传一个url链接进去) --->  然后以此基础实例化一个 `AVPlayerItem` ----> 然后依赖注入到一个播放器实例 player 中，就好比放碟到 DVD 中 ---> 而 player 和硬件的屏幕是绑定的，player 输出一帧又一帧的画面传递给屏幕显示，这里屏幕就是我们的 AVPlayerLayer
@@ -496,3 +496,87 @@ extension Optional: Hashable where Wrapped: Hashable {
 # 2018/07/16
 
 [Debugging with C-Reduce](https://www.mikeash.com/pyblog/friday-qa-2018-06-29-debugging-with-c-reduce.html)调试 xcodeproj 感觉还是个问题 毕竟编译需要一定时间，另外文中给出的脚本也不太明确，不好实践，不过还是蛮有意思的，总结来说这个工具就是平常我们遇到bug或者崩溃，将手动一行行删代码这种操作转为自动化脚本来跑。
+
+# 2018/07/17
+[Creating a Framework for iOS](https://www.raywenderlich.com/192939/creating-a-framework-for-ios) raywenderlich 出品，制作自定义控件的framework，并打成 cocoaPods 发布到github上，这篇文章能学习到的知识点：
+
+## 1. 学习 Swift 的 Access Control 
+总共有5个类别：
+
+* open 和 public 定义的 entity 允许被所有作用域（包括当前模块内文件或是其他模块文件）访问；
+* internal 作用范围仅限在 entity 所定义的模块内部，其他模块文件无法访问。ps：默认 Access Control Level 为 Internal；
+* fileprivate 作用范围为当前文件，因此一个文件内定义多个类，某个类标记为 fileprivate 之后，当前模块内的其他文件无法访问这个类，而当前文件内定义的其他类可以访问；
+* private 只允许当前作用域访问。
+
+open 只能应用于类和类成员，与 public 的不同之处在于:
+
+* public 以及其他 more restrictive 访问级别只能在定义的模块内被继承；
+* public 以及其他 more restrictive 访问级别只能在定义的模块内被重写；
+* open 则既可以在定义的模块或是其他模块内被继承或重写。
+
+## 2. Xcode 中创建 Framework 的流程
+
+这个很简单，就是New里面选择 iOS->Framework&Library->Cocoa Touch Framework，然后把源码拉进去就好了
+
+## 3. @IBInspectable 和 @IBDesignable 修饰符
+
+@IBInspectable 修饰我们的视图Class，Storyboard 会实时渲染代码呈现到 XIB 中。
+
+@IBDesignable 修改一些参数，这样在 Storyboard 的属性设置列表中出现参数配置项。
+
+// 某些情况下 我们还需要重写如下方法，如果重写了 drawRect 方法，可能下面的方法就不需要了
+```
+public override func prepareForInterfaceBuilder() {
+  super.prepareForInterfaceBuilder()
+
+  renderer.updateBounds(bounds)
+}
+```
+
+## 4. 学习如何使用 CocoaPods 将framework打包成一个pod
+
+首先调用 `pod spec create KnobControl` 命令为我们库创建一个 `.podspec` meta说明文件，内容如下：
+```
+s.name         = "KnobControl"
+s.version      = "1.0.0"
+s.summary      = "A knob control like the UISlider, but in a circular form."
+s.description  = "The knob control is a completely customizable widget that can be used in any iOS app. It also plays a little victory fanfare."
+s.homepage     = "http://raywenderlich.com"
+```
+
+这个文件和我们的工程是在同一个目录下的。
+
+pod 是package manager，采用的是 xcworkspace 方式，因此对于一开始是 xcodeproj 工程的项目，我们需要将其初始化为 xcworkspace，转换很简单，只需要一行命令，在主工程目录下调用 `pod init`，此时会生成一个 Podfile 文件，这个文件就是描述当前工程以及，用到的所有第三方库(Pod)的描述：
+
+```
+platform :ios, '12.0'
+
+target 'KnobShowcase' do
+  use_frameworks!
+
+  pod 'KnobControl', :path => '../KnobControl'
+
+end
+
+# Workaround for Cocoapods issue #7606
+post_install do |installer|
+    installer.pods_project.build_configurations.each do |config|
+        config.build_settings.delete('CODE_SIGNING_ALLOWED')
+        config.build_settings.delete('CODE_SIGNING_REQUIRED')
+    end
+end
+```
+
+注意path这一栏，既可以是本地相对路径，也可以是remote远程的。
+
+接着我们会调用 pod install 来安装Podfile涉及的所有库，所谓安装，应该就是将我们的主工程和所有第三方库建立依赖。
+
+
+## 5. 发布我们的Pod到Github 上
+
+这个很简单，只需要在 Github 上 new 一个 repo，然后把我们framework推上去，一定要包含podspec文件，这个是重中之重，描述了我们的库的所有信息，比如名称，支持版本，支持的平台等等信息。
+
+紧接着，podspec中的version要和我们tag保持一致，我们必须要为这个库大一个tag，因为别人用我们的库肯定是稳定的，也就是tags中取一个版本。
+
+最后我们工程中的 `pod 'KnobControl', :path => '../KnobControl'` 改成远程地址就搞定了。
+
