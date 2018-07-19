@@ -1,6 +1,6 @@
 > Theme: JS Native Communication
 > Source Code Read Plan:
-> - [ ] JavaScriptCore 实现原理，热更新如何做到？
+> - [x] JavaScriptCore 实现原理，热更新如何做到？
 > - [x] WebViewJavascriptBridge 实现写博文；
 > - [ ] WKWebview 之后是趋势，简单研究下使用
 > - [ ] [JLRoute](https://github.com/joeldev/JLRoutes)
@@ -579,4 +579,50 @@ end
 紧接着，podspec中的version要和我们tag保持一致，我们必须要为这个库大一个tag，因为别人用我们的库肯定是稳定的，也就是tags中取一个版本。
 
 最后我们工程中的 `pod 'KnobControl', :path => '../KnobControl'` 改成远程地址就搞定了。
+
+# 2018/07/18
+[Basic UIView Animation Tutorial: Getting Started](https://www.raywenderlich.com/193707/basic-uiview-animation-tutorial-getting-started) 动画入门初级教学文章，就目前来说学习价值不大，但是对初学者来说是入门好文，一步步完成一个打虫子的游戏，涉及的动画也是UIView 自带的。
+
+# 2018/07/19
+
+[深入浅出 JavaScriptCore](http://www.cocoachina.com/ios/20170720/19958.html)
+
+本篇文章对 JavaScriptCode 简单介绍，Objective-C和JavaScript两者互相调用，核心借助 JSContext ，它就像是 iOS客户端(Objective-C) 和 网页前端(JavaScript) 两者的共享数据池，两边都可以往里面注入数据，Objective-C和 JavaScript 类型映射关系如下：
+
+```
+nil         |   undefined
+NSNull      |   null
+NSString    |   string
+NSNumber    |   number,boolean
+NSDictionary |  Object object
+NSArray     |   Array object
+NSDate     |    Date object
+NSBlock     | Function object
+id          | Wrapper object
+Class       | Constructor object
+```
+
+总的来说推荐本文来入门 JavaScriptCore，但是美中不足的是“深入”并未到源码层次。
+
+最后JavaScriptCore交互可以是 JSContext 注入Block 或其他数据，也可以直接让OC对象遵循 `JSExport` 协议的扩展项，比如：
+
+```
+@protocol MyPointExports <JSExport>
+@property double x
+@property double y
+
+- (NSString *)description
+
++ (MyPoint *)makePointWithX:(double)x y:(double)y;
+@end
+```
+
+我们抽离 MyPoint 类中希望暴露的方法和属性，然后在 JSExport 协议基础上扩展出 MyPointExports。
+
+> 至于到底 JavaScriptCore 是如何实现两端交互的，还得看源码。
+
+
+
+
+
 
