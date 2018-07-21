@@ -621,6 +621,9 @@ Class       | Constructor object
 
 > 至于到底 JavaScriptCore 是如何实现两端交互的，还得看源码。
 
+# 2018/07/21
+[How to Play, Record, and Merge Videos in iOS and Swift](https://www.raywenderlich.com/188034/how-to-play-record-and-merge-videos-in-ios-and-swift) 是对AVPlayer 的进阶文章，学习如何获取video 和 audio，record video，以及多个video和audio合成。
+
 
 
 
