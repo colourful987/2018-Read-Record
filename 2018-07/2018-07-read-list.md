@@ -624,6 +624,33 @@ Class       | Constructor object
 # 2018/07/21
 [How to Play, Record, and Merge Videos in iOS and Swift](https://www.raywenderlich.com/188034/how-to-play-record-and-merge-videos-in-ios-and-swift) 是对AVPlayer 的进阶文章，学习如何获取video 和 audio，record video，以及多个video和audio合成。
 
+# 2018/07/22
+
+温习 Effective Objective-C 2.0 52 Specific Ways to Improve Your iOS 的 Item12 Understand Message Forwarding。
+
+应用程序在main函数之前会load class_image，将所有类对象（Class object）信息和元类对象（Meta Class object）信息都加载到内存中，有且仅有一份。
+
+某个类的实例本质上就是在堆上（heap）上开辟一块内存地址————毕竟实例变量的值都存储在这块内存上，而这块内存地址首地址（4或8个字节）存储的是一个指针（地址）————记录了当前类的信息，比如属性名称，有哪些实例方法等等，而这块内存的首位同样是一个地址，不用说也知道是记录元类对象信息，直白点就是类方法、类属性。
+
+书中关于消息转发的一个流程大致已经讲清，网上博文众多，基本都是套这章图，所以不再赘述。
+
+思考小知识，为啥这两个方法都是类方法：
+
+```
++ (BOOL)resolveInstanceMethod:(SEL)selector;
++ (BOOL)resolveClassMethod:(SEL)selector
+```
+
+这两个方法都是存储在元类对象的描述信息中，消息发送函数的原型为：
+
+```
+void objc_msgSend(id self, SEL cmd, ...) // 真正是汇编实现，且根据返回类型定义了不同函数
+```
+
+发送实例消息，self就是实例对象的地址；发送类消息，self就是类对象的地址。
+
+因此，`resolveInstanceMethod` 和 `resolveClassMethod` 都接收到了类对象的地址，前者只需要遍历类对象中的方法列表就能知道是不是能响应某个实例方法了。而关于类方法的描述都是存储在元类对象中，因此需要先用 self->isa 取到元类对象，然后遍历方法列表。
+
 
 
 
