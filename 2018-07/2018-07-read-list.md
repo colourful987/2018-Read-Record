@@ -4,7 +4,7 @@
 > - [x] WebViewJavascriptBridge 实现写博文；
 > - [ ] WKWebview 之后是趋势，简单研究下使用
 > - [ ] [JLRoute](https://github.com/joeldev/JLRoutes)
-> - [ ] Method Forward
+> - [x] Method Forward
 > - [ ] GCD 底层libdispatch
 > - [ ] Aspect 温顾
 > - [ ] YYModel 温顾
@@ -624,6 +624,7 @@ Class       | Constructor object
 # 2018/07/21
 [How to Play, Record, and Merge Videos in iOS and Swift](https://www.raywenderlich.com/188034/how-to-play-record-and-merge-videos-in-ios-and-swift) 是对AVPlayer 的进阶文章，学习如何获取video 和 audio，record video，以及多个video和audio合成。
 
+
 # 2018/07/22
 
 温习 Effective Objective-C 2.0 52 Specific Ways to Improve Your iOS 的 Item12 Understand Message Forwarding。
@@ -652,7 +653,157 @@ void objc_msgSend(id self, SEL cmd, ...) // 真正是汇编实现，且根据返
 因此，`resolveInstanceMethod` 和 `resolveClassMethod` 都接收到了类对象的地址，前者只需要遍历类对象中的方法列表就能知道是不是能响应某个实例方法了。而关于类方法的描述都是存储在元类对象中，因此需要先用 self->isa 取到元类对象，然后遍历方法列表。
 
 
+# 2018/07/23
+[Friday Q&A 2012-11-16: Let's Build objc_msgSend](https://www.mikeash.com/pyblog/friday-qa-2012-11-16-lets-build-objc_msgsend.html) 关于汇编实现 msgSend 比较懵逼。
 
+Mike Ash 12年时候就可以自己动手实现 msgSend 的asm版本，着实让人佩服，教程中的代码略微有些问题，对于多参数传入时候会崩溃.
 
+msgsend-asm.s 源码文件：
+```
+.global _objc_msgSend
+_objc_msgSend:
 
+pushq %rsi
+pushq %rdi
+pushq %rdx
+pushq %rcx
+pushq %r8
+pushq %r9
 
+pushq %rax
+
+pushq %r12
+mov %rsp, %r12
+andq $-0x10, %rsp
+
+callq _GetImplementation
+
+mov %rax, %r11
+mov %r12, %rsp
+popq %r12
+
+popq %rax
+popq %r9
+popq %r8
+popq %rcx
+popq %rdx
+popq %rdi
+popq %rsi
+
+jmp *%r11
+```
+
+`_objc_msgSend` 消息发送就是 runtime 的底层 asm 汇编声明，这里用 global 来标识，就近原则会 override origin 实现。注意 _GetImplementation 又是c语言实现，内部实现是基于缓存机制，简单来说就是为了加速消息发送效率，发送过的消息会缓存起来，下一次再调用该消息时，直接从hash table中读取，而不需要遍历methodlist。
+
+main.m 文件：
+
+```
+#import <Foundation/Foundation.h>
+#import <objc/runtime.h>
+
+#ifndef __LP64__
+# define CACHE_HASH(sel, mask) (((uintptr_t)(sel)>>2) & (mask))
+#else
+# define CACHE_HASH(sel, mask) (((unsigned int)((uintptr_t)(sel)>>0)) & (mask))
+#endif
+
+typedef struct {
+    SEL name;
+    void *unused;
+    IMP imp;
+} cache_entry;
+
+struct objc_cache {
+    uintptr_t mask;
+    uintptr_t occupied;
+    cache_entry *buckets[1];
+};
+
+struct class_t {
+    struct class_t *isa;
+    struct class_t *superclass;
+    struct objc_cache *cache;
+    IMP *vtable;
+};
+
+IMP GetImplementation(id self, SEL _cmd) {
+    Class c = object_getClass(self);
+    struct class_t *classInternals = (__bridge struct class_t *)c;
+    IMP imp = NULL;
+    struct objc_cache *cache = classInternals->cache;
+    uintptr_t index = CACHE_HASH(_cmd, cache->mask);
+    cache_entry **buckets = cache->buckets;
+    
+    for(; buckets[index] != NULL; index = (index + 1) & cache->mask)
+    {
+        if(buckets[index]->name == _cmd)
+        {
+            imp = buckets[index]->imp;
+            break;
+        }
+    }
+    
+    if(imp == NULL)
+        imp = class_getMethodImplementation(c, _cmd);
+    return imp;
+}
+
+@interface Test : NSObject
+- (void)none;
+- (void)param: (int)x;
+- (void)params: (int)a : (int)b : (int)c : (int)d : (int)e : (int)f : (int)g;
+- (int)retval;
+@end
+
+@implementation Test
+
+- (id)init
+{
+    fprintf(stderr, "in init method, self is %p\n", self);
+    return self;
+}
+
+- (void)none
+{
+    fprintf(stderr, "in none method\n");
+}
+
+- (void)param: (int)x
+{
+    fprintf(stderr, "got parameter %d\n", x);
+}
+
+- (void)params: (int)a : (int)b : (int)c : (int)d : (int)e : (int)f : (int)g
+{
+    fprintf(stderr, "got params %d %d %d %d %d %d %d\n", a, b, c, d, e, f, g);
+}
+
+- (int)retval
+{
+    fprintf(stderr, "in retval method\n");
+    return 42;
+}
+
+@end
+
+int main(int argc, const char * argv[]) {
+    @autoreleasepool {
+        for(int i = 0; i < 20; i++)
+        {
+            Test *t = [[Test alloc] init];
+            [t none];
+            [t param: 9999];
+            [t params: 1 : 2 : 3 : 4 : 5 : 6 : 7];
+            fprintf(stderr, "retval gave us %d\n", [t retval]);
+            
+            NSMutableArray *a = [[NSMutableArray alloc] init];
+            [a addObject: @1];
+            [a addObject: @{ @"foo" : @"bar" }];
+            [a addObject: @("blah")];
+            a[0] = @2;
+            NSLog(@"%@", a);
+        }
+    }
+    return 0;
+}
+```
