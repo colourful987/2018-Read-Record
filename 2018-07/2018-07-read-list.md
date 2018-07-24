@@ -807,3 +807,9 @@ int main(int argc, const char * argv[]) {
     return 0;
 }
 ```
+# 2018/07/24
+汇编相关：
+
+[X86-64寄存器和栈帧](https://blog.csdn.net/u013737447/article/details/49154509)
+
+[函数调用过程探究](https://www.cnblogs.com/bangerlee/archive/2012/05/22/2508772.html)
