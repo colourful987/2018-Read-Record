@@ -814,8 +814,6 @@ int main(int argc, const char * argv[]) {
 
 [函数调用过程探究](https://www.cnblogs.com/bangerlee/archive/2012/05/22/2508772.html)
 
-
-
 # 2018/07/25
 
 Runtime([latest objc 723](https://github.com/0xxd0/objc4))、Runloop 相关知识：
@@ -961,3 +959,61 @@ static inline void runLoop_source_perform(void *info) {
 因此这里的 perform() 就是执行闭包了。
 
 > 最后：`objc_inspect` 代码中有 `fgets(c_str, buf_size, stdin)` 用于读取用户输入，程序会一直在这行代码停留，因此runloop中有其他source0事件，是不会被执行的；之后的 `do{}while()` 也是一个道理，如果一个 source0 事件一直在死循环，其他source0 时钟不会处理。
+
+
+
+# 2018/07/26
+
+[Runtime 源码阅读](https://github.com/0xxd0/objc4).
+
+对于 Message Forward 消息转发机制，只有当声明了方法但是具体实现没有，或者干脆没有实现，用 `performSelector` 来执行，才会走如下机制：
+
+1. `+ (BOOL)resolveInstanceMethod:(SEL)sel` or `+ (BOOL)resolveClassMethod:(SEL)sel`
+2. `- (id)forwardingTargetForSelector:(SEL)aSelector`
+3. `- (void)forwardInvocation:(NSInvocation *)anInvocation `，这里还会调用 `- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector` 貌似返回nil会崩溃。
+
+源码如下：
+```
+// No implementation found. Try method resolver once.
+
+if (resolver  &&  !triedResolver) {
+    runtimeLock.unlockRead();
+    _class_resolveMethod(cls, sel, inst);
+    runtimeLock.read();
+    // Don't cache the result; we don't hold the lock so it may have 
+    // changed already. Re-do the search from scratch instead.
+    triedResolver = YES;
+    goto retry;
+}
+
+// No implementation found, and method resolver didn't help. 
+// Use forwarding.
+
+imp = (IMP)_objc_msgForward_impcache;
+cache_fill(cls, sel, imp, inst);
+```
+
+从源码来看，如果实现没有找到，就需要 try method resolver。
+
+resolveMethod 内部做了分流处理，区别是类方法还是实例方法：
+```
+void _class_resolveMethod(Class cls, SEL sel, id inst)
+{
+    if (! cls->isMetaClass()) {
+        // try [cls resolveInstanceMethod:sel]
+        _class_resolveInstanceMethod(cls, sel, inst);
+    } 
+    else {
+        // try [nonMetaClass resolveClassMethod:sel]
+        // and [cls resolveInstanceMethod:sel]
+        _class_resolveClassMethod(cls, sel, inst);
+        if (!lookUpImpOrNil(cls, sel, inst, 
+                            NO/*initialize*/, YES/*cache*/, NO/*resolver*/)) 
+        {
+            _class_resolveInstanceMethod(cls, sel, inst);
+        }
+    }
+}
+```
+
+上述第一步没有找到意味着 `return NO`，那么正如源码注释中所说 "No implementation found, and method resolver didn't help,Use forwarding."
