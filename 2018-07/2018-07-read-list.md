@@ -807,6 +807,7 @@ int main(int argc, const char * argv[]) {
     return 0;
 }
 ```
+
 # 2018/07/24
 汇编相关：
 
@@ -961,7 +962,6 @@ static inline void runLoop_source_perform(void *info) {
 > 最后：`objc_inspect` 代码中有 `fgets(c_str, buf_size, stdin)` 用于读取用户输入，程序会一直在这行代码停留，因此runloop中有其他source0事件，是不会被执行的；之后的 `do{}while()` 也是一个道理，如果一个 source0 事件一直在死循环，其他source0 时钟不会处理。
 
 
-
 # 2018/07/26
 
 [Runtime 源码阅读](https://github.com/0xxd0/objc4).
@@ -1017,3 +1017,173 @@ void _class_resolveMethod(Class cls, SEL sel, id inst)
 ```
 
 上述第一步没有找到意味着 `return NO`，那么正如源码注释中所说 "No implementation found, and method resolver didn't help,Use forwarding."
+
+
+# 2018/07/29
+
+关于消息转发第二条、第三条，实际在runtime代码中没有具体实现，到了 `_objc_msgForward_impcache` 这一步就“断掉了”，不过呢，我们汇编中的方法对应oc的方法，是oc方法前面加 `"_"` ，ps:历史原因，所以我直接搜 `__objc_msgForward_impcache`，可以在 `objc-msg-x86_64.s` 中找到
+
+```
+ENTRY __objc_msgForward
+// Non-stret version
+
+movq	__objc_forward_handler(%rip), %r11
+jmp	*%r11
+
+END_ENTRY __objc_msgForward
+```
+
+然后打个断点，就能验证确实走到了这里，然而这里的汇编指令还是依然没有太多信息，只能看到关键汇编指令：
+
+```
+movq	__objc_forward_handler(%rip), %r11
+```
+
+我们可以跳到 `__objc_forward_handler` 方法看实现（ps: 上面说了oc方法要去掉一个`“_”`）：
+
+```
+void *_objc_forward_handler = nil;
+
+__attribute__((noreturn)) void 
+objc_defaultForwardHandler(id self, SEL sel)
+{
+    _objc_fatal("%c[%s %s]: unrecognized selector sent to instance %p "
+                "(no message forward handler is installed)", 
+                class_isMetaClass(object_getClass(self)) ? '+' : '-', 
+                object_getClassName(self), sel_getName(sel), self);
+}
+void *_objc_forward_handler = (void*)objc_defaultForwardHandler;
+
+
+void objc_setForwardHandler(void *fwd, void *fwd_stret)
+{
+    _objc_forward_handler = fwd;
+#if SUPPORT_STRET
+    _objc_forward_stret_handler = fwd_stret;
+#endif
+}
+```
+
+首先 `_objc_forward_handler` 是个全局变量，函数指针，默认值可以看到是`objc_defaultForwardHandler`，但是有个 “setter” 方法，在`_objc_forward_handler = fwd;` 打个断点，重新跑程序，可以发现第一次调用在 `__CFInitialize` 中：
+
+![forwardHandler.png](./resource/forwardHandler.png)
+
+说明具体实现在 CoreFoundation 的初始化过程中，在 [Hmmm, What’s that Selector? ](http://arigrant.com/blog/2013/12/13/a-selector-left-unhandled) 一文中猜测实现(http://www.arigrant.com 有很多讲述底层的实现，真的很厉害 推荐)，ps: 其实我在oc提供的几个方法中都打了断点，大致也能猜测了，主要是：
+
+```oc
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector {
+    return [super methodSignatureForSelector:aSelector];
+}
+
+- (id)forwardingTargetForSelector:(SEL)aSelector{
+    return [super forwardingTargetForSelector:aSelector];
+}
+
+- (void)forwardInvocation:(NSInvocation *)anInvocation {
+    return [super forwardInvocation:anInvocation];
+}
+```
+
+然后猜测的具体实现为：
+```oc
+void __forwarding__(BOOL isStret, void *frameStackPointer, ...) {
+  id receiver = *(id *)frameStackPointer;
+  SEL sel = *(SEL *)(frameStackPointer + 4);
+
+  Class receiverClass = object_getClass(receiver);
+
+  if (class_respondsToSelector(receiverClass, @selector(forwardingTargetForSelector:))) {
+    id forwardingTarget = [receiver forwardingTargetForSelector:sel];
+    if (forwardingTarget) {
+      return objc_msgSend(forwardingTarget, sel, ...);
+    }
+  }
+
+  const char *className = class_getName(object_getClass(receiver));
+  const char *zombiePrefix = "_NSZombie_";
+  size_t prefixLen = strlen(zombiePrefix);
+  if (strncmp(className, zombiePrefix, prefixLen) == 0) {
+    CFLog(kCFLogLevelError,
+          @"-[%s %s]: message sent to deallocated instance %p",
+          className + prefixLen,
+          sel_getName(sel),
+          receiver);
+    <breakpoint-interrupt>
+  }
+
+  if (class_respondsToSelector(receiverClass, @selector(methodSignatureForSelector:))) {
+    NSMethodSignature *methodSignature = [receiver methodSignatureForSelector:sel];
+    if (methodSignature) {
+      BOOL signatureIsStret = [methodSignature _frameDescriptor]->returnArgInfo.flags.isStruct;
+      if (signatureIsStret != isStret) {
+        CFLog(kCFLogLevelWarning ,
+              @"*** NSForwarding: warning: method signature and compiler disagree on struct-return-edness of '%s'.  Signature thinks it does%s return a struct, and compiler thinks it does%s.",
+              sel_getName(sel),
+              signatureIsStret ? "" : not,
+              isStret ? "" : not);
+      }
+      if (class_respondsToSelector(receiverClass, @selector(forwardInvocation:))) {
+        NSInvocation *invocation = [NSInvocation _invocationWithMethodSignature:methodSignature
+                                                                          frame:frameStackPointer];
+        [receiver forwardInvocation:invocation];
+
+        void *returnValue = NULL;
+        [invocation getReturnValue:&value];
+        return returnValue;
+      } else {
+        CFLog(kCFLogLevelWarning ,
+              @"*** NSForwarding: warning: object %p of class '%s' does not implement forwardInvocation: -- dropping message",
+              receiver,
+              className);
+        return 0;
+      }
+    }
+  }
+
+  const char *selName = sel_getName(sel);
+  SEL *registeredSel = sel_getUid(selName);
+
+  if (sel != registeredSel) {
+    CFLog(kCFLogLevelWarning ,
+          @"*** NSForwarding: warning: selector (%p) for message '%s' does not match selector known to Objective C runtime (%p)-- abort",
+          sel,
+          selName,
+          registeredSel);
+  } else if (class_respondsToSelector(receiverClass, @selector(doesNotRecognizeSelector:))) {
+    [receiver doesNotRecognizeSelector:sel];
+  } else {
+    CFLog(kCFLogLevelWarning ,
+          @"*** NSForwarding: warning: object %p of class '%s' does not implement doesNotRecognizeSelector: -- abort",
+          receiver,
+          className);
+  }
+
+  // The point of no return.
+  kill(getpid(), 9);
+}
+```
+
+第二个步骤实现代码如下，实现比较简单易懂，没有知识盲点：
+
+```
+if (class_respondsToSelector(receiverClass, @selector(forwardingTargetForSelector:))) {
+  id forwardingTarget = [receiver forwardingTargetForSelector:sel];
+  if (forwardingTarget) {
+    return objc_msgSend(forwardingTarget, sel, ...);
+  }
+}
+```
+
+第三个步骤，通常萌新会认为只要重写 `- (void)forwardInvocation:(NSInvocation *)anInvocation` 就可以了，实际上我们应该考虑到既然要构建一个Invocation，必定要获取对应的 `methodSignature` ，因此`- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector` 肯定也要重写，你正在动态添加不存在的方法，若不重新，方法签名返回nil就会崩掉。
+
+
+其他知识点：
+
+```asm
+movq (%rsp), %rsp 
+```
+
+上述汇编指令的作用，首先movq是针对 x86 64的指令，四字节（quadword）move 指令。
+
+取出 rsp 寄存器中的值，然后到值指向的那块内存，取出内存中存储的value（这步操作就是括号"()" 的作用），再赋值给 %rsp 寄存器，引自[stackoverflow](https://stackoverflow.com/questions/3852909/movq-assembly-function)。
+
