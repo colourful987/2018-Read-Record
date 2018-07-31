@@ -1187,3 +1187,6 @@ movq (%rsp), %rsp
 
 取出 rsp 寄存器中的值，然后到值指向的那块内存，取出内存中存储的value（这步操作就是括号"()" 的作用），再赋值给 %rsp 寄存器，引自[stackoverflow](https://stackoverflow.com/questions/3852909/movq-assembly-function)。
 
+# 2018/07/31
+
+温习 Aspect & Happy birthday to me。^。^
