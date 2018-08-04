@@ -2,7 +2,7 @@
 > Source Code Read Plan:
 >
 > - [ ] GCD 底层libdispatch
-> - [ ] Aspect 温顾
+> - [x] Aspect 温顾
 > - [ ] `objc_msgSend` 汇编实现
 >
 > - [ ] WKWebview 之后是趋势，简单研究下使用
@@ -79,3 +79,11 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
 ```
 
 核心实现，逻辑比较简单、易懂。我记得这里有个小问题。
+
+
+
+# 2018/08/04
+
+[等额本金和等额本息视频讲解——李永乐](http://t.cn/ReevtJx?m=4268972146534009&u=3325704142)
+
+首先是等额本金和等额本息的基本算法，其次是对于小额贷款公司的一些陷阱进行了讲解。
