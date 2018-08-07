@@ -98,3 +98,23 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
 [Document-Based Apps Tutorial: Getting Started](https://www.raywenderlich.com/188572/document-based-apps-tutorial-getting-started)
 
 基于系统自带的 UIDocumentBrowser 开发一个文档可视化App，学习了一半，明天继续下半节。
+
+
+
+# 2018/08/07
+[Document-Based Apps Tutorial: Getting Started](https://www.raywenderlich.com/188572/document-based-apps-tutorial-getting-started)
+
+下半节内容学习，实现了 `UIDocumentBrowserViewControllerDelegate` 的协议来自定义一些操作行为：
+* `func documentBrowser(_ controller: UIDocumentBrowserViewController, didRequestDocumentCreationWithHandler : @escaping (URL?, UIDocumentBrowserViewController.ImportMode) -> Void)` 文件的创建，移动等操作
+* `func documentBrowser(_ controller: UIDocumentBrowserViewController, didPickDocumentURLs documentURLs: [URL]) ` 选中某个文档；
+* `func documentBrowser(_ controller: UIDocumentBrowserViewController, didImportDocumentAt sourceURL: URL, toDestinationURL destinationURL: URL) ` 导入某个文件
+* `func documentBrowser(_ controller: UIDocumentBrowserViewController, failedToImportDocumentAt documentURL: URL, error: Error?) ` 导入失败
+
+这里使用了策略模式，封装了一个对象遵循`UIDocumentBrowserViewControllerDelegate` 协议，然后实现了这四个方法，但是为了灵活性，这里的呈现方式是外部客赔的闭包。
+
+文中选中一个文件呈现，使用了封装的 `MarkupViewController` 视图控制器。
+
+另外是关于应用外部打开文件的方式：
+![](https://koenig-media.raywenderlich.com/uploads/2018/04/url-open-flow.png)
+
+其实主要还是 `AppDelegate` 的代理方法 `private func application(_ app: UIApplication, open inputURL: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:])`，这里我们会获取到window的rootViewController（这里是指定的一个视图控制器，能处理文件打开等事件）。
