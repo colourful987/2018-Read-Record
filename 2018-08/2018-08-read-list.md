@@ -118,3 +118,24 @@ static void __ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL
 ![](https://koenig-media.raywenderlich.com/uploads/2018/04/url-open-flow.png)
 
 其实主要还是 `AppDelegate` 的代理方法 `private func application(_ app: UIApplication, open inputURL: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:])`，这里我们会获取到window的rootViewController（这里是指定的一个视图控制器，能处理文件打开等事件）。
+
+
+
+# 2018/08/10
+
+[Design Patterns by Tutorials: MVVM](https://www.raywenderlich.com/34-design-patterns-by-tutorials-mvvm)
+
+简单介绍MMVM介绍，以及推荐书。
+
+MVVM 依赖双向绑定，因此在oc上基本都是“不伦不类”的“MVVM”，而引入RAC学习成本或许比较高（还未看过RAC源码）。
+
+viewmodel 就是将 model 数据经过处理后转成 View 展示的信息，这里有个问题，是view绑定一个ViewModel，还是ViewModel开放一个接口 `configuration(customView:CustomView)`，外部传入自定义视图内部配置？
+
+两者区别在于谁依赖谁，比较之下，我认为还是得分场景，貌似两者都是有存在的意义。
+
+比如我们经常在UITableViewCell 中会开放一个 `configuration:(Model *)model` 接口用于配置UI，方法内部取数据再赋值给控件，这个视图不再“纯粹”，想要复用意味着你必须要将数据转成model再传入————当然你可以开另外一个接口，只不过会显得很乱；如果按照网上说的viewModel就是处理业务的，那么这里的model显然不是viewmodel，因为一个视图和业务viewModel绑定肯定无法复用了。
+
+所以第二个方案，View就是一个纯粹的View，ViewModel就是处理业务的地方，持有model，然后内部处理得到和业务相关的数据，接着ViewModel开放一个接口 `configuration:(MyView *)myView`，内部可以使用诸如 `myView.label.text = @"处理完的数据"` 形式和上面一样，就看谁关联谁的问题了。
+
+这个 MVVM 还是继续学习，感觉理解还不够到位，但是我坚信无论是 MVC 还是 MVVM，MVP都是为了解决问题而诞生的，所以存在即合理，关键是何种场景何种业务下能够发挥优势的问题。
+
