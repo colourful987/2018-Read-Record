@@ -139,3 +139,9 @@ viewmodel 就是将 model 数据经过处理后转成 View 展示的信息，这
 
 这个 MVVM 还是继续学习，感觉理解还不够到位，但是我坚信无论是 MVC 还是 MVVM，MVP都是为了解决问题而诞生的，所以存在即合理，关键是何种场景何种业务下能够发挥优势的问题。
 
+# 2018/08/12
+[How to Create Your Own Slide-Out Navigation Panel in Swift](https://www.raywenderlich.com/299-how-to-create-your-own-slide-out-navigation-panel-in-swift)
+
+如何做一个抽屉视图控制器的入门文章，处理的比较简单，就是搞一个容器视图控制器，然后内部持有一个mainController(文中是CenterViewController)，leftPanelViewController和rightPanelViewController。
+
+动画就是简单的控制center控制器View的frame，然后左右中控制器都是addChildViewController到当前视图控制器中，但是所不同的是，左右视图只有当出现的时候才会add到当前视图中，隐藏时会remove掉。
