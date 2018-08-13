@@ -1,4 +1,4 @@
-> Theme: Computer underlying knowledge
+> Theme: Custom UIViewController Transitions && Computer underlying knowledge
 > Source Code Read Plan:
 >
 > - [ ] GCD 底层libdispatch
@@ -145,3 +145,16 @@ viewmodel 就是将 model 数据经过处理后转成 View 展示的信息，这
 如何做一个抽屉视图控制器的入门文章，处理的比较简单，就是搞一个容器视图控制器，然后内部持有一个mainController(文中是CenterViewController)，leftPanelViewController和rightPanelViewController。
 
 动画就是简单的控制center控制器View的frame，然后左右中控制器都是addChildViewController到当前视图控制器中，但是所不同的是，左右视图只有当出现的时候才会add到当前视图中，隐藏时会remove掉。
+
+
+
+# 2018/08/13 (Custom UIViewController Transitions Subject Begin)
+[Custom UIViewController Transitions: Getting Started](https://www.raywenderlich.com/322-custom-uiviewcontroller-transitions-getting-started)
+
+raywenderlich 入门佳作提供了一个翻页 flip 转场动画，我从初学者的角度去理解转场动画的设计思路如下：
+
+1. 转场动画发生在两个视图控制器的**View**之间，即一个视图控制器的View慢慢“退出”当前手机屏幕至不见，方式可以是淡出（Alpha从1->0），亦或者是整个视图平移出可视区域等等；而另外一个控制器的View以一定时间“进入”到当前可视区域中，方式也是多种多样，全凭想象；
+2. 不同视图的转场动画都不尽相同，因此倘若我们写死在某个视图控制器中，那么违背了重用原则，另一方面，转场动画并没有涉及到业务方面的，它是通用的，即一个转场动画可以适用于不同的控制器，综上所述，我们可以将如何协调两个视图的显示这部分逻辑delegate出去，为了重用我们通常会将某个转场代码封装成一个对象；
+3. 但是这个对象在完成转场动画中，肯定需要知道fromview和toview是哪个，最终的frame大小是多少等等信息，这些统称为 `transitionContext` 上下文，转场动画开始之前，底层会预先将所有信息以key-value方式写入到context中，紧接着在具体的转场方法中通过预先定义的key取到值来操作，通常用到的不外乎fromView toView FinalFrame等等
+
+![](https://koenig-media.raywenderlich.com/uploads/2015/07/parts.001.jpg)
