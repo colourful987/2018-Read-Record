@@ -158,3 +158,17 @@ raywenderlich 入门佳作提供了一个翻页 flip 转场动画，我从初学
 3. 但是这个对象在完成转场动画中，肯定需要知道fromview和toview是哪个，最终的frame大小是多少等等信息，这些统称为 `transitionContext` 上下文，转场动画开始之前，底层会预先将所有信息以key-value方式写入到context中，紧接着在具体的转场方法中通过预先定义的key取到值来操作，通常用到的不外乎fromView toView FinalFrame等等
 
 ![](https://koenig-media.raywenderlich.com/uploads/2015/07/parts.001.jpg)
+
+# 2018/08/14
+[iOS Animation Tutorial: Custom View Controller Presentation Transitions](https://www.raywenderlich.com/359-ios-animation-tutorial-custom-view-controller-presentation-transitions)
+
+多年前Raywenderlich animation一书中的例子，主界面是一个卡片式的浏览，选中某个卡牌进行放大至全屏Pop的转场动画。
+昨日和今日的转场实现都是必须遵循 `UIViewControllerTransitioningDelegate`，协议内容如下： 
+
+* `func animationController(forPresented presented:presenting:source:) -> UIViewControllerAnimatedTransitioning?`
+* `func animationController(forDismissed dismissed:) -> UIViewControllerAnimatedTransitioning?`
+
+本文的亮点将动画封装成了遵循 `UIViewControllerAnimatedTransitioning` 的**对象**，这个对象加入了 `presenting` 标识使得既可作为显示转场，又可用于消失转场动画。
+
+对于 `Device Orientation Transition` 相关的还不是很了解，明天学习下如何仿照一个 Ping App作品中的某个动画，另外可以看到上面的动画都是在两个容器View的层面进行transform，而并没有涉及内部元素的动画，我们有时候可以看到某些转场动画中，视图中的子视图也有参与进来。
+
