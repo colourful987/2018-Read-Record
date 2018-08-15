@@ -172,3 +172,36 @@ raywenderlich 入门佳作提供了一个翻页 flip 转场动画，我从初学
 
 对于 `Device Orientation Transition` 相关的还不是很了解，明天学习下如何仿照一个 Ping App作品中的某个动画，另外可以看到上面的动画都是在两个容器View的层面进行transform，而并没有涉及内部元素的动画，我们有时候可以看到某些转场动画中，视图中的子视图也有参与进来。
 
+# 2018/08/15
+[How To Make A UIViewController Transition Animation Like in the Ping App](https://www.raywenderlich.com/261-how-to-make-a-uiviewcontroller-transition-animation-like-in-the-ping-app)
+
+今日模仿Ping App中转场动画，效果如下：
+
+![](https://koenig-media.raywenderlich.com/uploads/2014/12/ping.gif)
+
+首先不再是present动画了，而是navigation的动画，但是最终提供动画的对象要求遵循 `UIViewControllerAnimatedTransitioning` 协议。如何替换掉Navigation自带的转场，那么还得说到 UINavigationDelegate.
+
+```oc
+func navigationController(_ navigationController: UINavigationController, animationControllerFor operation: UINavigationController.Operation, from fromVC: UIViewController, to toVC: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+    return CircularTransition()
+}
+```
+
+注意到该代理方法其实返回一个转场动画的对象，这里我们封装成了 `CircularTransition` 类。
+
+本文和上面两篇文章不同之处有三点：一、`CircularTransition` 类操作的不是一个具体的视图类，而是面向接口编程，即我们认为要动画的对象必须能够提供三个控件，为此我们声明了一个协议：
+
+```oc
+protocol CircleTransitionable {
+    var triggerButton : UIButton { get }
+    var contentTextView:UITextView {get}
+    var mainView:UIView {get}
+}
+```
+
+之后在实现 `UIViewControllerAnimatedTransitioning` 的 `animateTransition` 方法中我们获取到 fromVC 和 toVC都认为是遵循 `CircleTransitionable` 的对象，方便我们操作 triggerButton 或 contentView。
+
+二、正如之前说的我们大部分时间都是在操作整个视图 fromVC和toVC的视图，做一些平移、旋转和变换，而本文使用了上述的接口，能够获取到具体的子视图，然后在动画方法中操作；
+三、使用 maskLayer + CABasicAnimation + path 做一些炫酷的动画。
+
+明日计划写一些简单的转场动画
