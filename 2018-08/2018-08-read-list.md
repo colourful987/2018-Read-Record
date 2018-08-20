@@ -205,3 +205,17 @@ protocol CircleTransitionable {
 三、使用 maskLayer + CABasicAnimation + path 做一些炫酷的动画。
 
 明日计划写一些简单的转场动画
+
+
+
+# 2018/08/20
+继续动画相关的学习，不仅限于转场，可是是UIView，Layer层面的动画。
+
+[EasyAnimation](https://github.com/icanzilb/EasyAnimation)
+
+**CollectionView + Layout** 实现书翻页的动画呈现，但是代码没有适配最新的swift4.0
+
+[How to Create an iOS Book Open Animation: Part 1](https://www.raywenderlich.com/1719-how-to-create-an-ios-book-open-animation-part-1)
+
+[How to Create an iOS Book Open Animation: Part 2](https://www.raywenderlich.com/1719-how-to-create-an-ios-book-open-animation-part-2)
+
