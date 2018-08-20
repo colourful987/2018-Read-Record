@@ -219,3 +219,13 @@ protocol CircleTransitionable {
 
 [How to Create an iOS Book Open Animation: Part 2](https://www.raywenderlich.com/1719-how-to-create-an-ios-book-open-animation-part-2)
 
+实现一个较为复杂的Loading动画，文章中的demo是旧版本的swift，已经没法跑起来了，因此我重新用swift4.2写了一遍，demo地址请点击[这里](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/LoadingDemo)。
+
+这个加载动画复杂程度来说已经是Medium以上了，涉及到了多种ShapeLayer的变换结合，Layer层级的动画只能是用 `CABasicAnimation` + `layer.add(animation, forKey: nil)` 来实现。
+
+实现一个复杂的动画，最重要的是**创意+分解+衔接**！动画这块涉及的知识点真的不多，多学多码几个demo应该就差不多了，关键还得看实现思路。
+
+[文章地址：How to Create a Complex Loading Animation in Swift](https://www.raywenderlich.com/1746-how-to-create-a-complex-loading-animation-in-swift)
+
+
+
