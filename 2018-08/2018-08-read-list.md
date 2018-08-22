@@ -229,3 +229,11 @@ protocol CircleTransitionable {
 
 
 
+# 2018/08/21
+将 [How to Create an iOS Book Open Animation: Part 1](https://www.raywenderlich.com/1719-how-to-create-an-ios-book-open-animation-part-1) demo 部分代码更新到swift最新语法，自测能够运行，[demo地址](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/BookTutorial)
+
+
+
+# 2018/08/22
+
+将一个swift2.x版本的工程适配到最新swift，200+的错误改得我想骂娘，终于能跑起来了。
