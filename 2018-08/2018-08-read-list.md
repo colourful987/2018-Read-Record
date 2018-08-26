@@ -269,3 +269,13 @@ protocol CircleTransitionable {
 
 > Q8: 如何查看一个静态库包含哪些架构：
 > A9: 使用`lipo -info library` 命令，其他操作还有从已有库中移除/添加/瘦包/，更多使用可用 `man lipo` 查看。
+
+
+
+# 2018/08/26
+
+[Design Patterns in Swift #1: Factory Method and Singleton](https://www.appcoda.com/design-pattern-creational/)
+
+单例和工场模式设计模式入门文章。
+
+ps: 本周结束transition animation topic，写几个实际应用demo。
