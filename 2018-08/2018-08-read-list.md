@@ -279,3 +279,13 @@ protocol CircleTransitionable {
 单例和工场模式设计模式入门文章。
 
 ps: 本周结束transition animation topic，写几个实际应用demo。
+
+
+# 2018/08/27
+
+[淡入/淡出(Fade In/Fade Out 转场动画)](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/TransitionWorld/TransitionWorld/Transition%20Demo/Demo0)
+
+效果如下：
+
+![](/Users/pmst/Desktop/demo0.gif)
+
