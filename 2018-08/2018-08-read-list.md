@@ -287,5 +287,5 @@ ps: 本周结束transition animation topic，写几个实际应用demo。
 
 效果如下：
 
-![](/Users/pmst/Desktop/demo0.gif)
+![](./resource/demo0.gif)
 
