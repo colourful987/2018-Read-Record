@@ -16,7 +16,6 @@
 
 - (void)animateTransition:(id<UIViewControllerContextTransitioning>)transitionContext {
     UIView *toView = [transitionContext viewForKey:UITransitionContextToViewKey];
-    toView.alpha = 0.f;
     
     if (toView) {
         [transitionContext.containerView addSubview:toView];
