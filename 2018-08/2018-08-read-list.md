@@ -289,3 +289,12 @@ ps: 本周结束transition animation topic，写几个实际应用demo。
 
 ![](./resource/demo0.gif)
 
+
+
+# 2018/08/28
+
+[半屏滑入/滑出(Slide In/Slide Out 转场动画)](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/TransitionWorld/TransitionWorld/Transition%20Demo/Demo1)
+
+效果如下：
+
+![](./resource/demo1.gif)
