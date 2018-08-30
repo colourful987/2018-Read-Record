@@ -298,3 +298,67 @@ ps: 本周结束transition animation topic，写几个实际应用demo。
 效果如下：
 
 ![](./resource/demo1.gif)
+
+
+
+# 2018/08/30
+[竖屏横屏转场动画(Portrait Landscape)](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/TransitionWorld/TransitionWorld/Transition%20Demo/Demo2)
+
+效果如下：
+
+![](./resource/demo2.gif)
+
+遇到几个坑说下：
+
+1 竖屏控制器切换到横屏控制器并不需要考虑两个控制器的坐标系transform变换操作，没有想象的那么复杂，就比如想要指定一个控制器为横屏控制器，只需要设置如下几个方法：
+
+```oc
+- (BOOL)shouldAutorotate {
+    return NO;
+}
+
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+    
+    return UIInterfaceOrientationMaskLandscapeRight;
+}
+
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation {
+    
+    return UIInterfaceOrientationLandscapeRight;
+}
+```
+
+此时横屏控制器的宽(width)大于高(height)，相当于竖屏的宽高互换下。
+
+2 横竖屏转场设置代理只需要 `destinationVC.transitioningDelegate = self` ，我多设置了 `destinationVC.modalPresentationStyle = UIModalPresentationCustom` 反而就不正确了。原因未明，待查...
+
+3 牢记转场动画中的containerView 是系统提供的 UITransitionView，默认是把 fromView add到里面的，但是 toview还未添加，根据苹果官方文档所说：总是添加是 toView 到containerView时正确的做法，不管是present还是dismiss，最终显示在屏幕可视视图就是 toView。
+
+4 `animateTransition` 这个协议方法中的 containerView frame 是可以使用的，且和toView最终保持一致的，比如竖屏转横屏的转场，containerView 的frame（以iPhone 6s 尺寸为例）就是 （0，0，667，375），且fromView的位置由于一开始都是呈现在视图中的，位置也都是明确，可以利用的；但是toView是即将要显示的，此时toViewController才刚经历了 `loadView->viewDidLoad->ViewWillAppear->animateTransition` 此时的子视图位置有可能是不确定的————比如你用masonry。所以可以看到我在demo中调用了 `[viewToRotateInToView.superview layoutIfNeeded];` 强制刷新布局，这样做确实可以把子视图的frame都变正确，但是提前调用了 viewController 的 `viewWillLayoutSubviews` 系列方法，不知道有影响没。
+
+5 众所周知，iPhone的坐标系始终在左上角，下面要开放思维，坐标系是无限衍生的，我们透过屏幕只看到一块区域内容罢了，竖屏状态下：
+
+![](./resource/demo2-1.png)
+
+彩色区域是可视内容，由于我们只能看到黑色边框内部的内容！如果手机横屏状态下加，坐标系是不变的，但是黑色边框发生了变化：
+
+![](./resource/demo2-2.png)
+
+彩色区域如果不改变大小和位置，应该还是以竖直方向摆放，那么黑色变宽可视区域应该只能看到一部分内容，然而事实是这样的：
+
+![](./resource/demo2-3.png)
+
+原因其实就是转场动画开始前，系统会给fromView先做一个transform旋转变换加平移，把竖屏给横了过来！打印 fromViewController.view 信息，可以看 transform 值
+
+```
+(lldb) po fromViewController.view
+<UIView: 0x7ffab3c05250; frame = (0 0; 667 375); transform = [6.123233995736766e-17, -1, 1, 6.123233995736766e-17, 0, 0]; autoresize = W+H; layer = <CALayer: 0x604000220da0>>
+```
+
+那么进行了变换之后，如果我想对fromview的子视图布局，我到底以哪个坐标系来搞呢，坐标原点在哪里呢？
+
+答案是还是按照原先竖屏中的坐标系设置，不要考虑什么变换操作，可认为是先对fromview子视图操作，完成后应用 `transform = [6.123233995736766e-17, -1, 1, 6.123233995736766e-17, 0, 0]` 放射变换，把fromview给“横了“过来。
+
+6 最后一点是CGAffineTransform的东西，试想竖屏中的一个矩形子视图，如何一边旋转一边做(放大/缩小)操作，最终和横屏中的某个子视图重合？ 因为使用了 UIView animation 接口，所以我只需要考虑竖屏中的子视图最终frame位置和size大小即可，但是因为有个旋转动画，但是我同时把两个东西一起思考的时候卡壳了，竟然想了半天也没想出来，幸好今天突然茅塞顿开，两步操作分开思考，先平移兼缩放，然后旋转能和最终视图重合即可。
+
+
