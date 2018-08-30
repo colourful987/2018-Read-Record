@@ -26,7 +26,7 @@ static NSString * const kIdentifierOfTableViewCell = @"kIdentifierOfTableViewCel
 
 #pragma mark - Private
 - (void)p_initialize {
-    self.items = @[@"Fade In(淡入)/Fade Out(淡出)", @"Side In(滑入)/Side Out(滑出)"];
+    self.items = @[@"Fade In(淡入)/Fade Out(淡出)", @"Side In(滑入)/Side Out(滑出)", @"Rotate Portrait to Landscape"];
     self.title = @"Transition Animation World";
     [self.view addSubview:self.listTableView];
     [self.listTableView mas_makeConstraints:^(MASConstraintMaker *make) {
