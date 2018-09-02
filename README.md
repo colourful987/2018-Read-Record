@@ -2,11 +2,18 @@
 
 # Learning Recording Timeline
 
-- [ ] [2018 八月学习记录 🕐](./2018-07/2018-07-read-list.md)
+- [ ] [2018 九月学习记录 🕐](./2018-09/2018-09-read-list.md)
 
-> Theme: 待定 
+> Theme: Computer underlying knowledge && Custom UIViewController Transitions （收尾）
 > Source Code Read Plan:
 > Reference Book List:  
+
+
+
+- [x] [2018 八月学习记录 🕐](./2018-08/2018-08-read-list.md)
+
+> Theme:  Custom UIViewController Transitions
+> [TransitionWorld](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/TransitionWorld/)写了一些转场动画。转场其实考验的是交互设计，代码上尽管实现起来也稍有难度，但是如果分解成各个子动画，还是都能写出来，感觉转场动画在复用上实在...比较困难...很难统一
 
 
 

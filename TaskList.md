@@ -12,7 +12,7 @@
 
 * [ ] 源码阅读
 * [ ] 总结
-* [ ] 扩展，e.g. 实现一个基于 Aspect 的 throttle 处理库
+* [x] 扩展，e.g. 实现一个基于 Aspect 的 throttle 处理库
 
 ### 2.2 [THObserversAndBinders](https://github.com/th-in-gs/THObserversAndBinders)
 
