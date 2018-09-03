@@ -10,6 +10,8 @@
 #import "CHSlideInOutTransitionable.h"
 
 @implementation CHSlideOutAnimationController
+
+
 - (NSTimeInterval)transitionDuration:(id<UIViewControllerContextTransitioning>)transitionContext {
     return 0.4;
 }
@@ -33,4 +35,6 @@
         }];
     }
 }
+
+
 @end

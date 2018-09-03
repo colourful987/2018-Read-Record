@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4F33DD72213D94BD0073B604 /* CHDemo3DestinationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F33DD6F213D94BD0073B604 /* CHDemo3DestinationViewController.m */; };
+		4F33DD73213D94BD0073B604 /* CHDemo3SourceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F33DD71213D94BD0073B604 /* CHDemo3SourceViewController.m */; };
+		4F33DD76213D98C40073B604 /* CHSlideInteractionController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F33DD75213D98C40073B604 /* CHSlideInteractionController.m */; };
+		4F33DD78213DA4B10073B604 /* demo3.gif in Resources */ = {isa = PBXBuildFile; fileRef = 4F33DD77213DA4B10073B604 /* demo3.gif */; };
 		4F555A1F2138432F0029CD59 /* demo2.gif in Resources */ = {isa = PBXBuildFile; fileRef = 4F555A1E2138432F0029CD59 /* demo2.gif */; };
 		4F5CF7ED2134395400A490DF /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF7EC2134395400A490DF /* AppDelegate.m */; };
 		4F5CF7F32134395400A490DF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4F5CF7F12134395400A490DF /* Main.storyboard */; };
@@ -24,7 +28,7 @@
 		4F5CF82A21343A8700A490DF /* MASConstraint.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF81E21343A8700A490DF /* MASConstraint.m */; };
 		4F5CF82B21343A8700A490DF /* MASViewConstraint.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF82021343A8700A490DF /* MASViewConstraint.m */; };
 		4F5CF82C21343A8700A490DF /* MASViewAttribute.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF82121343A8700A490DF /* MASViewAttribute.m */; };
-		4F5CF82D21343A8700A490DF /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4F5CF82221343A8700A490DF /* Info.plist */; };
+		4F5CF82D21343A8700A490DF /* MASInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4F5CF82221343A8700A490DF /* MASInfo.plist */; };
 		4F5CF83121343F6D00A490DF /* CHDemo0SourceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF83021343F6D00A490DF /* CHDemo0SourceViewController.m */; };
 		4F5CF83521343FA400A490DF /* CHDemo0DestinationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF83421343FA400A490DF /* CHDemo0DestinationViewController.m */; };
 		4F5CF83A213447D400A490DF /* DimmingPresentationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF839213447D400A490DF /* DimmingPresentationController.m */; };
@@ -44,6 +48,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4F33DD6E213D94BD0073B604 /* CHDemo3DestinationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CHDemo3DestinationViewController.h; sourceTree = "<group>"; };
+		4F33DD6F213D94BD0073B604 /* CHDemo3DestinationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CHDemo3DestinationViewController.m; sourceTree = "<group>"; };
+		4F33DD70213D94BD0073B604 /* CHDemo3SourceViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CHDemo3SourceViewController.h; sourceTree = "<group>"; };
+		4F33DD71213D94BD0073B604 /* CHDemo3SourceViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CHDemo3SourceViewController.m; sourceTree = "<group>"; };
+		4F33DD74213D98C40073B604 /* CHSlideInteractionController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHSlideInteractionController.h; sourceTree = "<group>"; };
+		4F33DD75213D98C40073B604 /* CHSlideInteractionController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHSlideInteractionController.m; sourceTree = "<group>"; };
+		4F33DD77213DA4B10073B604 /* demo3.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = demo3.gif; sourceTree = "<group>"; };
 		4F555A1E2138432F0029CD59 /* demo2.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = demo2.gif; sourceTree = "<group>"; };
 		4F5CF7E82134395400A490DF /* TransitionWorld.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TransitionWorld.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4F5CF7EB2134395400A490DF /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -80,7 +91,7 @@
 		4F5CF81F21343A8700A490DF /* ViewController+MASAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ViewController+MASAdditions.h"; sourceTree = "<group>"; };
 		4F5CF82021343A8700A490DF /* MASViewConstraint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MASViewConstraint.m; sourceTree = "<group>"; };
 		4F5CF82121343A8700A490DF /* MASViewAttribute.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MASViewAttribute.m; sourceTree = "<group>"; };
-		4F5CF82221343A8700A490DF /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4F5CF82221343A8700A490DF /* MASInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MASInfo.plist; sourceTree = "<group>"; };
 		4F5CF82F21343F6D00A490DF /* CHDemo0SourceViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHDemo0SourceViewController.h; sourceTree = "<group>"; };
 		4F5CF83021343F6D00A490DF /* CHDemo0SourceViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHDemo0SourceViewController.m; sourceTree = "<group>"; };
 		4F5CF83321343FA400A490DF /* CHDemo0DestinationViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHDemo0DestinationViewController.h; sourceTree = "<group>"; };
@@ -126,6 +137,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4F33DD67213D8EF60073B604 /* Demo3 */ = {
+			isa = PBXGroup;
+			children = (
+				4F33DD77213DA4B10073B604 /* demo3.gif */,
+				4F33DD6E213D94BD0073B604 /* CHDemo3DestinationViewController.h */,
+				4F33DD6F213D94BD0073B604 /* CHDemo3DestinationViewController.m */,
+				4F33DD70213D94BD0073B604 /* CHDemo3SourceViewController.h */,
+				4F33DD71213D94BD0073B604 /* CHDemo3SourceViewController.m */,
+			);
+			path = Demo3;
+			sourceTree = "<group>";
+		};
 		4F5CF7DF2134395400A490DF = {
 			isa = PBXGroup;
 			children = (
@@ -224,7 +247,7 @@
 				4F5CF81F21343A8700A490DF /* ViewController+MASAdditions.h */,
 				4F5CF82021343A8700A490DF /* MASViewConstraint.m */,
 				4F5CF82121343A8700A490DF /* MASViewAttribute.m */,
-				4F5CF82221343A8700A490DF /* Info.plist */,
+				4F5CF82221343A8700A490DF /* MASInfo.plist */,
 			);
 			path = Masonry;
 			sourceTree = "<group>";
@@ -232,6 +255,7 @@
 		4F5CF82E21343F2F00A490DF /* Transition Demo */ = {
 			isa = PBXGroup;
 			children = (
+				4F33DD67213D8EF60073B604 /* Demo3 */,
 				4F7F15E52135A3C40055F189 /* Demo2 */,
 				4F7F15D321358F620055F189 /* Demo1 */,
 				4F5CF83221343F7800A490DF /* Demo0 */,
@@ -293,6 +317,8 @@
 				4F7F15DE213590940055F189 /* CHSlideOutAnimationController.h */,
 				4F7F15DF213590940055F189 /* CHSlideOutAnimationController.m */,
 				4F7F15E1213593BD0055F189 /* CHSlideInOutTransitionable.h */,
+				4F33DD74213D98C40073B604 /* CHSlideInteractionController.h */,
+				4F33DD75213D98C40073B604 /* CHSlideInteractionController.m */,
 			);
 			path = "Side In | Side Out";
 			sourceTree = "<group>";
@@ -381,8 +407,9 @@
 				4F5CF845213455A200A490DF /* demo0.gif in Resources */,
 				4F7F15E321359BD90055F189 /* demo1.gif in Resources */,
 				4F555A1F2138432F0029CD59 /* demo2.gif in Resources */,
-				4F5CF82D21343A8700A490DF /* Info.plist in Resources */,
+				4F5CF82D21343A8700A490DF /* MASInfo.plist in Resources */,
 				4F5CF7F82134395500A490DF /* LaunchScreen.storyboard in Resources */,
+				4F33DD78213DA4B10073B604 /* demo3.gif in Resources */,
 				4F5CF7F52134395500A490DF /* Assets.xcassets in Resources */,
 				4F5CF7F32134395400A490DF /* Main.storyboard in Resources */,
 			);
@@ -406,16 +433,19 @@
 				4F5CF82421343A8700A490DF /* ViewController+MASAdditions.m in Sources */,
 				4F7F15E0213590940055F189 /* CHSlideOutAnimationController.m in Sources */,
 				4F5CF82B21343A8700A490DF /* MASViewConstraint.m in Sources */,
+				4F33DD73213D94BD0073B604 /* CHDemo3SourceViewController.m in Sources */,
 				4F5CF7ED2134395400A490DF /* AppDelegate.m in Sources */,
 				4F7F15EB2135A4D10055F189 /* CHRotateToLandscapeAnimationController.m in Sources */,
 				4F5CF82721343A8700A490DF /* MASLayoutConstraint.m in Sources */,
 				4F5CF82A21343A8700A490DF /* MASConstraint.m in Sources */,
 				4F7F15E82135A4BA0055F189 /* CHRotateToPortaitAnimationController.m in Sources */,
+				4F33DD76213D98C40073B604 /* CHSlideInteractionController.m in Sources */,
 				4F5CF82821343A8700A490DF /* NSArray+MASAdditions.m in Sources */,
 				4F7F15D921358F940055F189 /* CHDemo1DestinationViewController.m in Sources */,
 				4F7F15F12135A5A00055F189 /* CHDemo2DestinationViewController.m in Sources */,
 				4F5CF83121343F6D00A490DF /* CHDemo0SourceViewController.m in Sources */,
 				4F5CF807213439CB00A490DF /* ListViewController.m in Sources */,
+				4F33DD72213D94BD0073B604 /* CHDemo3DestinationViewController.m in Sources */,
 				4F5CF82521343A8700A490DF /* MASCompositeConstraint.m in Sources */,
 				4F5CF82921343A8700A490DF /* View+MASAdditions.m in Sources */,
 				4F5CF82321343A8700A490DF /* NSLayoutConstraint+MASDebugAdditions.m in Sources */,

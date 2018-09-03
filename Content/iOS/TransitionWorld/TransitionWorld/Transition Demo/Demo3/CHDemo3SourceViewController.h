@@ -1,5 +1,5 @@
 //
-//  CHSlideOutAnimationController.h
+//  CHDemo3SourceViewController.h
 //  TransitionWorld
 //
 //  Created by pmst on 2018/8/28.
@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-
-@interface CHSlideOutAnimationController : NSObject<UIViewControllerAnimatedTransitioning>
+@interface CHDemo3SourceViewController : UIViewController
 
 @end
