@@ -36,6 +36,10 @@
 		4F5CF84021344E2200A490DF /* CHFadeInAnimationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF83F21344E2200A490DF /* CHFadeInAnimationController.m */; };
 		4F5CF84321344E3400A490DF /* CHFadeOutAnimationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F5CF84221344E3400A490DF /* CHFadeOutAnimationController.m */; };
 		4F5CF845213455A200A490DF /* demo0.gif in Resources */ = {isa = PBXBuildFile; fileRef = 4F5CF844213455A200A490DF /* demo0.gif */; };
+		4F7043FC21403FFE004AEFD6 /* CHDemo4DestinationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7043FB21403FFE004AEFD6 /* CHDemo4DestinationViewController.m */; };
+		4F7043FF2140400D004AEFD6 /* CHDemo4SourceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7043FE2140400D004AEFD6 /* CHDemo4SourceViewController.m */; };
+		4F704403214047F5004AEFD6 /* CircularAnimationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F704402214047F5004AEFD6 /* CircularAnimationController.m */; };
+		4F70440621405752004AEFD6 /* demo4.gif in Resources */ = {isa = PBXBuildFile; fileRef = 4F70440521405752004AEFD6 /* demo4.gif */; };
 		4F7F15D621358F810055F189 /* CHDemo1SourceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7F15D521358F810055F189 /* CHDemo1SourceViewController.m */; };
 		4F7F15D921358F940055F189 /* CHDemo1DestinationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7F15D821358F940055F189 /* CHDemo1DestinationViewController.m */; };
 		4F7F15DD213590850055F189 /* CHSlideInAnimationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7F15DC213590850055F189 /* CHSlideInAnimationController.m */; };
@@ -105,6 +109,14 @@
 		4F5CF84121344E3400A490DF /* CHFadeOutAnimationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHFadeOutAnimationController.h; sourceTree = "<group>"; };
 		4F5CF84221344E3400A490DF /* CHFadeOutAnimationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHFadeOutAnimationController.m; sourceTree = "<group>"; };
 		4F5CF844213455A200A490DF /* demo0.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = demo0.gif; sourceTree = "<group>"; };
+		4F7043FA21403FFE004AEFD6 /* CHDemo4DestinationViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHDemo4DestinationViewController.h; sourceTree = "<group>"; };
+		4F7043FB21403FFE004AEFD6 /* CHDemo4DestinationViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHDemo4DestinationViewController.m; sourceTree = "<group>"; };
+		4F7043FD2140400D004AEFD6 /* CHDemo4SourceViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHDemo4SourceViewController.h; sourceTree = "<group>"; };
+		4F7043FE2140400D004AEFD6 /* CHDemo4SourceViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHDemo4SourceViewController.m; sourceTree = "<group>"; };
+		4F704401214047F5004AEFD6 /* CircularAnimationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CircularAnimationController.h; sourceTree = "<group>"; };
+		4F704402214047F5004AEFD6 /* CircularAnimationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CircularAnimationController.m; sourceTree = "<group>"; };
+		4F7044042140484D004AEFD6 /* CircleTransitionable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CircleTransitionable.h; sourceTree = "<group>"; };
+		4F70440521405752004AEFD6 /* demo4.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = demo4.gif; sourceTree = "<group>"; };
 		4F7F15D421358F810055F189 /* CHDemo1SourceViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHDemo1SourceViewController.h; sourceTree = "<group>"; };
 		4F7F15D521358F810055F189 /* CHDemo1SourceViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHDemo1SourceViewController.m; sourceTree = "<group>"; };
 		4F7F15D721358F940055F189 /* CHDemo1DestinationViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHDemo1DestinationViewController.h; sourceTree = "<group>"; };
@@ -195,6 +207,7 @@
 		4F5CF8022134399400A490DF /* TransitionWorld */ = {
 			isa = PBXGroup;
 			children = (
+				4F704400214042CF004AEFD6 /* Circular Transition */,
 				4F7F15E42135A32A0055F189 /* Portait  Rotate | Landscape Rotate */,
 				4F7F15DA213590620055F189 /* Side In | Side Out */,
 				4F5CF837213447BA00A490DF /* Presentation */,
@@ -255,6 +268,7 @@
 		4F5CF82E21343F2F00A490DF /* Transition Demo */ = {
 			isa = PBXGroup;
 			children = (
+				4F7043F921403BFF004AEFD6 /* Demo4 */,
 				4F33DD67213D8EF60073B604 /* Demo3 */,
 				4F7F15E52135A3C40055F189 /* Demo2 */,
 				4F7F15D321358F620055F189 /* Demo1 */,
@@ -295,6 +309,28 @@
 				4F5CF83C2134483700A490DF /* CHGradientView.m */,
 			);
 			path = Presentation;
+			sourceTree = "<group>";
+		};
+		4F7043F921403BFF004AEFD6 /* Demo4 */ = {
+			isa = PBXGroup;
+			children = (
+				4F70440521405752004AEFD6 /* demo4.gif */,
+				4F7043FA21403FFE004AEFD6 /* CHDemo4DestinationViewController.h */,
+				4F7043FB21403FFE004AEFD6 /* CHDemo4DestinationViewController.m */,
+				4F7043FD2140400D004AEFD6 /* CHDemo4SourceViewController.h */,
+				4F7043FE2140400D004AEFD6 /* CHDemo4SourceViewController.m */,
+			);
+			path = Demo4;
+			sourceTree = "<group>";
+		};
+		4F704400214042CF004AEFD6 /* Circular Transition */ = {
+			isa = PBXGroup;
+			children = (
+				4F704401214047F5004AEFD6 /* CircularAnimationController.h */,
+				4F704402214047F5004AEFD6 /* CircularAnimationController.m */,
+				4F7044042140484D004AEFD6 /* CircleTransitionable.h */,
+			);
+			path = "Circular Transition";
 			sourceTree = "<group>";
 		};
 		4F7F15D321358F620055F189 /* Demo1 */ = {
@@ -411,6 +447,7 @@
 				4F5CF7F82134395500A490DF /* LaunchScreen.storyboard in Resources */,
 				4F33DD78213DA4B10073B604 /* demo3.gif in Resources */,
 				4F5CF7F52134395500A490DF /* Assets.xcassets in Resources */,
+				4F70440621405752004AEFD6 /* demo4.gif in Resources */,
 				4F5CF7F32134395400A490DF /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -424,6 +461,7 @@
 			files = (
 				4F7F15DD213590850055F189 /* CHSlideInAnimationController.m in Sources */,
 				4F5CF82621343A8700A490DF /* MASConstraintMaker.m in Sources */,
+				4F704403214047F5004AEFD6 /* CircularAnimationController.m in Sources */,
 				4F7F15EE2135A5890055F189 /* CHDemo2SourceViewController.m in Sources */,
 				4F5CF83521343FA400A490DF /* CHDemo0DestinationViewController.m in Sources */,
 				4F5CF84321344E3400A490DF /* CHFadeOutAnimationController.m in Sources */,
@@ -434,6 +472,7 @@
 				4F7F15E0213590940055F189 /* CHSlideOutAnimationController.m in Sources */,
 				4F5CF82B21343A8700A490DF /* MASViewConstraint.m in Sources */,
 				4F33DD73213D94BD0073B604 /* CHDemo3SourceViewController.m in Sources */,
+				4F7043FF2140400D004AEFD6 /* CHDemo4SourceViewController.m in Sources */,
 				4F5CF7ED2134395400A490DF /* AppDelegate.m in Sources */,
 				4F7F15EB2135A4D10055F189 /* CHRotateToLandscapeAnimationController.m in Sources */,
 				4F5CF82721343A8700A490DF /* MASLayoutConstraint.m in Sources */,
@@ -446,6 +485,7 @@
 				4F5CF83121343F6D00A490DF /* CHDemo0SourceViewController.m in Sources */,
 				4F5CF807213439CB00A490DF /* ListViewController.m in Sources */,
 				4F33DD72213D94BD0073B604 /* CHDemo3DestinationViewController.m in Sources */,
+				4F7043FC21403FFE004AEFD6 /* CHDemo4DestinationViewController.m in Sources */,
 				4F5CF82521343A8700A490DF /* MASCompositeConstraint.m in Sources */,
 				4F5CF82921343A8700A490DF /* View+MASAdditions.m in Sources */,
 				4F5CF82321343A8700A490DF /* NSLayoutConstraint+MASDebugAdditions.m in Sources */,
