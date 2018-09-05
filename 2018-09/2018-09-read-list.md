@@ -51,3 +51,13 @@
 遗留问题：
 1. 当progress进度小于0.5放手时也执行了dismiss操作，这个是不合理的;
 2. 实例化一个 InteractionController 的方式需要把手势加载到sourceViewController的view上，项目中过早的调用 viewController.view可能导致视图控制器LifeCycle生命周期错乱的可能性。
+
+
+
+# 2018/09/05
+
+[右上角圆形发散式转场，参照Raywenderlich](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/TransitionWorld/TransitionWorld/Transition%20Demo/Demo4)
+
+效果如下：
+
+![](./resource/demo4.gif)
