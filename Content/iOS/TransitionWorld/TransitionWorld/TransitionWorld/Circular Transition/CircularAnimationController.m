@@ -43,7 +43,6 @@
         snapshot.transform = CGAffineTransformMakeScale(5.f, 5.f);
     } completion:nil];
     
-    
     [containerView addSubview:toViewController.mainView];
     UIButton *triggerButton = fromViewController.triggerButton;
     UIView *toView = toViewController.mainView;

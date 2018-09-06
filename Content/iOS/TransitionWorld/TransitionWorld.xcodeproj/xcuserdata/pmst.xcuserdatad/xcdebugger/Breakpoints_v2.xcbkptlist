@@ -20,7 +20,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "TransitionWorld/TransitionWorld/Portait  Rotate | Landscape Rotate/CHRotateToLandscapeAnimationController.m"
-            timestampString = "557339390.233983"
+            timestampString = "557941483.856375"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "26"
@@ -75,6 +75,20 @@
             endingLineNumber = "84"
             landmarkName = "-interactionControllerForDismissal:"
             landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "TransitionWorld/TransitionWorld/Circular Transition/CircularAnimationController.m"
+            timestampString = "557944380.863885"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "82"
+            endingLineNumber = "82">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
