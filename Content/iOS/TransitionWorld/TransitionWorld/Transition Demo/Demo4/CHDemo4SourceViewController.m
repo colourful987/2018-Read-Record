@@ -29,6 +29,7 @@
     CHDemo4DestinationViewController *destinationVC = [[CHDemo4DestinationViewController alloc] init];
     
     destinationVC.transitioningDelegate = self;
+    destinationVC.modalPresentationStyle = UIModalPresentationCustom;
     
     [self presentViewController:destinationVC animated:YES completion:nil];
 }

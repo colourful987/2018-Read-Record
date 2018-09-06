@@ -61,3 +61,72 @@
 效果如下：
 
 ![](./resource/demo4.gif)
+
+
+
+
+
+# 2018/09/06
+重要事情说三遍：
+1. **只要设置**`destinationVC.transitioningDelegate = self`就可以了，如果没有实现自定义呈现类，**不要设置**`destinationVC.modalPresentationStyle = UIModalPresentationCustom`!!!
+2. **只要设置**`destinationVC.transitioningDelegate = self`就可以了，如果没有实现自定义呈现类，**不要设置**`destinationVC.modalPresentationStyle = UIModalPresentationCustom`!!!
+3. **只要设置**`destinationVC.transitioningDelegate = self`就可以了，如果没有实现自定义呈现类，**不要设置**`destinationVC.modalPresentationStyle = UIModalPresentationCustom`!!!
+
+mmp的转成present的时候往 `transitionContext.containerView`(系统提供的`UITransitionView`) add子视图是没有问题的，但是dismiss的时候却“不正常”，动画正确地执行，然后黑屏！其实“不正常”是情理之中的事情，因为设置了 `destinationVC.modalPresentationStyle = UIModalPresentationCustom;`，系统会向delegate询问关于呈现（Presentation）由谁负责：
+
+```oc
+// 如下写法
+- (UIPresentationController *)presentationControllerForPresentedViewController:(UIViewController *)presented presentingViewController:(UIViewController *)presenting sourceViewController:(UIViewController *)source {
+    return [[DimmingPresentationController alloc] initWithPresentedViewController:presented presentingViewController:presenting];
+}
+
+// 附上DimmingPresentationController的实现
+
+@interface DimmingPresentationController()
+@property(nonatomic, strong)CHGradientView *dimmingView;
+@end
+
+@implementation DimmingPresentationController
+
+- (void)presentationTransitionWillBegin {
+    self.dimmingView.frame = self.containerView.bounds;
+    [self.containerView insertSubview:self.dimmingView atIndex:0];
+    self.dimmingView.alpha = 0;
+    
+    id <UIViewControllerTransitionCoordinator> transitionCoordinator =  self.presentedViewController.transitionCoordinator;
+    
+    if (transitionCoordinator) {
+        [transitionCoordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext>  _Nonnull context) {
+            self.dimmingView.alpha = 1;
+        } completion:nil];
+    }
+}
+
+- (void)dismissalTransitionWillBegin {
+    id <UIViewControllerTransitionCoordinator> transitionCoordinator =  self.presentedViewController.transitionCoordinator;
+    
+    if (transitionCoordinator) {
+        [transitionCoordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext>  _Nonnull context) {
+            self.dimmingView.alpha = 0;
+        } completion:nil];
+    }
+}
+
+// 如果是半屏的话 这个属性设置为NO 表明不移除当前视图
+- (BOOL)shouldRemovePresentersView {
+    return NO;
+}
+
+- (CHGradientView *)dimmingView {
+    if (!_dimmingView) {
+        _dimmingView = [[CHGradientView alloc] initWithFrame:CGRectZero];
+    }
+    return _dimmingView;
+}
+@end
+```
+
+说一个视图是 `presentedViewController` 还是 `presentingViewController` ，是有个相对关系的，一定要说 A 是 B 的 `presentedViewController/presentingViewController`。
+
+一个视图控制器即可以是`presentedViewController` 也可以是 `presentingViewController`，比如 A present B, B present C，那么 B 就扮演了两个角色，B是A的 presentedViewController，又是C的presentingViewController；
+A 则简单点，是B的presentingViewController；C则只有一种角色，是B的presentedViewController。
