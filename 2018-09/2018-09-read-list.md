@@ -130,3 +130,19 @@ mmp的转成present的时候往 `transitionContext.containerView`(系统提供�
 
 一个视图控制器即可以是`presentedViewController` 也可以是 `presentingViewController`，比如 A present B, B present C，那么 B 就扮演了两个角色，B是A的 presentedViewController，又是C的presentingViewController；
 A 则简单点，是B的presentingViewController；C则只有一种角色，是B的presentedViewController。
+
+
+
+# 2018/09/07
+
+[Book 模仿书本翻页动画，参照Raywenderlich](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/BookTutorial)
+
+效果如下：
+
+![](./resource/bookTutorial.gif)
+    
+之前作者的 demo 停留在 swift2.x版本，所以特地改写了下，然而没有用最新的swift语法，能跑就行。
+
+整个例子重点是实现的思路，以及collectionView的使用技巧，真的很牛逼！
+
+另外目前只是做了代码搬运工，表示毫无成就感，一没把collectionView运用的得心应手，二不了解这个翻页动画的实现，三... 趁着周末学习一波，起码要有收获，尽量不做代码搬运工，伪成就感还是不要有的好。
