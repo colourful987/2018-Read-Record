@@ -23,15 +23,26 @@ class BooksViewController: UICollectionViewController {
     
     // MARK: Helpers
     
-    func openBook(book: Book?) {
+    func openBook() {
         let vc = storyboard?.instantiateViewController(withIdentifier:"BookViewController") as! BookViewController
-        vc.book = book
+        vc.book = selectedCell()?.book
         // UICollectionView loads it's cells on a background thread, so make sure it's loaded before passing it to the animation handler
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
             return
         }
     }
+    
+    func selectedCell()->BookCoverCell? {
+        if let indexPath = collectionView?.indexPathForItem(at: CGPoint(x: collectionView!.contentOffset.x + collectionView!.bounds.width/2, y: collectionView!.bounds.height/2)) {
+            if let cell = collectionView?.cellForItem(at: indexPath) as? BookCoverCell {
+                return cell
+            }
+        }
+        return nil
+    }
+    
+    
     
 }
 
@@ -40,8 +51,7 @@ class BooksViewController: UICollectionViewController {
 extension BooksViewController {
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let book = books?[indexPath.row]
-        openBook(book: book)
+        openBook()
     }
     
 }

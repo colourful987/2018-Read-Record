@@ -71,6 +71,23 @@ class BookPageCell: UICollectionViewCell {
         return ratio
     }
     
+    override func apply(_ layoutAttributes: UICollectionViewLayoutAttributes) {
+        super.apply(layoutAttributes)
+        
+        //1
+        if layoutAttributes.indexPath.item % 2 == 0 {
+            //2
+            layer.anchorPoint = CGPoint(x: 0, y: 0.5)
+            isRightPage = true
+        } else { //3
+            //4
+            layer.anchorPoint = CGPoint(x: 1, y: 0.5)
+            isRightPage = false
+        }
+        //5
+        self.updateShadowLayer()
+    }
+    
     func updateShadowLayer(animated: Bool = false) {
         var _: CGFloat = 0
         
@@ -84,30 +101,19 @@ class BookPageCell: UICollectionViewCell {
         
         if isRightPage {
             // Right page
-            shadowLayer.colors = NSArray(objects:
-                UIColor.darkGray.withAlphaComponent(inverseRatio * 0.45).cgColor,
-                                         UIColor.darkGray.withAlphaComponent(inverseRatio * 0.40).cgColor,
-                                         UIColor.darkGray.withAlphaComponent(inverseRatio * 0.55).cgColor
-                ) as! [UIColor]
-            shadowLayer.locations = NSArray(objects:
-                NSNumber(value: 0.00),
-                                            NSNumber(value: 0.02),
-                                            NSNumber(value: 1.00)
-                ) as? [NSNumber]
+            shadowLayer.colors = [UIColor.darkGray.withAlphaComponent(inverseRatio * 0.45).cgColor,
+                                  UIColor.darkGray.withAlphaComponent(inverseRatio * 0.40).cgColor,
+                                  UIColor.darkGray.withAlphaComponent(inverseRatio * 0.55).cgColor]
+            
+            shadowLayer.locations = [0.00,0.02,1.00]
         } else {
             // Left page
-            shadowLayer.colors = NSArray(objects:
-                UIColor.darkGray.withAlphaComponent(inverseRatio * 0.30).cgColor,
-                                         UIColor.darkGray.withAlphaComponent(inverseRatio * 0.40).cgColor,
-                                         UIColor.darkGray.withAlphaComponent(inverseRatio * 0.50).cgColor,
-                                         UIColor.darkGray.withAlphaComponent(inverseRatio * 0.55).cgColor
-                ) as! [UIColor]
-            shadowLayer.locations = NSArray(objects:
-                NSNumber(value: 0.00),
-                                            NSNumber(value: 0.50),
-                                            NSNumber(value: 0.98),
-                                            NSNumber(value: 1.00)
-                ) as? [NSNumber]
+            shadowLayer.colors = [UIColor.darkGray.withAlphaComponent(inverseRatio * 0.30).cgColor,
+                                  UIColor.darkGray.withAlphaComponent(inverseRatio * 0.40).cgColor,
+                                  UIColor.darkGray.withAlphaComponent(inverseRatio * 0.50).cgColor,
+                                  UIColor.darkGray.withAlphaComponent(inverseRatio * 0.55).cgColor]
+            
+            shadowLayer.locations = [0.00,0.50,0.98,1.00]
         }
         
         if !animated {
