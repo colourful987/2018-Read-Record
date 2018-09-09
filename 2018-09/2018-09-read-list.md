@@ -146,3 +146,14 @@ A 则简单点，是B的presentingViewController；C则只有一种角色，是B
 整个例子重点是实现的思路，以及collectionView的使用技巧，真的很牛逼！
 
 另外目前只是做了代码搬运工，表示毫无成就感，一没把collectionView运用的得心应手，二不了解这个翻页动画的实现，三... 趁着周末学习一波，起码要有收获，尽量不做代码搬运工，伪成就感还是不要有的好。
+
+
+
+# 2018/09/08 - 2018/09/09
+给Book animation tutorial工程增加了注释，从几何角度了解这个翻页动画的实现，难点还是`CATransform`的知识 目前搜了几篇文章，可以学习一波基础知识：
+
+* [CGAffineTransform与CATransform3D](https://www.cnblogs.com/jingdizhiwa/p/5481072.html)
+* [如何使用 CATransform3D 处理 3D 影像、制做互动立体旋转的效果 ?](http://www.myzaker.com/article/591d1d7a1bc8e04e43000002/)
+* [iOS-从三维立方体到理解CATransform3D&CGAffineTransform&m34](https://www.jianshu.com/p/3dd14cfbdc53)
+
+ps: 貌似大家都喜欢以三维矩形筛子来作为演示demo，撞车比较严重
