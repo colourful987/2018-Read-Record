@@ -9,6 +9,17 @@
 import UIKit
 
 class BooksViewController: UICollectionViewController {
+    var transition:BookOpeningTransition?
+    
+    var interactionController: UIPercentDrivenInteractiveTransition?
+    // 添加双指捏合手势
+    var recognizer: UIGestureRecognizer? {
+        didSet {
+            if let recognizer = recognizer {
+                collectionView?.addGestureRecognizer(recognizer)
+            }
+        }
+    }
     
     var books: Array<Book>? {
         didSet {
@@ -19,14 +30,43 @@ class BooksViewController: UICollectionViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         books = BookStore.sharedInstance.loadBooks(plist: "Books")
+        recognizer = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(recognizer:)))
     }
-    
+
+    @objc func handlePinch(recognizer:UIPinchGestureRecognizer) {
+        switch recognizer.state {
+        case .began:
+            interactionController = UIPercentDrivenInteractiveTransition()
+            if recognizer.scale >= 1 {
+                if recognizer.view == collectionView {
+                    var book = self.selectedCell()?.book
+                    self.openBook()
+                }
+            } else {
+                navigationController?.popViewController(animated: true)
+            }
+        case .changed:
+            if transition!.isPush {
+                let progress = min(max(abs((recognizer.scale - 1)) / 5, 0), 1)
+                interactionController?.update(progress)
+            } else {
+                var progress = min(max(abs((1 - recognizer.scale)), 0), 1)
+                interactionController?.update(progress)
+            }
+        case .ended:
+            interactionController?.finish()
+            interactionController = nil
+        default:
+            break
+        }
+    }
     // MARK: Helpers
     
     func openBook() {
         let vc = storyboard?.instantiateViewController(withIdentifier:"BookViewController") as! BookViewController
         vc.book = selectedCell()?.book
         // UICollectionView loads it's cells on a background thread, so make sure it's loaded before passing it to the animation handler
+        vc.view.snapshotView(afterScreenUpdates: true)
         DispatchQueue.main.async {
             self.navigationController?.pushViewController(vc, animated: true)
             return
@@ -80,4 +120,26 @@ extension BooksViewController {
         return cell
     }
     
+}
+
+extension BooksViewController {
+    func animationControllerForPresentController(vc: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        // 1
+        let transition = BookOpeningTransition()
+        // 2
+        transition.isPush = true
+        transition.interactionController = interactionController
+        // 3
+        self.transition = transition
+        // 4
+        return transition 
+    }
+    
+    func animationControllerForDismissController(vc: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        let transition = BookOpeningTransition()
+        transition.isPush = false
+        transition.interactionController = interactionController
+        self.transition = transition
+        return transition
+    }
 }

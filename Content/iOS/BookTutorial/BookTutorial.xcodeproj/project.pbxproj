@@ -22,6 +22,8 @@
 		4F2949AB212C593E00D3FFEB /* BookViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F2949AA212C593E00D3FFEB /* BookViewController.swift */; };
 		4F2949AD212C59C600D3FFEB /* BookPageCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F2949AC212C59C600D3FFEB /* BookPageCell.swift */; };
 		4F2949B0212C624100D3FFEB /* BooksLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F2949AF212C624100D3FFEB /* BooksLayout.swift */; };
+		4F4597E62146AB930031C7A7 /* CustomNavigationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F4597E52146AB930031C7A7 /* CustomNavigationController.swift */; };
+		4F4597E82146AC770031C7A7 /* BookOpeningTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F4597E72146AC770031C7A7 /* BookOpeningTransition.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +44,8 @@
 		4F2949AA212C593E00D3FFEB /* BookViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookViewController.swift; sourceTree = "<group>"; };
 		4F2949AC212C59C600D3FFEB /* BookPageCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookPageCell.swift; sourceTree = "<group>"; };
 		4F2949AF212C624100D3FFEB /* BooksLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BooksLayout.swift; sourceTree = "<group>"; };
+		4F4597E52146AB930031C7A7 /* CustomNavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomNavigationController.swift; sourceTree = "<group>"; };
+		4F4597E72146AC770031C7A7 /* BookOpeningTransition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookOpeningTransition.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +78,7 @@
 		4F294983212C559000D3FFEB /* BookTutorial */ = {
 			isa = PBXGroup;
 			children = (
+				4F4597E42146AA780031C7A7 /* Transition */,
 				4F2949AE212C622000D3FFEB /* Layout */,
 				4F29499D212C564500D3FFEB /* Helpers */,
 				4F29499C212C563A00D3FFEB /* Data models */,
@@ -166,6 +171,15 @@
 			path = Layout;
 			sourceTree = "<group>";
 		};
+		4F4597E42146AA780031C7A7 /* Transition */ = {
+			isa = PBXGroup;
+			children = (
+				4F4597E52146AB930031C7A7 /* CustomNavigationController.swift */,
+				4F4597E72146AC770031C7A7 /* BookOpeningTransition.swift */,
+			);
+			path = Transition;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -238,6 +252,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4F4597E62146AB930031C7A7 /* CustomNavigationController.swift in Sources */,
 				4F078EBA2142D414006484BD /* BookLayout.swift in Sources */,
 				4F29499F212C566900D3FFEB /* UIImage+Helpers.swift in Sources */,
 				4F2949AD212C59C600D3FFEB /* BookPageCell.swift in Sources */,
@@ -249,6 +264,7 @@
 				4F2949AB212C593E00D3FFEB /* BookViewController.swift in Sources */,
 				4F2949A7212C588200D3FFEB /* BooksViewController.swift in Sources */,
 				4F2949A9212C58D100D3FFEB /* BookCoverCell.swift in Sources */,
+				4F4597E82146AC770031C7A7 /* BookOpeningTransition.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
