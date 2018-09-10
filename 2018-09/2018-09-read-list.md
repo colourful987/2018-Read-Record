@@ -157,3 +157,14 @@ A 则简单点，是B的presentingViewController；C则只有一种角色，是B
 * [iOS-从三维立方体到理解CATransform3D&CGAffineTransform&m34](https://www.jianshu.com/p/3dd14cfbdc53)
 
 ps: 貌似大家都喜欢以三维矩形筛子来作为演示demo，撞车比较严重
+
+
+
+# 2018/09/10
+
+> 教师节快乐！撒花！
+
+给Book animation tutorial 整个demo用swift4.2重写了，需要在Xcode10 iOS12.0下运行。其实这个教程刚出来时候就对着码了，当时说白了也是抄着玩（现在也差不多orz...)，感觉吃透这篇文章可以学习以下几块知识点：
+1. collectionView 自定义布局如何实现书本展开、转盘等效果，这里涉及重写 collectionView 的 `layoutAttributesForElements` 等一系列方法，难度2/5星吧；
+2. transform 三维上的仿射变换，这个涉及数学几何知识，难度3/5；
+3. 转场动画，由于之前已经“瞎搞过一阵子”，所以感觉难度在1/5星；
