@@ -1,8 +1,8 @@
 > Theme: Computer underlying knowledge 
 > Source Code Read Plan:
 > - [ ] GCD 底层libdispatch
-> - [ ] `objc_msgSend` 汇编实现
-> - [ ] Custom UIViewController Transitions (随便写几个demo实现玩)
+> - [ ] TableView Reload 原理，博文总结
+> - [x] Custom UIViewController Transitions (随便写几个demo实现玩)
 
 # 2018/09/03
 
@@ -168,3 +168,20 @@ ps: 貌似大家都喜欢以三维矩形筛子来作为演示demo，撞车比较
 1. collectionView 自定义布局如何实现书本展开、转盘等效果，这里涉及重写 collectionView 的 `layoutAttributesForElements` 等一系列方法，难度2/5星吧；
 2. transform 三维上的仿射变换，这个涉及数学几何知识，难度3/5；
 3. 转场动画，由于之前已经“瞎搞过一阵子”，所以感觉难度在1/5星；
+
+# 2018/09/11
+本周会研究下 tableview 的 reload 操作实现，可以参照的源码 [Chameleon](https://github.com/BigZaphod/Chameleon)，Chameleon is a port of Apple's UIKit (and some minimal related frameworks) to Mac OS X. 说白了就是从iOS移植到Mac端的代码，尽管最后一次提交代码还停留在4 years ago，但是参考价值很足。
+
+其次还涉及到 Runloop，毕竟我们操作的东西都是由runloop对象管理的，大部分其实是procedure过程式，处理流程就摆在那里，源码我看的是 github 上的 apple repo：[swift-corelibs-foundation](https://github.com/apple/swift-corelibs-foundation)。
+
+实际开发中经常会用到 GCD 配合 reloadData  对 TableView  刷新，所以对 GCD 底层实现原理还需要了解，源码应该会看libdispatch。
+
+最后还是站在前人肩膀上，看了下[iOS 事件处理机制与图像渲染过程](http://www.cnblogs.com/yulang314/p/5091894.html)，差不多算16年的博文了，具有参考价值，本文的reference还涉及了如下文章：
+
+* runloop原理 (https://github.com/ming1016/study/wiki/CFRunLoop)
+* 深入理解runloop (http://blog.ibireme.com/2015/05/18/runloop/)
+* 线程安全类的设计 (http://objccn.io/issue-2-4/)
+* iOS保持界面流畅的技巧和AsyncDisplay介绍 （http://blog.ibireme.com/2015/11/12/smooth_user_interfaces_for_ios/）
+* 离屏渲染 (http://foggry.com/blog/2015/05/06/chi-ping-xuan-ran-xue-xi-bi-ji/)
+* ios核心动画高级技巧 (https://zsisme.gitbooks.io/ios-/content/index.html)
+
