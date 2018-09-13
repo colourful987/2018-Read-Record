@@ -197,3 +197,122 @@ ps: 貌似大家都喜欢以三维矩形筛子来作为演示demo，撞车比较
 5. html加载过程：客户端发请求->服务端返回html标记文本->html会有一些css，js，或者`<img src='./path/to/img'>` 标记符中的资源文件，这些都是异步加载的，如果有缓存的话，那么根据策略来使用缓存，同时还可能去请求，请求回来之后再刷新，但是有些是仅使用缓存或者始终以服务端数据为准，这个就有些坑爹了....
 
 看了几个网页，发现有些资源的 `Cache-Control` 设置为了 `no-cache` ，那么自然每次进来都会重新请求资源数据喽；但是有些页面的广告图片明明设置了 `Cache-Control` 为 `max-xxxxx` 以及过期时间，我在调试时候发现，NSURLCache 的 `cachedResponseForRequest` 方法中，以资源request为key去取缓存，返回的依然是nil...这个就不理解了。
+
+
+
+# 2018/09/12 
+
+进一步了解 NSURLCache 缓存机制，但是仅限于皮毛，我使用 MacOS 自带的 Apache 服务器，用PHP写了一个page页面，显示一些 `<p></p>` 文本和一个 `<img>` 用于异步加载图片，而服务端获取图片的接口同样是 PHP 实现，可配置 response header 为 no-cache，同样 page页面也可以这么干，以下demo是我从网上找到的设置方式：
+
+```php
+sleep(5); // 模拟图片获取耗时操作 这样能明显感觉到是否图片被NSURLCache缓存
+
+
+$fullpath = '/path/to/image' . basename($_GET['img']); 
+
+if (!is_file($fullpath)) { 
+    header("HTTP/1.0 404 Not Found"); 
+    exit(); 
+} 
+
+// 获取图片信息 
+$info = getImageSize($fullpath); 
+
+// 如果不是图片
+if (!$info) {                     
+    header("HTTP/1.0 404 Not Found"); 
+    exit(); 
+} 
+ 
+// 以下凡是header函数都是在输出头部信息。较多。 
+header('Content-type: '. $info['mime']);          // e.g. image/png 
+header('Content-Length: '. filesize($fullpath));  // 文件长度 
+ 
+header('Pragma: ');  
+ 
+// 手动设置过期时间，单位都是秒 
+$validtime = 48* 60 * 60;    // 48小时 
+ 
+// 缓存相对请求的时间， 
+header('Cache-Control: ' . 'max-age='. $validtime); 
+ 
+//也很重要的Expires头，功能类似于max-age 
+//time()+$validtime: 设置期限，到期后才会向服务器提交请求 
+//gmdate，生成Sun, 01 Mar 2009 04:05:49 +0000  的字符串，而且是GMT标准时区 
+//preg_replace,  生成Sun, 01 Mar 2009 04:05:49 GMT， 注意：可能与服务器设置有关， 
+//但我都用默认设置 
+header('Expires:'. preg_replace('/.{5}$/', 'GMT', gmdate('r', time()+ $validtime))); 
+ 
+//文件最后修改时间 
+$lasttime = filemtime($fullpath); 
+ 
+//最后修改时间，设置了，点击刷新时，浏览器再次请求图片才会发出'IF_MODIFIED_SINCE'头， 
+//从而被php程序读取 
+header('Last-Modified: ' . preg_replace('/.{5}$/', 'GMT', gmdate('r', $lasttime) )); 
+ 
+//重要，如果请求中的时间和 文件生成时间戳相等，则文件未修改，客户端可用缓存 
+if (strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) == $lasttime) { 
+    header("HTTP/1.1 304 Not Modified"); //服务器发出文件不曾修改的指令 
+    exit(); 
+} 
+ 
+//如果文件被修改了，只好重新发出数据 
+echo file_get_contents($fullpath);
+```
+
+其实我们只需要简单设置 header 中的 `Cache-Control` 等属性即可使得image不缓存。
+
+iOS Demo 非常简单，就是搞一个UIWebView加载我们本地服务器的page.php页面来验证：
+
+```oc
+NSURLRequest *request = [[NSURLRequest alloc] initWithURL:[NSURL URLWithString:@"http://127.0.0.1/page.php"]];
+[self.webview loadRequest:request];
+```
+
+为了验证昨天 NSURLCache 系统类的 `- (NSCachedURLResponse *)cachedResponseForRequest:(NSURLRequest *)request` 和 `- (void)storeCachedResponse:(NSCachedURLResponse *)cachedResponse forRequest:(NSURLRequest *)request` 何时被UIWebView调用（苹果自带使用 URL Loading System），我们需要替换掉系统默认的 NSURLCache，如何替换？很简单，首先 NSURLCache 类有一个 `sharedURLCache` 单例，替换它为我们自定义的 NSURLCache 实例即可，如下：
+
+```
+@implementation CustomURLCache
+
+// override
+- (NSCachedURLResponse *)cachedResponseForRequest:(NSURLRequest *)request {
+    NSCachedURLResponse *resp = [super cachedResponseForRequest:request];
+    
+    NSLog(@"🔴cachedResponseForRequest request : %@", request.URL.absoluteString);
+    NSLog(@"🔴cachedResponseForRequest response header: %@", [(NSHTTPURLResponse *)resp.response allHeaderFields]);
+    
+    return resp;
+}
+
+// override
+- (void)storeCachedResponse:(NSCachedURLResponse *)cachedResponse forRequest:(NSURLRequest *)request {
+    
+    NSLog(@"✅storeCachedResponse request : %@", request.URL.absoluteString);
+    NSLog(@"✅storeCachedResponse response header: %@", [(NSHTTPURLResponse *)cachedResponse.response allHeaderFields]);
+    
+    [super storeCachedResponse:cachedResponse forRequest:request];
+}
+
+// private
+- (void)clearCache {
+    [self removeAllCachedResponses];
+}
+```
+然后找一个合适的地方替换 `[NSURLCache sharedURLCache]` 即可：
+
+```oc
+self.cache = [[CustomURLCache alloc] initWithMemoryCapacity:1024*1024*10 diskCapacity:1024*1024*60 diskPath:nil];
+[NSURLCache setSharedURLCache:self.cache];
+```
+
+设置完毕后，开始调试这个demo：第一次加载时候，先出现html中的文字，然后等约5秒后加载出image图片。
+* `cachedResponseForRequest` 和 `storeCachedResponse` 都会被调用两次，第一次是刚进入页面加载html link之前，因为先要确定本地是否有缓存，注意到前一个方法return了 nil，所以会加载页面，服务器返回html文本后会调用后者方法，因为要把这个response存储到本地————不管response header有没有设置 Cache-Control 等属性；
+* 第二次进入的时候，先调用 `cachedResponseForRequest` 方法， request 为page地址，从日志还能看到从本地读出了Cache.....；但是从charles抓包可以看到发送了一个请求，我猜测尽管能从本地读出缓存，但是缓存response中的header信息标识这个是不使用缓存的，因此会发一个请求；
+* 当服务器返回page html文本数据时，会调用 `storeCachedResponse` 存储；
+
+
+然后....就没有然后了....**本来我以为紧接着会调用**`cachedResponseForRequest` 方法从本地缓存拿image图片，这样不用发送请求。
+
+> 关于缓存的文件和response信息存储地址，使用模拟器的话，应该存储在类似：`~/Library/Developer/CoreSimulator/Devices/15843FEA-1A4A-4F4A-B3C8-014EEA3A11B9/data/Containers/Data/Application/05BCB4F0-4AD7-477C-9CC2-B49C133E8F5C` 有个 Cache.db 文件，如何查看这个db文件，我们可以使用例如 Daturn Free 和 Liya工具，也可以使用 CommandLine，输入 `sqlite3 Cache.db` 命令，然后键入一些数据库查询命令，如 `.tables` 、`select * from table_name`等
+
+
