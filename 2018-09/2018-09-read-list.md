@@ -362,3 +362,17 @@ self.cache = [[CustomURLCache alloc] initWithMemoryCapacity:1024*1024*10 diskCap
 2. 具体一些动态库的生成，比如app中加载 bundle 方式加载动态库我也比较懵逼，虽然网上我是看到有此类做法说明，但是如何制作这样一个 bundle的动态库呢？bundle不是一个资源包吗。。。还是说可以包含可执行文件的资源包
 
 若有知道的朋友，可以提pr给我，感激不尽
+
+
+
+# 2018/09/18
+
+[TextKit 入门文章——raywenderlich](https://www.raywenderlich.com/5960-text-kit-tutorial-getting-started)
+
+![](https://koenig-media.raywenderlich.com/uploads/2013/09/TextRenderingArchitecture-iOS7.png)
+
+知识点：
+1. 文字排版
+2. attributeString，可以用正则匹配文案中的一些带标识符的特殊内容，已另外一种形式表现出来，比如bold加粗（`*content*`），italic斜体(`~content~`)
+
+明天看教程下半部分，感觉可以撸一个markdown在线编辑器
