@@ -376,3 +376,41 @@ self.cache = [[CustomURLCache alloc] initWithMemoryCapacity:1024*1024*10 diskCap
 2. attributeString，可以用正则匹配文案中的一些带标识符的特殊内容，已另外一种形式表现出来，比如bold加粗（`*content*`），italic斜体(`~content~`)
 
 明天看教程下半部分，感觉可以撸一个markdown在线编辑器
+
+
+
+# 2018/09/19
+
+推荐两篇文章[C-Reduce Friday QA系列](https://www.mikeash.com/pyblog/friday-qa-2018-06-29-debugging-with-c-reduce.html)和[Design Patterns in Swift #3: Facade and Adapter](https://www.appcoda.com/design-pattern-structural/)
+
+> 另外 UIWebview NSURLCache 测试验证 iOS12.0 缓存由问题，起码之前提到的两个方法中 `storeCachedResponse` 不会进入，查看本地 Cache.db 数据库也没有存储，应该是apple的sdk bug，难道是因为wkwebview，所以摒弃UIWebview了？
+
+另外 WKWebview 今天帮忙改bug，其中就是前端使用 window.open 方式调用，需要wkwebview的configuration中的preference需要设置下`preferences.javaScriptCanOpenWindowsAutomatically = YES` 完整代码如下：
+
+```
+WKWebViewConfiguration *config = [[WKWebViewConfiguration alloc] init];
+config.processPool = processPool;
+WKPreferences *preferences = [WKPreferences new];
+preferences.javaScriptCanOpenWindowsAutomatically = YES;// 设置了才会进 createWebViewWithConfiguration 代理方法
+config.preferences = preferences;
+self.webView = [[WKWebView alloc] initWithFrame:self.view.bounds configuration:config];
+self.webView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+self.webView.backgroundColor = [UIColor clearColor];
+self.webView.contentMode = UIViewContentModeRedraw;
+self.webView.opaque = YES;
+[self.view addSubview:self.webView];
+[_webView setUserInteractionEnabled:YES];
+_webView.navigationDelegate = self;
+_webView.UIDelegate = self;
+
+-(WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures{
+    NSLog(@"createWebViewWithConfiguration  request     %@",navigationAction.request);
+    if (!navigationAction.targetFrame.isMainFrame) {
+        [webView loadRequest:navigationAction.request];
+    }
+    if (navigationAction.targetFrame == nil) {
+        [webView loadRequest:navigationAction.request];
+    }
+    return nil;
+}
+```
