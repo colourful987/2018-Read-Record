@@ -414,3 +414,111 @@ _webView.UIDelegate = self;
     return nil;
 }
 ```
+
+
+# 2018/09/20
+
+TextKit 知识点，核心是`NSTextStorage`、`NSLayoutManager` 和 `NSTextContainer` 三个对象，三者的职责和作用分别如下：
+
+1. `NSTextStorage` 存储要显示的 `AttributedString`，相当于是 `NSLayoutManager` 的“补给站”，我们可以继承 `NSTextStorage` 自定义一个子类，在更新之前动态更新 `AttributedString` 属性，ps: `NSTextStorage` 是继承自 `AttributedString`；
+2. `NSTextContainer` 顾名思义就是显示文字的容器，渲染 Text 到屏幕中的某个几何区域，比如圆形，矩形或是自定义图形，每一个 `UITextView` 关联了一个 `NSTextContainer`，如果我们同样继承它自定义一个容器类，需要替换掉 `UITextView` 的容器类即可；
+3. `NSLayoutManager` 相当于一个中间者，右手拿着 `NSTextStorage` ，左手拿着 `NSTextContainer`，将前者的文本内容渲染到容器中，扮演者布局引擎的角色。
+
+> 从 storyboard 中实例化得到 UITextView 的同时也会分别得到默认的 `NSTextStorage`、`NSTextContainer`和 `NSLayoutManager`实例。
+
+NSAttributeString 有两个方法需要 override :
+```oc
+override func replaceCharacters(in range: NSRange, with str: String) {
+  print("replaceCharactersInRange:\(range) withString:\(str)")
+    
+  beginEditing()
+  backingStore.replaceCharacters(in: range, with:str)
+  edited(.editedCharacters, range: range, 
+         changeInLength: (str as NSString).length - range.length)
+  endEditing()
+}
+  
+override func setAttributes(_ attrs: [NSAttributedString.Key: Any]?, range: NSRange) {
+  print("setAttributes:\(String(describing: attrs)) range:\(range)")
+    
+  beginEditing()
+  backingStore.setAttributes(attrs, range: range)
+  edited(.editedAttributes, range: range, changeInLength: 0)
+  endEditing()
+}
+```
+
+前者是替换AttributedString中某段字符串（显示内容）；后者则是替换其中某段区域字符串的显示属性，比如字体类型，颜色等等（显示样式）。
+
+`beginEditing()`， `edited()` 和 `endEditing()` 三个方法必须实现，因为要求 NSTextStorage 通过这三个方法告知 layout manager ，相当于是一个流程，我们自定义一个 NSTextStorage，包裹了一个 AttributedString （这里我不太理解，本身就是继承 AttributedString 类，为啥还要封装一个在里面）。
+
+`NSTextStorage`、`NSTextContainer` 和 `NSLayoutManager` 实例化方式以及组装过程如下，还是比较简单易懂的：
+
+```oc
+// 1 textStorage 自定义，实例化后赋值内容
+let attrs = [NSAttributedString.Key.font: UIFont.preferredFont(forTextStyle: .body)]
+let attrString = NSAttributedString(string: note.contents, attributes: attrs)
+textStorage = SyntaxHighlightTextStorage()
+textStorage.append(attrString)
+  
+let newTextViewRect = view.bounds
+  
+// 2 实例化一个布局管理者
+let layoutManager = NSLayoutManager()
+  
+// 3 实例化一个container容器类
+let containerSize = CGSize(width: newTextViewRect.width, 
+                           height: .greatestFiniteMagnitude)
+let container = NSTextContainer(size: containerSize)
+container.widthTracksTextView = true
+// 给布局管理类绑定容器类
+layoutManager.addTextContainer(container)
+// textStorage 绑定布局管理类
+textStorage.addLayoutManager(layoutManager)
+  
+// 4 
+textView = UITextView(frame: newTextViewRect, textContainer: container)
+textView.delegate = self
+view.addSubview(textView)
+
+// 5
+textView.translatesAutoresizingMaskIntoConstraints = false
+NSLayoutConstraint.activate([
+  textView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+  textView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+  textView.topAnchor.constraint(equalTo: view.topAnchor),
+  textView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+])
+```
+
+前面说到 layoutManager 会持有 NSTextStorage，但是这里却是 `textStorage.addLayoutManager(layoutManager)`，存疑。
+
+最后一个知识点就是正则匹配，主要有：`*content*` 匹配加粗黑体(bold)，`~content~` 匹配印刷样式(script)，`-content-` 匹配删除样式(strike)，`_content_`匹配斜体样式（italic）。
+
+```
+let scriptFontDescriptor = UIFontDescriptor(fontAttributes: [.family: "Zapfino"])
+  
+// 1 
+let bodyFontDescriptor = UIFontDescriptor.preferredFontDescriptor(withTextStyle: .body)
+let bodyFontSize = bodyFontDescriptor.fontAttributes[.size] as! NSNumber
+let scriptFont = UIFont(descriptor: scriptFontDescriptor, 
+                        size: CGFloat(bodyFontSize.floatValue))
+  
+// 2 
+let boldAttributes = createAttributesForFontStyle(.body,  withTrait:.traitBold)
+let italicAttributes = createAttributesForFontStyle(.body, 
+                                                    withTrait:.traitItalic)
+let strikeThroughAttributes =  [NSAttributedString.Key.strikethroughStyle: 1]
+let scriptAttributes = [NSAttributedString.Key.font: scriptFont]
+let redTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor.red]
+
+replacements = [
+    "(\\*\\w+(\\s\\w+)*\\*)": boldAttributes,
+    "(_\\w+(\\s\\w+)*_)": italicAttributes,
+    "([0-9]+\\.)\\s": boldAttributes,
+    "(-\\w+(\\s\\w+)*-)": strikeThroughAttributes,
+    "(~\\w+(\\s\\w+)*~)": scriptAttributes,
+    "\\s([A-Z]{2,})\\s": redTextAttributes
+  ]
+  
+```
