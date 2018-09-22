@@ -522,3 +522,11 @@ replacements = [
   ]
   
 ```
+
+
+
+# 2018/09/22
+在上面代码基础上修改出一个简单的markdown编辑器，仅需要支持黑体，斜体等基础语法即可，只是为了学习：
+1. Regex 正则语法，raywenderlich 上有多篇关于regex入门文章
+2. 熟悉TextKit的使用
+3. AttributedString使用
