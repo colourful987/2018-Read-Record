@@ -530,3 +530,20 @@ replacements = [
 1. Regex 正则语法，raywenderlich 上有多篇关于regex入门文章
 2. 熟悉TextKit的使用
 3. AttributedString使用
+
+# 2018/09/24
+
+在TextKit项目基础上搞了几个简单的正则匹配，套了个壳子就是一个 Markdown 编辑器了，只是个demo而已，用正则方式问题如下：
+1. 性能不佳，尤其是在正则匹配和textView.attributedString赋值时，内容少的情况下可能不太显著，但是一旦内容很多就扛不住；
+2. markdown语法大部分可以用 regex 一个个匹配，但是呈现方式仅用 AttributeString 还是不够的，比如引用“>”样式就无法实现；
+
+![](./resource/PTMarkdown.png)
+
+参考一些正则表达式的入门文章，还得继续学习：
+
+* [iOS之常用正则（一）](https://blog.csdn.net/u011146511/article/details/76169201)
+* [Regular Expressions Tutorial: Getting Started](https://www.raywenderlich.com/5765-regular-expressions-tutorial-getting-started)
+* [An Introduction to Regular Expressions](https://www.raywenderlich.com/5767-an-introduction-to-regular-expressions)
+* [iOS正则表达式语法全集](https://www.jianshu.com/p/3323adcff24f)
+* [正则表达式NSRegularExpression](https://github.com/pro648/tips/wiki/正则表达式NSRegularExpression)
+* [iOS正则表达式语法全集](https://github.com/pro648/tips/wiki/iOS正则表达式语法全集)
