@@ -547,3 +547,73 @@ replacements = [
 * [iOS正则表达式语法全集](https://www.jianshu.com/p/3323adcff24f)
 * [正则表达式NSRegularExpression](https://github.com/pro648/tips/wiki/正则表达式NSRegularExpression)
 * [iOS正则表达式语法全集](https://github.com/pro648/tips/wiki/iOS正则表达式语法全集)
+
+
+
+# 2018/09/25(objc_msgSend)
+* [为什么 objc_msgSend 必须用汇编实现](http://arigrant.com/blog/2014/2/12/why-objcmsgsend-must-be-written-in-assembly) 总结来说：C 语言中调用函数要求在编译阶段（compile time)明确方法签名（method signature)，在运行时（runtime）C实现中派发调用是不可能的，唯有基于底层 ASM 汇编才可以。
+
+* [Friday Q&A 2012-11-16: Let's Build objc_msgSend](https://www.mikeash.com/pyblog/friday-qa-2012-11-16-lets-build-objc_msgsend.html) 是12年mike Ash的简单入门实现，代码可以跑起来；
+* [Friday Q&A 2017-06-30: Dissecting objc_msgSend on ARM64](https://www.mikeash.com/pyblog/friday-qa-2017-06-30-dissecting-objc_msgsend-on-arm64.html) mike Ash 在17年中旬时候详细的关于在arm上的 `objc_msgSend` 实现，非常值得学习
+
+学习是遇到一个老生常谈的问题，堆栈的增长方向是如何?如《程序员的自我修养》一书中谈及栈的地址比堆高，堆是向上增长的————其实这都是不严谨的。
+
+另外还有以数组举例的：
+
+```C
+#include <iostream>
+#include <vector>
+int main()
+{
+    using namespace std;
+    double a0[4] = {1.2, 2.4, 3.6, 4.8};
+    double a1[4] = {1.2, 2.4, 3.6, 4.8};
+    vector<double> a2(4);
+    vector<double> a3(4);
+    a2[0] = 1.0/3.0;
+    a2[1] = 1.0/5.0;
+    a2[2] = 1.0/7.0;
+    a2[3] = 1.0/9.0;
+    a3[0] = 1.0/3.0;
+    a3[1] = 1.0/5.0;
+    a3[2] = 1.0/7.0;
+    a3[3] = 1.0/9.0;
+    cout << "a0[2]: " << a0[2] << " at " << &a0[2] << endl;
+    cout << "a1[2]: " << a1[2] << " at " << &a1[2] << endl;
+    cout << "a1[3]: " << a1[3] << " at " << &a1[3] << endl;
+    cout << "a2[2]: " << a2[2] << " at " << &a2[2] << endl;
+    cout << "a2[3]: " << a2[3] << " at " << &a2[3] << endl;
+    cout << "a3[2]: " << a3[2] << " at " << &a3[2] << endl;
+    cout << "a3[3]: " << a3[3] << " at " << &a3[3] << endl;
+
+    return 0;
+}
+```
+
+然后有文章喜欢拿上文中的 `a1[1]` 和 `a1[2]` 比地址，借此判断栈是向上增长还是向下增长。
+
+进程地址空间分布取决于操作系统（e.g. 栈被分配在高地址，堆分配在低地址），栈向什么方向增长取决于操作系统和CPU，所以不能一概而论，不过我们通常以X86_64为例，**栈的增长方向与栈帧布局有关（我也喜欢称之为函数帧）** ：
+
+-----
+
+> [摘自知乎
+> RednaxelaFX的回答](https://www.zhihu.com/question/36103513/answer/66101372)。上下文里说的“栈”是函数调用栈，是以“栈帧”（stack frame）为单位的。每一次函数调用会在栈上分配一个新的栈帧，在这次函数调用结束时释放其空间。被调用函数（callee）的栈帧相对调用函数（caller）的栈帧的位置反映了栈的增长方向：如果被调用函数的栈帧比调用函数的在更低的地址，那么栈就是向下增长；反之则是向上增长。而在一个栈帧内，局部变量是如何分布到栈帧里的（所谓栈帧布局，stack frame layout），这完全是编译器的自由。
+
+> 至于数组元素与栈的增长方向：C与C++语言规范都规定了数组元素是分布在连续递增的地址上的。引用C语言规范的规定：
+> An array type describes a contiguously allocated nonempty set of objects with a particular member object type, called the element type.A postfix expression followed by an expression in square brackets [] is a subscripted designation of an element of an array object. The definition of the subscript operator []
+> is that E1[E2] is identical to (*((E1)+(E2))). Because of the conversion rules that
+> apply to the binary + operator, if E1 is an array object (equivalently, a pointer to the
+> initial element of an array object) and E2 is an integer, E1[E2] designates the E2-th
+> element of E1 (counting from zero).
+
+`double a0[4]` 声明旨在向编译器在栈上申请一块连续的内存，大小为 `sizeof(double)*4`，**并且让a0指向该空间的起始位置（最低地址）**，至于内部到底 a0 、a1哪个在高地址，哪个在低地址由编译器决定，并不能反映栈的增长方向。C与C++语言的数组元素要分配在连续递增的地址上，也不反映栈的增长方向。
+
+以Linux/x86模型为例，主线程栈空间比堆空间地址高，由高地址向低地址增长，借用Gustavo Duarte的Anatomy of a Program in Memory里的图：
+
+![](https://pic3.zhimg.com/80/215522854f166f7b5a537ccfa641c922_hd.png)
+
+多线程进程中，进程的栈是按照上图所示，但是多线程只不过是一组共享虚拟地址空间的地址，线程中的“栈”位置都是随机的，由 `pthread_create()`调用 `mmap()`来分配，也可以由程序自己调用 `mmap()` 获取分配的内存地址再调用 `pthread_create()` 创建线程。
+
+ASLR（Address space layout randomization ）
+
+-----
