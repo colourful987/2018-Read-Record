@@ -617,3 +617,49 @@ int main()
 ASLR（Address space layout randomization ）
 
 -----
+
+asm registers knowledge：
+
+1. rax 寄存器作为一个隐藏的参数存在，在函数调用时，计算传递过来的参数个数；
+2. xmm 存储传递的浮点数参数;
+3. MacOS 内存采用 16 字节对齐方式，而我们无须关心任何对齐问题；
+
+```
+pushq %r12    // 存储栈指针
+mov %rsp, %r12
+andq $-0x10, %rsp
+```
+
+TODO:这里如何对 esp 进行16对齐？学习下函数帧调用asm实现！
+
+4. `self`,`_cmd` 会存储在 `%rsi` 和 `%rdi` 寄存器中；
+5. `callq _GetImplementation`； 函数调用会返回值，可能是整数，也可能是浮点数，甚至是结构体，返回值会存储在 `%rax` 寄存器中————之前%rax还存储了参数个数；
+6. 由于`%rax`之后要恢复到原来的状态，所以得立刻马上迅速把值存储到别的地方
+
+```asm
+mov %rax, %r11
+mov %r12, %rsp
+popq %r12
+popq %rax
+popq %r9
+popq %r8
+popq %rcx
+popq %rdx
+popq %rdi
+popq %rsi
+
+jmp *%r11 // 调用查找到的 IMP
+```
+
+而对于返回值为结构体的情况，Mike Ash 提出如下方法：
+
+```
+NSRect r = SomeFunc(a, b, c);
+
+NSRect r;
+SomeFunc(&r, a, b, c);
+```
+
+一开始我想的是返回值是一个指向结构体的指针。。。
+
+`objc_msgSend_stret` 和 `objc_msgSend` 中的 `self` 和 `_cmd` 存储的寄存器还不同，前者的 `self` 和 `_cmd` 存储到 `%rdi` 和 `%rsi` 寄存中，返回值在 `%rdi`；后者的`self` 和 `_cmd` 存储到 `%rsi` 和 `%rdx` 寄存中，返回值在 `%rax`。
