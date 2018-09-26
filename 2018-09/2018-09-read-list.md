@@ -663,3 +663,35 @@ SomeFunc(&r, a, b, c);
 一开始我想的是返回值是一个指向结构体的指针。。。
 
 `objc_msgSend_stret` 和 `objc_msgSend` 中的 `self` 和 `_cmd` 存储的寄存器还不同，前者的 `self` 和 `_cmd` 存储到 `%rdi` 和 `%rsi` 寄存中，返回值在 `%rdi`；后者的`self` 和 `_cmd` 存储到 `%rsi` 和 `%rdx` 寄存中，返回值在 `%rax`。
+
+
+
+# 2018/09/26
+
+学习x86_64基础的 asm 指令，reference：[Introduction to X86-64 Assembly for Compiler Writers](https://www3.nd.edu/~dthain/courses/cse40243/fall2015/intel-intro.html)，通过此篇文章学习到：
+1. 寄存器的种类，x86_64下常用的有16个，%rax、%rbx...%r8、%r9...%r15，当然此处为64位寄存器，而32位寄存器如%eax，16位寄存器如%ax，再者高8位低8位：%ah、%al；另外%r8-%r15都是通用寄存器，而前者大部分一开始都是为特定指令设计使用的；
+2. 学习直接寻址，间接寻址等指令，如下：
+
+| **Mode**                    | **Example**                 |
+| --------------------------- | --------------------------- |
+| Global Symbol               | MOVQ x, %rax                |
+| Immediate                   | MOVQ $56, %rax              |
+| Register                    | MOVQ %rbx, %rax             |
+| Indirect                    | MOVQ (%rsp), %rax           |
+| Base-Relative               | MOVQ -8(%rbp), %rax         |
+| Offset-Scaled-Base-Relative | MOVQ -16(%rbx,%rcx,8), %rax |
+
+3. 基础操作 add、sub、imul、idiv等双目操作运算符；而INCQ和DECQ是单目运算符；逻辑比较：JE、JNE、JL、JLE、JG、JGE等，
+4. %rsp stack pointer 栈指针操作，首先栈向下增长，esp始终指向栈顶（bottom-most，低地址)，pop和push操作会直接更改%rsp寄存器保存的栈顶地址值，代码如下：
+
+```
+SUBQ $8, %rsp
+MOVQ %rax, (%rsp)
+
+MOVQ (%rsp), %rax
+ADDQ $8, %rsp
+
+// 上面等同于下面的指令
+PUSHQ %rax
+POPQ  %rax
+```
