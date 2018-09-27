@@ -695,3 +695,160 @@ ADDQ $8, %rsp
 PUSHQ %rax
 POPQ  %rax
 ```
+
+x86_64 寄存器目的以及谁负责save:
+
+| Register | Purpose       | Saved?       |
+| -------- | ------------- | ------------ |
+| %rax     | result        | not saved    |
+| %rbx     | scratch       | callee saves |
+| %rcx     | argument 4    | not saved    |
+| %rdx     | argument 3    | not saved    |
+| %rsi     | argument 2    | not saved    |
+| %rdi     | argument 1    | not saved    |
+| %rbp     | base pointer  | callee saves |
+| %rsp     | stack pointer | callee saves |
+| %r8      | argument 5    | not saved    |
+| %r9      | argument 6    | not saved    |
+| %r10     | scratch       | CALLER saves |
+| %r11     | scratch       | CALLER saves |
+| %r12     | scratch       | callee saves |
+| %r13     | scratch       | callee saves |
+| %r14     | scratch       | callee saves |
+| %r15     | scratch       | callee saves |
+
+其中callee就是被调用者，也就是被调用函数本身。
+
+在调用一个函数之前，需要计算传参个数，同时放置传参到指定寄存器中，接着调用者需要负责将 %r10 和 %r11 push 到栈中，然后再执行函数调用的call指令；执行完函数后return函数值之前，先要把 caller-saved 的 %r10和%r11先pop出来，然后把函数返回值放置到%eax中.(但是现在的版本.s文件确不是这样的)
+
+# 2018/09/27(学习汇编的一个小Demo)
+
+Code snippet :
+```c
+/// main.c
+long x=0;
+long y=10;
+
+int main()
+{
+	x = printf("value: %d",y);
+}
+```
+
+使用 `gcc -S main.c` 生成汇编文件`main.s`，而其他使用`gcc main.s -c -o main.o`生成目标文件；使用`gcc main.s -o main` 生成可执行文件；使用`nm main.o`可以查看引入的符号，其中`T`表示Text section段，而U表示的是undefined，比如调用其他函数库的方法。
+
+生成的汇编如下（MacOS 10.13.6）
+
+```asm
+	.section	__TEXT,__text,regular,pure_instructions
+	.macosx_version_min 10, 13
+	.globl	_main                   ## -- Begin function main
+	.p2align	4, 0x90
+_main:                                  ## @main
+	.cfi_startproc
+## BB#0:
+	pushq	%rbp
+Lcfi0:
+	.cfi_def_cfa_offset 16
+Lcfi1:
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+Lcfi2:
+	.cfi_def_cfa_register %rbp
+	leaq	L_.str(%rip), %rdi
+	movq	_y(%rip), %rsi
+	movb	$0, %al
+	callq	_printf
+	xorl	%ecx, %ecx
+	movslq	%eax, %rsi
+	movq	%rsi, _x(%rip)
+	movl	%ecx, %eax
+	popq	%rbp
+	retq
+	.cfi_endproc
+                                        ## -- End function
+	.globl	_x                      ## @x
+.zerofill __DATA,__common,_x,8,3
+	.section	__DATA,__data
+	.globl	_y                      ## @y
+	.p2align	3
+_y:
+	.quad	10                      ## 0xa
+
+	.section	__TEXT,__cstring,cstring_literals
+L_.str:                                 ## @.str
+	.asciz	"value:%d"
+
+
+.subsections_via_symbols
+```
+
+里面一堆的 cfi 指令，[更多请见](http://sourceware.org/binutils/docs-2.17/as/CFI-directives.html#CFI-directives)，这是因为我们调用生成asm的指令不对，按照如下命令`llvm-gcc -S -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm main.c`：
+
+```
+	.section	__TEXT,__text,regular,pure_instructions
+	.macosx_version_min 10, 13
+	.globl	_main                   ## -- Begin function main
+	.p2align	4, 0x90
+_main:                                  ## @main
+## BB#0:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	leaq	L_.str(%rip), %rdi
+	movq	_y(%rip), %rsi
+	movb	$0, %al
+	callq	_printf
+	xorl	%ecx, %ecx
+	movslq	%eax, %rsi
+	movq	%rsi, _x(%rip)
+	movl	%ecx, %eax
+	popq	%rbp
+	retq
+                                        ## -- End function
+	.globl	_x                      ## @x
+.zerofill __DATA,__common,_x,8,3
+	.section	__DATA,__data
+	.globl	_y                      ## @y
+	.p2align	3
+_y:
+	.quad	10                      ## 0xa
+
+	.section	__TEXT,__cstring,cstring_literals
+L_.str:                                 ## @.str
+	.asciz	"value:%d"
+
+
+.subsections_via_symbols
+```
+下面会详尽地解释上面十来行代码！首先来看第一条指令，先说说 rbp rsp 名称的由来，其实32位下是esp（extended stack pointer） 栈指针寄存器，以及 ebp（extended base pointer）基址指针寄存器，而到了64位机器则变成了rsp和rbp。R就是在 32位 extended的基础上再加一层，re-extended，再次扩展的意思？说完名称，说命令的作用：
+```
+pushq	%rbp
+movq	%rsp, %rbp
+```
+首先%rbp存的是栈的基址，当函数A调用另外函数B时，此时%rbp还保存着A函数stack-frame的栈低(内存地址上是高地址)，而%rsp指向栈顶（低地址）；由于调用函数B要新开一个stack-frame，那么%rbp肯定要保存它的基址，所以为了调用完毕后恢复函数A的栈，那么我们需要把函数A的%rbp栈基址先保存起来，这就有了 `pushq %rbp` 命令。
+
+而 %rsp 还在正常工作，指向的是函数B stack-frame 的“栈低”（高地址），此时是个特殊状态，即 %rsp == %rbp 的时候，之后 %rbp 一直保存着函数B的栈基址，而%rsp会随着push pop操作寄存器值改变。
+
+接着说说`leaq	L_.str(%rip), %rdi` 指令，先了解下 leaq(load effective address) 地址传递指令，通过两条指令的对比加深印象：
+
+```
+//不进行间接寻址，直接把传送地址赋值给目的寄存器
+leal -8(%ebp), %eax  //取出ebp寄存器的值并减去8赋给eax寄存器，ebp-8 -> eax
+
+//进行了间接寻址取出变量值（内容）
+movl -8(%ebp), %eax //取出ebp的值减去8，然后再读取(ebp-8)所指向的内存的内容，赋给eax ，(ebp-8)->eax
+```
+回过头说上面这条指令，相当于把第一个format格式字符串地址，也就是第一个参数放到 %rdi 寄存器中，至于 `L_.str(%rip)` 不是很懂，待查；同理 `movq	_y(%rip), %rsi` 就是把第二个参数放到 %rsi 寄存器中； `movb	$0, %al` 很简单，就是置 %al（回顾上面就是%rax的低8位） 低8位寄存器清零。
+
+接着`callq	_printf` 就是调用函数了； `xorl	%ecx, %ecx` 亦或操作，对 %ecx 寄存器清零操作，但是具体为啥有这条指令待查。
+
+`movslq	%eax, %rsi` 把结果值 %rax 赋值给 %rsi 寄存器，为啥呢？ （ps:movslq表示将一个双字符号扩展后送到一个四字地址中）
+
+`movq	%rsi, _x(%rip)` 接着把扩展后的值赋值给 `_x` 符号所在的内存地址。
+
+`movl	%ecx, %eax` 相当于赋值结果值 %rax，终于知道为啥前面要有个 %ecx 清零操作了，最后一步就是 `retq`。
+
+大致指令都清楚，存疑有两点：
+
+1. `L_.str(%rip)` 和 `movq	_y(%rip), %rsi` 
+2. %rip 寄存器作用
