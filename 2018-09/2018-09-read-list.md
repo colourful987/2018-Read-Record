@@ -1,5 +1,8 @@
 > Theme: Computer underlying knowledge 
 > Source Code Read Plan:
+>
+> - [x] `objc_msgSend` 汇编实现
+>
 > - [ ] GCD 底层libdispatch
 > - [ ] TableView Reload 原理，博文总结
 > - [x] Custom UIViewController Transitions (随便写几个demo实现玩)
@@ -684,7 +687,7 @@ SomeFunc(&r, a, b, c);
 3. 基础操作 add、sub、imul、idiv等双目操作运算符；而INCQ和DECQ是单目运算符；逻辑比较：JE、JNE、JL、JLE、JG、JGE等，
 4. %rsp stack pointer 栈指针操作，首先栈向下增长，esp始终指向栈顶（bottom-most，低地址)，pop和push操作会直接更改%rsp寄存器保存的栈顶地址值，代码如下：
 
-```
+```asm
 SUBQ $8, %rsp
 MOVQ %rax, (%rsp)
 
@@ -785,7 +788,7 @@ L_.str:                                 ## @.str
 
 里面一堆的 cfi 指令，[更多请见](http://sourceware.org/binutils/docs-2.17/as/CFI-directives.html#CFI-directives)，这是因为我们调用生成asm的指令不对，按照如下命令`llvm-gcc -S -fno-asynchronous-unwind-tables -fno-dwarf2-cfi-asm main.c`：
 
-```
+```asm
 	.section	__TEXT,__text,regular,pure_instructions
 	.macosx_version_min 10, 13
 	.globl	_main                   ## -- Begin function main
@@ -821,7 +824,7 @@ L_.str:                                 ## @.str
 .subsections_via_symbols
 ```
 下面会详尽地解释上面十来行代码！首先来看第一条指令，先说说 rbp rsp 名称的由来，其实32位下是esp（extended stack pointer） 栈指针寄存器，以及 ebp（extended base pointer）基址指针寄存器，而到了64位机器则变成了rsp和rbp。R就是在 32位 extended的基础上再加一层，re-extended，再次扩展的意思？说完名称，说命令的作用：
-```
+```asm
 pushq	%rbp
 movq	%rsp, %rbp
 ```
@@ -831,7 +834,7 @@ movq	%rsp, %rbp
 
 接着说说`leaq	L_.str(%rip), %rdi` 指令，先了解下 leaq(load effective address) 地址传递指令，通过两条指令的对比加深印象：
 
-```
+```asm
 //不进行间接寻址，直接把传送地址赋值给目的寄存器
 leal -8(%ebp), %eax  //取出ebp寄存器的值并减去8赋给eax寄存器，ebp-8 -> eax
 
@@ -852,3 +855,191 @@ movl -8(%ebp), %eax //取出ebp的值减去8，然后再读取(ebp-8)所指向�
 
 1. `L_.str(%rip)` 和 `movq	_y(%rip), %rsi` 
 2. %rip 寄存器作用
+
+
+
+# 2018/09/28
+函数调用时，调用者传参方式可以是将参数写入%rsi %rdi %rdx $rcx 寄存器，如果有更多的寄存器，我们可以使用 push 到栈上，这一切都发生下 **下个函数创建一个新的stack-frame之前！**，即 `push %rbp，movl %rsp %rbp`这条命令之前。
+
+调用一个简单的函数:
+
+```c
+long square( long x )
+{
+	return x*x;
+}
+```
+函数定义显示只需要参数 `x` 即可，按照上面所说的：第一个参数默认是放置到 %rdi ，第二个参数放置到 %rsi，接着是 %rdx，%rcx 总计四个参数，而多余的参数只能由调用者预先push到栈上，而函数本身内部通过ebp加地址偏移获取栈上的参数，一般都是 `ebp - 地址偏移`。
+
+```asm
+// 旧版本的编译成汇编代码如下
+.global square
+square:
+	MOVQ  %rdi, %rax  # copy first argument to %rax
+        IMULQ %rdi, %rax  # multiply it by itself
+                          # result is already in %rax
+	RET               # return to caller
+```
+上面的实现非常简单，就是从 %rdi 取出第一个参数放到 %rax 寄存器，然后两个寄存器值相乘得到结果放入 %rax 中————也就是结果寄存器，RET 返回即可。
+
+目前系统下我编译成汇编代码如下：
+```asm
+	.section	__TEXT,__text,regular,pure_instructions
+	.macosx_version_min 10, 13
+	.globl	_square                 ## -- Begin function square
+	.p2align	4, 0x90
+_square:                                ## @square
+## BB#0:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	movq	%rdi, -8(%rbp)     #%rdi值存入栈中 此时rsp是没有变的
+	movq	-8(%rbp), %rdi     #这里为啥还要赋值%rdi,原来的值没了吗 还是为了确保安全或者是C编译成汇编语言不是很智能罢了
+	imulq	-8(%rbp), %rdi     #两者相乘 结果值让如 %rdi
+	movq	%rdi, %rax  # 结果值放入 %rax
+	popq	%rbp  # rsp和rbp都是指向stack-frame第一个位置，这个位置保存了上一个函数帧的 rbp 值，所以这里这么干
+	retq
+                                        ## -- End function
+	.globl	_main                   ## -- Begin function main
+	.p2align	4, 0x90
+_main:                                  ## @main
+## BB#0:
+	pushq	%rbp
+	movq	%rsp, %rbp  # main函数开启一个新的stack frame
+	subq	$32, %rsp   # rsp 减去 32 ,意味着栈指针往下移了4个字节，也就是新栈第二个4字节
+	movl	$2, %eax    # 把立即数 2 存入 %eax 
+	movl	%eax, %ecx  # 把值存入了 %ecx 中(32位），其实相当于存入了%rcx（64位）
+	-------------------- 其实可以理解为把上一个函数（caller)的传参寄存器先保存起来 --------------------
+	movl	$0, -4(%rbp) # 把当前栈上部偏移4字节设为 0
+	movl	%edi, -8(%rbp) # 将%edi值存到当前栈上部偏移8字节处
+	movq	%rsi, -16(%rbp) # 将%rsi存到当前栈上部偏移16个字节
+	----------------------------------------------------------------------------------------------------
+	movq	%rcx, %rdi   # 现在轮到调用函数square了，所以新的传参要依次放入 %rdi %rsi %rdx %rcx 中 这里只有一个
+	callq	_square # 调用函数 _squre
+	xorl	%edx, %edx # 寄存器 %rdx 清零
+	movq	%rax, -24(%rbp)         ## 8-byte Spill
+	movl	%edx, %eax
+	addq	$32, %rsp
+	popq	%rbp
+	retq
+                                        ## -- End function
+
+.subsections_via_symbols
+```
+
+而对于更复杂的函数，由C语言实现的代码，调用llvm转成汇编代码个人认为代码过于冗余：
+
+```asm
+int func( int a, int b, int c )
+{
+        int x, y;
+        x = a+b+c;
+	y = x*5;
+        return y;
+}
+
+.globl func
+func:
+	##################### preamble of function sets up stack
+
+  pushq %rbp          # save the base pointer
+  movq  %rsp, %rbp    # set new base pointer to esp
+
+	pushq %rdi          # save first argument (a) on the stack
+	pushq %rsi          # save second argument (b) on the stack
+	pushq %rdx          # save third argument (c) on the stack
+
+  subq  $16, %rsp     # allocate two more local variables
+
+	pushq %rbx          # save callee-saved registers
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+
+	######################## body of function starts here
+
+  movq  -8(%rbp),  %rbx   # load each arg into a scratch register
+  movq  -16(%rbp), %rcx
+  movq  -24(%rbp), %rdx
+
+  addq  %rdx, %rcx       # add the args together
+  addq  %rcx, %rbx
+  movq  %rbx, -32(%rbp)   # store the result into local 0 (x)
+
+	movq  -32(%rbp), %rbx   # load local 0 (x) into a scratch register.
+	imulq  $5, %rbx		# multiply it by 5
+	movl  %rbx, -40(%ebp)	# store the result in local 1 (y)
+
+  movl  -20(%ebp), %eax   # move local 1 (y) into the result register
+
+	#################### epilogue of function restores the stack
+
+	popq %r15          # restore callee-saved registers
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %rbx
+
+  movq %rbp, %rsp    # reset stack to base pointer.
+  popq %rbp          # restore the old base pointer
+
+  ret                # return to caller
+```
+
+上面的汇编是出自文章中，但我认为实际生成肯定不一样，代码如下：
+
+```asm
+	.section	__TEXT,__text,regular,pure_instructions
+	.macosx_version_min 10, 13
+	.globl	_func                   ## -- Begin function func
+	.p2align	4, 0x90
+_func:                                  ## @func
+## BB#0:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	#===========================================================
+	# 将 edi esi edx ecx 32位寄存器参数值推入栈中
+	# 再强调一次rdi rsi rdx rcx 都是64位寄存器，函数传参是int 所以32位寄存器足矣
+	movl	%edi, -4(%rbp)  
+	movl	%esi, -8(%rbp)
+	movl	%edx, -12(%rbp)
+	#===========================================================
+	movl	-4(%rbp), %edx # 计算 a+b+c 存入 %edx
+	addl	-8(%rbp), %edx
+	addl	-12(%rbp), %edx
+	movl	%edx, -16(%rbp) # 将计算结果写入栈中，即表达式 x= a+b+c
+	imull	$5, -16(%rbp), %edx # 立即数 5 * x 存入 %edx 中
+	movl	%edx, -20(%rbp) #结果写入栈上
+	movl	-20(%rbp), %eax #再写会 %eax
+	popq	%rbp # 恢复栈的基址 esp也会自动减8
+	retq
+                                        ## -- End function
+	.globl	_main                   ## -- Begin function main
+	.p2align	4, 0x90
+_main:                                  ## @main
+## BB#0:
+	pushq	%rbp
+	movq	%rsp, %rbp
+	subq	$32, %rsp
+	#=================================
+	# 
+	movl	$1, %eax
+	movl	$2, %ecx
+	movl	$3, %edx
+	movl	$0, -4(%rbp)  # 同上
+	movl	%edi, -8(%rbp) # 保存上一个stack frame 的传参
+	movq	%rsi, -16(%rbp)# 同上
+	movl	%eax, %edi # 这里开始才是下一个函数帧传参放到对应的寄存器中 rdi rsi rdx rcx
+	movl	%ecx, %esi
+	#=================================
+	callq	_func
+	xorl	%ecx, %ecx
+	movl	%eax, -20(%rbp)         ## 4-byte Spill
+	movl	%ecx, %eax
+	addq	$32, %rsp
+	popq	%rbp
+	retq
+                                        ## -- End function
+
+.subsections_via_symbols
+```
