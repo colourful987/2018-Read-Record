@@ -1043,3 +1043,122 @@ _main:                                  ## @main
 
 .subsections_via_symbols
 ```
+# 2018/09/30（`_objc_msgSend` x86_64实现）
+
+有了一定的汇编基础，`_objc_msgSend` 的实现不妨猜测下：
+
+1. 首先是把不定入参从 %rsi %rdi %rdx %rcx %r8 %r9 六个寄存器中取出，然后 `pushq` 到栈上，至于压入的寄存器个数是由 %rax 寄存器存储的
+
+```
+pushq %rsi
+pushq %rdi
+pushq %rdx
+pushq %rcx
+pushq %r8
+pushq %r9
+pushq %rax
+```
+%xmm寄存器专门传递浮点数类型参数（待确认）。上面还存在一个栈对齐问题，MacOS 要求 `aligned to a 16-byte boundary`。
+
+为了对齐，先把%r12寄存器保存的旧值保存到栈上，然后将%rsp保存到%r12寄存器中，然后将%rsp栈指针往下移动16个字节。
+
+```asm
+pushq %r12
+mov %rsp, %r12
+andq $-0x10, %rsp # 在栈上分配了16个字节
+```
+
+> TODO: 这里要搞清楚汇编下如何栈上内存对齐。
+
+下一步就是调用 `_GetImplementation` 查找对应的方法实现 `Imp` ，也就是根据 `sel` 方法名称得到对应的函数指针：
+
+```
+callq _GetImplementation 
+mov %rax, %r11  // 将查找到的 IMP 由 %rax 寄存器移动到 %r11 寄存器中
+```
+
+调用完函数后就要恢复之前的栈指针了：
+```
+mov %r12, %rsp  # %rsp 栈指针恢复到之前指向栈%12上的地址
+popq %r12 # %r12 恢复之前的值
+
+
+############# 依次pop出去 ###############
+popq %rax 
+popq %r9
+popq %r8
+popq %rcx
+popq %rdx
+popq %rdi
+popq %rsi
+```
+找到的 IMP 在 %r11 中，保存的是函数指针，我们可以使用 `jmp *%r11` 跳转至函数处，invoke这个函数完毕后悔直接回到 `objc_msgSend`。
+
+Mike Ash 中提到了关于函数返回的是个结构体，需要返回结构体指针：
+
+```
+NSRect r = SomeFunc(a, b, c); // 改为传址方式
+
+NSRect r;
+SomeFunc(&r, a, b, c);
+```
+前面说到 `objc_msgSend` 默认是把 `self` 和 `_cmd` 存储的是 %rdi 和 %rsi 寄存器，这么玩的话不适用那些返回结构体指针的方法。所以才有了 `_objc_msgSend_strect` 这个方法，这样的话 %rdi 要用来存储返回值指针，而 %rsi 和 %rdx 存储 `self` 和 `_cmd` 。ps: `objc_msgSend_fpret` 同样是这个道理。
+
+至于 Method Lookup 方式简单说就是搞个Hash字典方式，TODO:可以学习下如何实现一个自定义的字典。
+
+```oc
+typedef struct {
+    SEL name;
+    void *unused;
+    IMP imp;
+} cache_entry;
+
+struct objc_cache {
+    uintptr_t mask;
+    uintptr_t occupied;        
+    cache_entry *buckets[1]; // 这里是c语言的变长实现
+};
+
+#ifndef __LP64__
+# define CACHE_HASH(sel, mask) (((uintptr_t)(sel)>>2) & (mask))
+#else
+# define CACHE_HASH(sel, mask) (((unsigned int)((uintptr_t)(sel)>>0)) & (mask))
+#endif
+
+struct class_t {
+    struct class_t *isa;
+    struct class_t *superclass;
+    struct objc_cache *cache;
+    IMP *vtable;
+};
+
+IMP GetImplementation(id self, SEL _cmd)
+{
+
+    Class c = object_getClass(self);
+    struct class_t *classInternals = (struct class_t *)c;
+
+    IMP imp = NULL;
+
+    struct objc_cache *cache = classInternals->cache;
+
+    uintptr_t index = CACHE_HASH(_cmd, cache->mask);
+    cache_entry **buckets = cache->buckets;
+    for(; buckets[index] != NULL; index = (index + 1) & cache->mask)
+    {
+        if(buckets[index]->name == _cmd)
+        {
+            imp = buckets[index]->imp;
+            break;
+        }
+    }
+    if(imp == NULL)
+        imp = class_getMethodImplementation(c, _cmd);
+
+    return imp;
+}
+```
+
+关键是通过 sel 名称得到一个 index 索引，从上面的buckets中取出，其实index计算是存在相同的可能，应该还会有个处理。
+
+> 今日的学习知识点就是关于 `jmp *%r11` 这玩样，这行代码之前其实都是在做准备工作 pop %rax %r9 %r8 %rcx %rdx %rdi %rsi，把参数值预先存储到寄存器中，由 %r11 指向的函数内部再去这些寄存器中拿。
