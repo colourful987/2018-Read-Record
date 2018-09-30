@@ -2,15 +2,25 @@
 
 # Learning Recording Timeline
 
-- [ ] [2018 九月学习记录 🕐](./2018-09/2018-09-read-list.md)
+- [ ] [2018 十月学习记录](./2018-09/2018-09-read-list.md)
 
-> Theme: Computer underlying knowledge && Custom UIViewController Transitions （收尾）
-> Source Code Read Plan:
+> Theme:  待定
+> Source Code Read Plan: 打算 `objc_msgSend` 收尾，另外实现以下知乎和App Store中的几个转场动画。
 > Reference Book List:  
 
 
 
-- [x] [2018 八月学习记录 🕐](./2018-08/2018-08-read-list.md)
+- [x] [2018 九月学习记录](./2018-09/2018-09-read-list.md)
+
+> Theme: Computer underlying knowledge && Custom UIViewController Transitions （收尾）
+> Source Code Read Plan:学习了 `objc_msgSend` 汇编实现，实现了一些Custom UIViewController Transition。
+> Reference Book List: 
+>
+> Summary：本月学习到的收获主要是转场动画，以及最近几天的 asm 学习，收获颇丰，对理解堆栈，内存对齐，指令调用等等都算是近了一步。说实在的，汇编入门难，毕竟偏底层，暂时没有实际应用场景过，基本都停留在分析已有的源码上。
+
+
+
+- [x] [2018 八月学习记录 ](./2018-08/2018-08-read-list.md)
 
 > Theme:  Custom UIViewController Transitions
 > [TransitionWorld](https://github.com/colourful987/2018-Read-Record/tree/master/Content/iOS/TransitionWorld/)写了一些转场动画。转场其实考验的是交互设计，代码上尽管实现起来也稍有难度，但是如果分解成各个子动画，还是都能写出来，感觉转场动画在复用上实在...比较困难...很难统一
