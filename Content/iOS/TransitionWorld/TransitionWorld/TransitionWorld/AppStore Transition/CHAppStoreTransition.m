@@ -27,33 +27,33 @@
   // 牢记：fromView一开始就存在，toView总是需要我们去手动添加
   // 动画一开始 我们就把toView视图放置当前cell的位置
   toVC.view.frame = fromVC.position;
+  [toVC.view layoutIfNeeded];
   toVC.appIntroView.backgroundColor = fromVC.appIntroView.backgroundColor;
   toVC.textView.hidden = YES; // 先隐藏掉
   [containerView addSubview:toVC.view];
   
-  
-  [UIView animateWithDuration:10 animations:^{
-    [toVC.view mas_makeConstraints:^(MASConstraintMaker *make) {
-      make.left.equalTo(@16);
-      make.right.equalTo(@(-16));
-      make.height.mas_equalTo(CGRectGetHeight(containerView.bounds) - 40);
-      make.top.equalTo(@40);
+  [UIView animateKeyframesWithDuration:0.5 delay:0 options:UIViewKeyframeAnimationOptionCalculationModeLinear animations:^{
+    [UIView addKeyframeWithRelativeStartTime:0.0 relativeDuration:0.7 animations:^{
+      [toVC.view mas_remakeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(@16);
+        make.right.equalTo(@(-16));
+        make.height.mas_equalTo(CGRectGetHeight(containerView.bounds) - 40);
+        make.top.equalTo(@40);
+      }];
+      [containerView layoutIfNeeded];
     }];
-    [containerView layoutIfNeeded];
-  } completion:^(BOOL finished) {
-//    toVC.textView.hidden = NO;
-  }];
-  
-  
-  [UIView animateWithDuration:5 animations:^{
-    [toVC.view mas_remakeConstraints:^(MASConstraintMaker *make) {
-      make.left.right.bottom.equalTo(containerView);
-      make.top.equalTo(containerView);
+    
+    [UIView addKeyframeWithRelativeStartTime:0.7 relativeDuration:0.3 animations:^{
+      [toVC.view mas_remakeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.bottom.equalTo(containerView);
+        make.top.equalTo(containerView);
+      }];
+      [containerView layoutIfNeeded];
     }];
-    [containerView layoutIfNeeded];
   } completion:^(BOOL finished) {
-    toVC.textView.hidden = YES;
+    toVC.textView.hidden = NO;
     [transitionContext completeTransition:true];
+
   }];
 
   

@@ -94,13 +94,13 @@
 - (void)tableView:(UITableView *)tableView didHighlightRowAtIndexPath:(NSIndexPath *)indexPath {
   CHAppIntroItemCell *cell = [tableView cellForRowAtIndexPath:indexPath];
   
-  [cell userSelectAppIntroCell];
+//  [cell userSelectAppIntroCell];
 }
 
 - (void)tableView:(UITableView *)tableView didUnhighlightRowAtIndexPath:(NSIndexPath *)indexPath {
   CHAppIntroItemCell *cell = [tableView cellForRowAtIndexPath:indexPath];
   
-  [cell userDeselectedAppIntroCell];
+//  [cell userDeselectedAppIntroCell];
 
 }
 
