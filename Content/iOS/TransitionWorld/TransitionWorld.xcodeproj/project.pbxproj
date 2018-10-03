@@ -40,6 +40,7 @@
 		4F7043FF2140400D004AEFD6 /* CHDemo4SourceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7043FE2140400D004AEFD6 /* CHDemo4SourceViewController.m */; };
 		4F704403214047F5004AEFD6 /* CircularAnimationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F704402214047F5004AEFD6 /* CircularAnimationController.m */; };
 		4F70440621405752004AEFD6 /* demo4.gif in Resources */ = {isa = PBXBuildFile; fileRef = 4F70440521405752004AEFD6 /* demo4.gif */; };
+		4F7E1FBB2164FE2200817B2C /* CHAppStoreTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7E1FBA2164FE2200817B2C /* CHAppStoreTransition.m */; };
 		4F7F15D621358F810055F189 /* CHDemo1SourceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7F15D521358F810055F189 /* CHDemo1SourceViewController.m */; };
 		4F7F15D921358F940055F189 /* CHDemo1DestinationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7F15D821358F940055F189 /* CHDemo1DestinationViewController.m */; };
 		4F7F15DD213590850055F189 /* CHSlideInAnimationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7F15DC213590850055F189 /* CHSlideInAnimationController.m */; };
@@ -49,6 +50,10 @@
 		4F7F15EB2135A4D10055F189 /* CHRotateToLandscapeAnimationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7F15EA2135A4D10055F189 /* CHRotateToLandscapeAnimationController.m */; };
 		4F7F15EE2135A5890055F189 /* CHDemo2SourceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7F15ED2135A5890055F189 /* CHDemo2SourceViewController.m */; };
 		4F7F15F12135A5A00055F189 /* CHDemo2DestinationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F7F15F02135A5A00055F189 /* CHDemo2DestinationViewController.m */; };
+		4FA97DD02163B14B005A1857 /* CHDemo5DestinationViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FA97DCD2163B14B005A1857 /* CHDemo5DestinationViewController.m */; };
+		4FA97DD12163B14B005A1857 /* CHDemo5SourceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FA97DCF2163B14B005A1857 /* CHDemo5SourceViewController.m */; };
+		4FA97DD52163B7AD005A1857 /* CHAppIntroItemCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FA97DD32163B7AD005A1857 /* CHAppIntroItemCell.m */; };
+		4FA97DD62163B7AD005A1857 /* CHAppIntroItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4FA97DD42163B7AD005A1857 /* CHAppIntroItemCell.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -117,6 +122,9 @@
 		4F704402214047F5004AEFD6 /* CircularAnimationController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CircularAnimationController.m; sourceTree = "<group>"; };
 		4F7044042140484D004AEFD6 /* CircleTransitionable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CircleTransitionable.h; sourceTree = "<group>"; };
 		4F70440521405752004AEFD6 /* demo4.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = demo4.gif; sourceTree = "<group>"; };
+		4F7E1FB92164FE2200817B2C /* CHAppStoreTransition.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHAppStoreTransition.h; sourceTree = "<group>"; };
+		4F7E1FBA2164FE2200817B2C /* CHAppStoreTransition.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHAppStoreTransition.m; sourceTree = "<group>"; };
+		4F7E1FBC216500C100817B2C /* CHAppStoreTransitionable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHAppStoreTransitionable.h; sourceTree = "<group>"; };
 		4F7F15D421358F810055F189 /* CHDemo1SourceViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHDemo1SourceViewController.h; sourceTree = "<group>"; };
 		4F7F15D521358F810055F189 /* CHDemo1SourceViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHDemo1SourceViewController.m; sourceTree = "<group>"; };
 		4F7F15D721358F940055F189 /* CHDemo1DestinationViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHDemo1DestinationViewController.h; sourceTree = "<group>"; };
@@ -136,6 +144,13 @@
 		4F7F15EF2135A5A00055F189 /* CHDemo2DestinationViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHDemo2DestinationViewController.h; sourceTree = "<group>"; };
 		4F7F15F02135A5A00055F189 /* CHDemo2DestinationViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHDemo2DestinationViewController.m; sourceTree = "<group>"; };
 		4F7F15F22135ACC10055F189 /* CHRotateTransitionable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHRotateTransitionable.h; sourceTree = "<group>"; };
+		4FA97DCC2163B14B005A1857 /* CHDemo5SourceViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CHDemo5SourceViewController.h; sourceTree = "<group>"; };
+		4FA97DCD2163B14B005A1857 /* CHDemo5DestinationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CHDemo5DestinationViewController.m; sourceTree = "<group>"; };
+		4FA97DCE2163B14B005A1857 /* CHDemo5DestinationViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CHDemo5DestinationViewController.h; sourceTree = "<group>"; };
+		4FA97DCF2163B14B005A1857 /* CHDemo5SourceViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CHDemo5SourceViewController.m; sourceTree = "<group>"; };
+		4FA97DD22163B7AD005A1857 /* CHAppIntroItemCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHAppIntroItemCell.h; sourceTree = "<group>"; };
+		4FA97DD32163B7AD005A1857 /* CHAppIntroItemCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHAppIntroItemCell.m; sourceTree = "<group>"; };
+		4FA97DD42163B7AD005A1857 /* CHAppIntroItemCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CHAppIntroItemCell.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -207,6 +222,7 @@
 		4F5CF8022134399400A490DF /* TransitionWorld */ = {
 			isa = PBXGroup;
 			children = (
+				4F7E1FB82164FD7100817B2C /* AppStore Transition */,
 				4F704400214042CF004AEFD6 /* Circular Transition */,
 				4F7F15E42135A32A0055F189 /* Portait  Rotate | Landscape Rotate */,
 				4F7F15DA213590620055F189 /* Side In | Side Out */,
@@ -268,6 +284,7 @@
 		4F5CF82E21343F2F00A490DF /* Transition Demo */ = {
 			isa = PBXGroup;
 			children = (
+				4FA97DCB2163B0AA005A1857 /* Demo5 */,
 				4F7043F921403BFF004AEFD6 /* Demo4 */,
 				4F33DD67213D8EF60073B604 /* Demo3 */,
 				4F7F15E52135A3C40055F189 /* Demo2 */,
@@ -333,6 +350,16 @@
 			path = "Circular Transition";
 			sourceTree = "<group>";
 		};
+		4F7E1FB82164FD7100817B2C /* AppStore Transition */ = {
+			isa = PBXGroup;
+			children = (
+				4F7E1FB92164FE2200817B2C /* CHAppStoreTransition.h */,
+				4F7E1FBA2164FE2200817B2C /* CHAppStoreTransition.m */,
+				4F7E1FBC216500C100817B2C /* CHAppStoreTransitionable.h */,
+			);
+			path = "AppStore Transition";
+			sourceTree = "<group>";
+		};
 		4F7F15D321358F620055F189 /* Demo1 */ = {
 			isa = PBXGroup;
 			children = (
@@ -381,6 +408,20 @@
 				4F7F15F02135A5A00055F189 /* CHDemo2DestinationViewController.m */,
 			);
 			path = Demo2;
+			sourceTree = "<group>";
+		};
+		4FA97DCB2163B0AA005A1857 /* Demo5 */ = {
+			isa = PBXGroup;
+			children = (
+				4FA97DCE2163B14B005A1857 /* CHDemo5DestinationViewController.h */,
+				4FA97DCD2163B14B005A1857 /* CHDemo5DestinationViewController.m */,
+				4FA97DCC2163B14B005A1857 /* CHDemo5SourceViewController.h */,
+				4FA97DCF2163B14B005A1857 /* CHDemo5SourceViewController.m */,
+				4FA97DD22163B7AD005A1857 /* CHAppIntroItemCell.h */,
+				4FA97DD32163B7AD005A1857 /* CHAppIntroItemCell.m */,
+				4FA97DD42163B7AD005A1857 /* CHAppIntroItemCell.xib */,
+			);
+			path = Demo5;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -444,6 +485,7 @@
 				4F7F15E321359BD90055F189 /* demo1.gif in Resources */,
 				4F555A1F2138432F0029CD59 /* demo2.gif in Resources */,
 				4F5CF82D21343A8700A490DF /* MASInfo.plist in Resources */,
+				4FA97DD62163B7AD005A1857 /* CHAppIntroItemCell.xib in Resources */,
 				4F5CF7F82134395500A490DF /* LaunchScreen.storyboard in Resources */,
 				4F33DD78213DA4B10073B604 /* demo3.gif in Resources */,
 				4F5CF7F52134395500A490DF /* Assets.xcassets in Resources */,
@@ -460,10 +502,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				4F7F15DD213590850055F189 /* CHSlideInAnimationController.m in Sources */,
+				4FA97DD12163B14B005A1857 /* CHDemo5SourceViewController.m in Sources */,
 				4F5CF82621343A8700A490DF /* MASConstraintMaker.m in Sources */,
 				4F704403214047F5004AEFD6 /* CircularAnimationController.m in Sources */,
 				4F7F15EE2135A5890055F189 /* CHDemo2SourceViewController.m in Sources */,
 				4F5CF83521343FA400A490DF /* CHDemo0DestinationViewController.m in Sources */,
+				4FA97DD52163B7AD005A1857 /* CHAppIntroItemCell.m in Sources */,
 				4F5CF84321344E3400A490DF /* CHFadeOutAnimationController.m in Sources */,
 				4F5CF84021344E2200A490DF /* CHFadeInAnimationController.m in Sources */,
 				4F5CF83D2134483700A490DF /* CHGradientView.m in Sources */,
@@ -487,7 +531,9 @@
 				4F33DD72213D94BD0073B604 /* CHDemo3DestinationViewController.m in Sources */,
 				4F7043FC21403FFE004AEFD6 /* CHDemo4DestinationViewController.m in Sources */,
 				4F5CF82521343A8700A490DF /* MASCompositeConstraint.m in Sources */,
+				4F7E1FBB2164FE2200817B2C /* CHAppStoreTransition.m in Sources */,
 				4F5CF82921343A8700A490DF /* View+MASAdditions.m in Sources */,
+				4FA97DD02163B14B005A1857 /* CHDemo5DestinationViewController.m in Sources */,
 				4F5CF82321343A8700A490DF /* NSLayoutConstraint+MASDebugAdditions.m in Sources */,
 				4F7F15D621358F810055F189 /* CHDemo1SourceViewController.m in Sources */,
 				4F5CF82C21343A8700A490DF /* MASViewAttribute.m in Sources */,

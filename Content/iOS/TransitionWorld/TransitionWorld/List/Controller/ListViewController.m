@@ -30,7 +30,8 @@ static NSString * const kIdentifierOfTableViewCell = @"kIdentifierOfTableViewCel
                    @"Side In(滑入)/Side Out(滑出)",
                    @"Rotate Portrait to Landscape",
                    @"Interactive Side In/Out Ver&Hor",
-                   @"Transition Animation Like in the Ping App"];
+                   @"Transition Animation Like in the Ping App",
+                   @"App Store Present App Intro View"];
     self.title = @"Transition Animation World";
     [self.view addSubview:self.listTableView];
     [self.listTableView mas_makeConstraints:^(MASConstraintMaker *make) {
