@@ -28,7 +28,13 @@
   // fromVC.view 慢慢缩小到toView中cell的视图缩略图中
   [UIView animateWithDuration:0.5 animations:^{
     NSLog(@"toVC %@",NSStringFromCGRect(toVC.position));
-    fromVC.view.frame = toVC.position;
+    [fromVC.view mas_remakeConstraints:^(MASConstraintMaker *make) {
+      make.left.equalTo(@16);
+      make.right.equalTo(@(-16));
+      make.top.equalTo(@(toVC.position.origin.y));
+      make.height.equalTo(@(CGRectGetHeight(toVC.position)));
+    }];
+    [containerView layoutIfNeeded];
   } completion:^(BOOL finished) {
     [fromVC.view removeFromSuperview];
     [transitionContext completeTransition:finished];
