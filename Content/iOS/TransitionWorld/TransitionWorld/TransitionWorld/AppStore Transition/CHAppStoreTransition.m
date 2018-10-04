@@ -52,8 +52,7 @@
     }];
   } completion:^(BOOL finished) {
     toVC.textView.hidden = NO;
-    [transitionContext completeTransition:true];
-
+    [transitionContext completeTransition:finished];
   }];
 
   

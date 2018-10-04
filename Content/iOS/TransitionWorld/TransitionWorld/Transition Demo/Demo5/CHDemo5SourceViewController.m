@@ -10,8 +10,8 @@
 #import "CHDemo5DestinationViewController.h"
 #import "CHAppIntroItemCell.h"
 #import "CHAppStoreTransition.h"
+#import "CHAppStoreDismissTransition.h"
 #import "Masonry.h"
-
 
 @interface CHDemo5SourceViewController ()<UIViewControllerTransitioningDelegate, UITableViewDataSource, UITableViewDelegate>
 @property(nonatomic, strong)UITableView *list;
@@ -91,18 +91,18 @@
   return 400.f;
 }
 
-- (void)tableView:(UITableView *)tableView didHighlightRowAtIndexPath:(NSIndexPath *)indexPath {
-  CHAppIntroItemCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-  
-//  [cell userSelectAppIntroCell];
-}
-
-- (void)tableView:(UITableView *)tableView didUnhighlightRowAtIndexPath:(NSIndexPath *)indexPath {
-  CHAppIntroItemCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-  
-//  [cell userDeselectedAppIntroCell];
-
-}
+//- (void)tableView:(UITableView *)tableView didHighlightRowAtIndexPath:(NSIndexPath *)indexPath {
+//  CHAppIntroItemCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+//  
+////  [cell userSelectAppIntroCell];
+//}
+//
+//- (void)tableView:(UITableView *)tableView didUnhighlightRowAtIndexPath:(NSIndexPath *)indexPath {
+//  CHAppIntroItemCell *cell = [tableView cellForRowAtIndexPath:indexPath];
+//  
+////  [cell userDeselectedAppIntroCell];
+//
+//}
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
   CHAppIntroItemCell *cell = [tableView cellForRowAtIndexPath:indexPath];
@@ -113,14 +113,15 @@
 }
 #pragma mark - UIViewControllerTransitioningDelegate
 
-//- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
-//  return nil;
-//}
-//
+- (id<UIViewControllerAnimatedTransitioning>)animationControllerForDismissedController:(UIViewController *)dismissed {
+  return [[CHAppStoreDismissTransition alloc] init];
+}
+
 //- (id<UIViewControllerInteractiveTransitioning>)interactionControllerForDismissal:(id<UIViewControllerAnimatedTransitioning>)animator {
 //
 //  return nil;
 //}
+
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source {
   return [[CHAppStoreTransition alloc] init];

@@ -27,7 +27,7 @@
   [self.view addSubview:self.appIllustration];
   [self.appIllustration mas_makeConstraints:^(MASConstraintMaker *make) {
     make.left.right.top.equalTo(self.view);
-    make.height.mas_equalTo(368);
+    make.height.mas_equalTo(367.5);
   }];
   
   [self.appIllustration addSubview:self.closeButton];

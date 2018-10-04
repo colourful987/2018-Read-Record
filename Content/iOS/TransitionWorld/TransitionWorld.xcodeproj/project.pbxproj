@@ -54,6 +54,7 @@
 		4FA97DD12163B14B005A1857 /* CHDemo5SourceViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FA97DCF2163B14B005A1857 /* CHDemo5SourceViewController.m */; };
 		4FA97DD52163B7AD005A1857 /* CHAppIntroItemCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FA97DD32163B7AD005A1857 /* CHAppIntroItemCell.m */; };
 		4FA97DD62163B7AD005A1857 /* CHAppIntroItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4FA97DD42163B7AD005A1857 /* CHAppIntroItemCell.xib */; };
+		4FF9CF33216642D000BA8764 /* CHAppStoreDismissTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 4FF9CF32216642D000BA8764 /* CHAppStoreDismissTransition.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -151,6 +152,8 @@
 		4FA97DD22163B7AD005A1857 /* CHAppIntroItemCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHAppIntroItemCell.h; sourceTree = "<group>"; };
 		4FA97DD32163B7AD005A1857 /* CHAppIntroItemCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHAppIntroItemCell.m; sourceTree = "<group>"; };
 		4FA97DD42163B7AD005A1857 /* CHAppIntroItemCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CHAppIntroItemCell.xib; sourceTree = "<group>"; };
+		4FF9CF31216642D000BA8764 /* CHAppStoreDismissTransition.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CHAppStoreDismissTransition.h; sourceTree = "<group>"; };
+		4FF9CF32216642D000BA8764 /* CHAppStoreDismissTransition.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CHAppStoreDismissTransition.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -356,6 +359,8 @@
 				4F7E1FB92164FE2200817B2C /* CHAppStoreTransition.h */,
 				4F7E1FBA2164FE2200817B2C /* CHAppStoreTransition.m */,
 				4F7E1FBC216500C100817B2C /* CHAppStoreTransitionable.h */,
+				4FF9CF31216642D000BA8764 /* CHAppStoreDismissTransition.h */,
+				4FF9CF32216642D000BA8764 /* CHAppStoreDismissTransition.m */,
 			);
 			path = "AppStore Transition";
 			sourceTree = "<group>";
@@ -533,6 +538,7 @@
 				4F5CF82521343A8700A490DF /* MASCompositeConstraint.m in Sources */,
 				4F7E1FBB2164FE2200817B2C /* CHAppStoreTransition.m in Sources */,
 				4F5CF82921343A8700A490DF /* View+MASAdditions.m in Sources */,
+				4FF9CF33216642D000BA8764 /* CHAppStoreDismissTransition.m in Sources */,
 				4FA97DD02163B14B005A1857 /* CHDemo5DestinationViewController.m in Sources */,
 				4F5CF82321343A8700A490DF /* NSLayoutConstraint+MASDebugAdditions.m in Sources */,
 				4F7F15D621358F810055F189 /* CHDemo1SourceViewController.m in Sources */,
