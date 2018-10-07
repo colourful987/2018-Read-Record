@@ -21,6 +21,10 @@ Transition Animation 学习模仿App Store Today 中的点击转场动画，使�
 3. dismiss 效果一般
 4. 未实现手势dismiss
 
-
 简单总结：
 实现过程花了小半天，还是遇到了一些坑，苹果的动画实现从细节上来说真的很赞，比如缺少了弹簧效果就没了“灵动”；转场动画现在从基础掌握上可以打3/5，具体的动画还得交互给实现细节，否则光靠自己的话需要录屏然后一帧一帧看。
+
+
+
+# 2018/10/07
+[nshipster 新出的 mac OS Dynamic Desktop](https://nshipster.com/macos-dynamic-desktop/)，作者 Mattt 10月1号刚出的文章。
