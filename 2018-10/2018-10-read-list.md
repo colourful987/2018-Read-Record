@@ -32,3 +32,39 @@ Transition Animation 学习模仿App Store Today 中的点击转场动画，使�
 
 
 互联网侦查微信公众号的文章明日看一遍，主要是对算法应用突然有点小兴趣。[link](https://mp.weixin.qq.com/s?__biz=MzIzMTE1ODkyNQ==&mid=2649410317&idx=1&sn=6a142afbee6e8ead78dbe145e4f56b8a&chksm=f0b60eefc7c187f9f1aa7008b5fc24a48700af5fec2a37a2ba98b14838b4ce58f260fc937053&scene=38#wechat_redirect)
+
+
+
+# 2018/10/08
+两年前记录的宏定义的三个使用方式：
+
+```c
+/**
+  引自 Pointers on C 一书
+  1. 在调用宏时，首先对参数进行检查，查看是否包含任何由 `#define` 定义的符号，如果是，这些符号首先被替换掉
+  2. 替换文本随后被插入到程序中原来文本的位置，对于宏，参数名被它们的值所替换。
+  3. 最后，再次对结果文本进行扫描，看看它是否包含了任何由#define 定义的符号，如果是，就重复上述处理步骤。
+  宏参数和#define 定义可以包含其他#define 定义的符号，但是，宏不可以出现递归！
+  当预处理器搜索#define定义的符号时，字符串常量的内容不被检查，如果想把宏参数插入到字符串常量中，有以下几种方式：
+*/
+
+
+// 技巧1：这种技巧只有当字符串常量作为宏参数给出时才能使用 这里多个字符串放在一起时会自动编程一个！
+#define PRINT(FORMAT,VALUE)     \
+        printf("The value is " FORMAT "\n",VALUE) 
+// 这里 FORMAT 实际是一个字符串常量 例如 %d
+PRINT("%d",x + 3);
+
+
+// 技巧2：利用预处理器把一个宏参数转换成一个字符串，#argument 这种结构被预处理器解释为“argument”。你可以这么用：
+#define PRINT(FORMAT,VALUE)     \
+  printf("The value of" #VALUE  \
+  " is " FORMAT "\n" ,VALUE)  \
+// 这里 VALUE 不是字符串常量 而是“x+3”表达式 所以利用#符号解释为字符串
+
+
+// 技巧3： ##非常有意思，负责把位于它两边的符号连接成一个符号。
+#define ADD_TO_SUM( sum_number, value ) \
+    sum ## sum_number += value
+ADD_TO_SUM(5,25) // 这里不是 5+25 ! 而是把25加到 sum_5 这个变量中。
+```
