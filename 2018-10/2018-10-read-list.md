@@ -297,7 +297,23 @@ sort(a, i + 1, right);
 3. 归并排序：这篇文章短而形象，可以参考值它：[图解排序算法(四)之归并排序](https://www.cnblogs.com/chengxiao/p/6194356.html)，不由感慨，对于这种相对简单的算法，用图解是最恰当的！
 4. 选择排序：简单选择排序是最简单直观的一种算法，基本思想为每一趟从待排序的数据元素中选择最小（或最大）的一个元素作为首元素，直到所有元素排完为止，简单选择排序是不稳定排序。
 
-# 2018/10/14
 
 
+# 2018/10/14（解释器拾遗）
+> Goal: 实现一个股票公式解释器
 
+[Let’s Build A Simple Interpreter. Part 1-5 温顾，计算器篇](https://ruslanspivak.com/lsbasi-part4/)
+
+知识点在于 factor term expr 的引入，以及 context-free grammer 和 BNF(Backus-Naur Form) 概念，写解释器之前我们通常要绘制grammer语法表，比如：
+
+![](https://ruslanspivak.com/lsbasi-part4/lsbasi_part4_bnf2.png)
+
+明确terminal以及no-terminal符号，像 Integer ,Plus（+）就是个 terminal，因为不能再展开了，解释到此结束了。
+
+![](https://ruslanspivak.com/lsbasi-part4/lsbasi_part4_bnf4.png)
+
+上文中是最“粗糙”的 Interpreter 解释器，输入是一串字符串(e.g. "12+33/3-11")，然后解释器会对这串字符串进行“解释”出factor，term，expr等token（这个其实就是词法分析器 lexer），特别强调的一点是，上面的解释器并非先提取出所有的 token ，再应用规则进行加减乘除；而是我认为是递归方式查找 expr,term等no-terminal符号，因为这些都是非终结的，所以一直可以展开表达式，直至遇到一个terminal符号，例如 integer 或者操作运算符(+ - * /) 等运算符，就好比二叉树 at the bottom。
+
+当且仅有表达式为 left operate right，三者都是terminal符号时才能应用，比如 5 + 4，如果left是一个no-terminal，比如(5+3)这种，那么我们会先计算这个expr，得到一个 terminal ，也就是一个结果值，才会继续应用这个规则。
+
+> Our goal is get the terminal symbol！
