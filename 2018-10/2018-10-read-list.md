@@ -317,3 +317,36 @@ sort(a, i + 1, right);
 当且仅有表达式为 left operate right，三者都是terminal符号时才能应用，比如 5 + 4，如果left是一个no-terminal，比如(5+3)这种，那么我们会先计算这个expr，得到一个 terminal ，也就是一个结果值，才会继续应用这个规则。
 
 > Our goal is get the terminal symbol！
+
+
+
+# 2018/10/15(解释器拾遗)
+
+![](https://ruslanspivak.com/lsbasi-part5/lsbasi_part5_syntaxdiagram.png)
+
+由于当前解释器只是个粗糙实现，其中解释器并没有先生成AST，再进行Interpret，因此如上图所示，每找到一个term对象，就要专注于对其的解释，这就是所谓的no-terminal非终结符号，紧接着解释一个 term 表达式，也就是`factor ((MUL|DIV)factor)*`，然而接触到第一个factor，我们发现它也是一个no-terminal符号，因此还需要进一步深入，直至将其解释成一个terminal符号，也就是整数；接着是 `* /` ，直接略过，寻找下一个factor并将其一步步解释成terminal符号，然后应用 `* /` 运算符号；这是一个term已经解释完毕，那么 `+ -` 符号优先级低，所以放在最上层，解释下一个term，依葫芦画瓢，算出这个表达式 term的值。
+
+> Note: 我的理解是，按照这里的grammer，我们总是遇到一个no-terminal符号必须解释成terminal符号才肯罢休！
+
+引入 `()` 括号表达式的话，我们发现由于括号的优先级高，所以应该归纳到 factor 中，用一个 `|` 或符号。
+
+![](https://ruslanspivak.com/lsbasi-part6/lsbasi_part6_factor_diagram.png)
+
+例如像 `2 * (7 + 3)` 表达式，Grammer图显示如下：
+
+![](https://ruslanspivak.com/lsbasi-part6/lsbasi_part6_decomposition.png)
+
+目前代码感觉就是interpret和parser代码一团写死在了一起，而且interpret一旦recognized识别出某种结构的表达式或符号，就会立马解析出结构——————这也是我一直强调的，这种术语叫做 **syntax-directed interpreters**。
+
+接下来的目的是lexer生成中间语言(intermediate representation，缩写IR)，然后解释器拿到这个IR进行解释，而 AST 和 Parse Tree 的区别有如下几点：
+
+1. AST使用 operators/operations 作为root节点和中间节点，而操作数作为节点的children（能叫leaf 叶不？）；
+2. AST 实际上不能体现一些 grammar 语法规则，见下左图；
+3. AST 之所以叫做抽象语法树，因为它无法呈现一些详细的语法规则，比如没有rule node，没有 parentheses 括号等等；
+4. 相对于 parse tree，AST密集程度更高？但是我认为刚好相反。。。。
+
+> 抽象语法树用于某门编程语言的呈现抽象语法结构。
+
+![](https://ruslanspivak.com/lsbasi-part7/lsbasi_part7_ast_02.png)
+
+to be continue...
