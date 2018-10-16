@@ -350,3 +350,15 @@ sort(a, i + 1, right);
 ![](https://ruslanspivak.com/lsbasi-part7/lsbasi_part7_ast_02.png)
 
 to be continue...
+
+
+
+# 2018/10/16(解释器)
+
+[Let’s Build A Simple Interpreter. Part 8 - 10](https://ruslanspivak.com/lsbasi-part11/) 这几节引入了 AST 对Pascal基础语法的定义，如果想实现一门属于自己的语言，第一步不可能马上生成AST抽象语法树，我们得规定有哪些Token，保留关键字，Grammar等等，比如Var关键字，"x,y" 等变量Id，由这个Token我们衍生出赋值语句（var declare statement），其中有保留关键字，比如类型 Integer(整数)；至于其他的当然有赋值语句 `x = y+3*a/2`，这些赋值语句组成了代码片段，进一步就是程序了。
+
+> 上述难度较大，需要一定计算机基础。另外通过目前的学习，基本上对Token，Lexer，Parser，AST有了初步理解，其实对于Parser持有一个Lexer用于生成AST，然后遍历这个抽象语法树，配合Symbol Table来解释这个抽象语法树，得到我们想要的结果，比如每个变量最后的结果值。不过呢，到目前为止，我们的解释器 Interpreter 就是为了得到一个或多个结果值！但是有意思的想法不仅限于此，我们可以将其解释并生成另外一门语言————即中间语言Intermediate Representation，缩写 IR。
+
+
+
+to be continue...
