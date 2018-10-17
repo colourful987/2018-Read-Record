@@ -362,3 +362,9 @@ to be continue...
 
 
 to be continue...
+
+# 2018/10/17 (解释器 —— Symbol Table)
+
+引入了 Symbol Table 概念，与 Runtime Global_Memory不同，前者是在static analysis阶段生成的符号表，而后者是运行时存储中间变量的，比如我们的堆和栈。
+
+明日开始编码...
