@@ -97,7 +97,7 @@ a = a ^ b;
 
 4.异或运算具有可交换性，即a^b=b^a
 
-可以使用上面的结核性+交换性不能推出 `b = a ^ b = (a ^ b) ^ b = a ^  (b ^ b) = a ^ 0 = a;`，然后 `a = (a ^ b) ^ a = b`
+可以使用上面的结核性+交换性不难推出 `b = a ^ b = (a ^ b) ^ b = a ^  (b ^ b) = a ^ 0 = a;`，然后 `a = (a ^ b) ^ a = b`
 
 # 2018/10/09
 [【面试现场】如何判断一个数是否在40亿个整数中？](https://mp.weixin.qq.com/s/M-9OXISosrqRI08QIDJiPA)
@@ -191,7 +191,7 @@ for(int i = 0 ;i < count -1 ;i++) {
     if(a > b) {
       a ^= b;
       b ^= a;
-      a ^= a ;
+      a ^= b ;
       arr[j] = b;
       arr[j+1] = a;
     }
