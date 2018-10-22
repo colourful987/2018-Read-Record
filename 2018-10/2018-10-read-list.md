@@ -370,3 +370,13 @@ to be continue...
 明日开始编码...
 
 
+
+# 2018/10/22(解释器 —— Semantic analysis 静态分析)
+
+没持续更新原因：1.手头任务较多，瞎忙 ；2，有点迷茫，没调整好
+
+引入了Semantic analysis概念，其实相当于是一个简化版的Interpreter(或者称之为 Node vistor)，两者之间共同点是对 Syntax analysis 生成的 AST 抽象语法树进行分析，前者是语义分析，比如在赋值语句中可以检查某个变量是否被预先声明过，或者objective-c中，dealloc方法中有没有对NSNotification进行移除观察者self，亦或是block中引用了self，注意这些都是关于语义的，即程序语言是否合法；而解释器更进了一步，是真正在执行（解释）语句了，当然它比语义分析器更全面，毕竟在解释过程中如果出现非预期情况，解释器也是会报错的。
+
+下图足够解释我们的SIP简单的一个流程，进一步理解解释器各个流程部分的职责：
+
+![](https://ruslanspivak.com/lsbasi-part13/lsbasi_part13_img03.png)
