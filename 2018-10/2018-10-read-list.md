@@ -400,3 +400,165 @@ to be continue...
 
 1. 学习一波Python
 2. talk is cheap，code is Baba，仅观看文章和提供的示例会觉得很容易理解，但是真正码代码时候就磕磕碰碰，就好比看了一堆算法题，当时什么思路步骤都很清晰，而真正落笔码时却犹豫不决；多看，会思考，实践，再提出自己的观点才是进步的正确流程；
+
+
+
+计算器demo完成：
+
+```python
+INTEGER, MUL, DIV, PLUS, MINUS, LPAREN, RPAREN, EOF = "INTEGER", "MUL", "DIV", "PLUS", "MINUS", "(", ")",  "EOF"
+
+
+class Token(object):
+    def __init__(self, type, value):
+        self.type = type
+        # token value : 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '+' or none
+        self.value = value
+
+    def __str__(self):
+        return 'Token({type},{value})'.format(type=self.type, value=repr(self.value))
+
+    def __repr__(self):
+        return self.__str__()
+
+class Lexer(object):
+    """just output Token, Lexer not care current token """
+    def __init__(self, text):
+        self.text = text
+        self.pos = 0
+        self.current_char = self.text[self.pos]
+
+    def error(self):
+        raise Exception('Error parsing input')
+
+    def advance(self):
+        self.pos += 1
+        if self.pos > len(self.text) - 1:
+            self.current_char = None
+        else:
+            self.current_char = self.text[self.pos]
+
+    def skip_whitespace(self):
+        while self.current_char is not None and self.current_char.isspace():
+            self.advance()
+
+    def integer(self):
+        result = ''
+        while self.current_char is not None and self.current_char.isdigit():
+            result += self.current_char
+            self.advance()
+        return int(result)
+
+    def get_next_token(self):
+
+        while self.current_char is not None:
+            if self.current_char.isspace():
+                self.skip_whitespace()
+                continue
+
+            if self.current_char.isdigit():
+                return Token(INTEGER, self.integer())
+
+            if self.current_char == '*':
+                self.advance()
+                return Token(MUL, '*')
+
+            if self.current_char == '/':
+                self.advance()
+                return Token(DIV, '/')
+
+            if self.current_char == '+':
+                self.advance()
+                return Token(PLUS, '+')
+
+            if self.current_char == '-':
+                self.advance()
+                return Token(MINUS, '-')
+
+            if self.current_char == "(":
+                self.advance()
+                return Token(LPAREN, '(')
+
+            if self.current_char == ")":
+                self.advance()
+                return Token(RPAREN, ')')
+
+            self.error()
+        return Token(EOF, None)
+
+class Interpreter(object):
+    def __init__(self, lexer):
+        self.lexer = lexer
+        self.current_token = lexer.get_next_token()
+
+    def error(self):
+        raise Exception('Error parsing input')
+
+
+    def eat(self, token_type):
+        if self.current_token.type == token_type:
+            self.current_token = self.lexer.get_next_token()
+        else:
+            self.error()
+
+    def factor(self):
+        token = self.current_token
+        if token.type == INTEGER :
+            self.eat(INTEGER)
+            return token.value
+        elif token.type == LPAREN:
+            self.eat(LPAREN)
+            result = self.expr()
+            self.eat(RPAREN)
+            return result
+
+    def term(self):
+        result = self.factor()
+        while self.current_token.type in (MUL, DIV):
+            """* or / symbol"""
+            token = self.current_token
+
+            if token.type == MUL:
+                self.eat(MUL)
+                result *= self.factor()
+            elif token.type == DIV:
+                self.eat(DIV)
+                result /= self.factor()
+        return result
+
+    def expr(self):
+
+        result = self.term()
+
+        while self.current_token.type in (PLUS, MINUS):
+            """* or / symbol"""
+            token = self.current_token
+
+            if token.type == PLUS:
+                self.eat(PLUS)
+                result += self.term()
+            elif token.type == MINUS:
+                self.eat(MINUS)
+                result -= self.term()
+        return result
+
+
+def main():
+    while True:
+        try:
+            # To run under Python3 replace 'raw_input' call
+            # with 'input'
+            text = raw_input('calc> ')
+        except EOFError:
+            break
+        if not text:
+            continue
+        lexer = Lexer(text)
+        interpreter = Interpreter(lexer)
+        result = interpreter.expr()
+        print(result)
+
+
+if __name__ == '__main__':
+    main()
+```
