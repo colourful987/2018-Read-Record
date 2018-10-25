@@ -562,3 +562,51 @@ def main():
 if __name__ == '__main__':
     main()
 ```
+
+
+# 2018/10/25 （解释器 —— AST实践篇章）
+
+Lexer 吐出的的单位为 Token（词法单元），而抽象语法树 AST 最小组成单位也是Token，比如前文提到的 `Token(INTEGER,"9")`，操作符 `Token(MUL,"*")`等等。
+
+但是AST必定要有一个数据结构来呈现，比如某些节点Node会有left和right 子节点 child node（甚至可能多个）；而某些节点可能就是terminal symbol，没有任何子节点，比如整数。
+
+为了呈现抽象语法树这种数据结构，对于抽象语法树中的操作符 Op 节点来说，首先它是一个 `Token(MUL,"*")` 类似的词法单元，其次它关联两个操作数，leftNode 和 rightNode，所以定义如下：
+
+```
+class BinOp(AST):
+    def __init__(self,left,op,right):
+        self.left = left # AST 节点类型
+        self.op = op # Token类型
+        self.right = right # AST 节点类型
+```
+
+> 注意 BinOp 是一种描述节点的数据结构，不能和 Token 混为一谈！
+
+而整数节点的描述就简单很多：
+
+```
+class Num(AST):
+    def __init__(self,token):
+        self.token = token
+        self.value = self.token.value
+```
+
+为啥 BinOp 左右节点是 AST 而非 Num，因为两个节点可能还是一个 BinOp 节点！
+
+今天手撸 Parser 解析成 AST，然后又撸Interpreter解释抽象语法树，学了一波python的动态运行方法：
+
+```
+class NodeVisitor(object):
+    def visit(self, node):
+        # 构造方法名称
+        method_name = 'visit_' + type(node).__name__
+        # IMP
+        visitor = getattr(self, method_name, self.generic_visit)
+        # Call
+        return visitor(node)
+
+    def generic_visit(self, node):
+        raise Exception('No visit_{} method'.format(type(node).__name__))
+```
+
+Parser 代码实际上就是从原先的Interpreter改写而来，改动很小，就是吧 factor term expr 等原先返回result value结果值都改成我们的Node：Num和BinOp，最后expr返回的就是一个 AST抽象语法树
