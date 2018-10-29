@@ -1,7 +1,7 @@
 > Theme: 暂定
 > Source Code Read Plan:
 > - [ ] GCD 底层libdispatch
-> - [ ] 解释器拾遗
+> - [x] 解释器拾遗
 > - [x] `objc_msgSend` 汇编实现收尾
 > - [x] Custom UIViewController Transitions (实现App Store和知乎的转场效果)
 > - [x] 四大排序算法(选择，冒泡，归并，快速)学习理解
@@ -613,8 +613,70 @@ Parser 代码实际上就是从原先的Interpreter改写而来，改动很小�
 
 
 
-
-
 # 2018/10/28
 
 Calculator Interpretor 章节结束。
+
+
+
+# 2018/10/29
+设计一门编程语言，首先需要制定语法形式和规则，可以通过在草稿纸上简单涂鸦即可，我觉得Ruslan的手插画就简单而实用，非常推荐：
+
+![](https://ruslanspivak.com/lsbasi-part9/lsbasi_part9_syntax_diagram_01.png)
+
+![](https://ruslanspivak.com/lsbasi-part9/lsbasi_part9_syntax_diagram_02.png)
+
+![](https://ruslanspivak.com/lsbasi-part9/lsbasi_part9_syntax_diagram_03.png)
+
+始终觉得图画配合理解非常有用，当然随着深入、严谨或是为了简洁，我们可能需要将其用简写文字或公式表述这些语法规则————这是个必然，因为设计一门语言，随着复杂度的提升，如果全部用绘画来表达成本和收益会不符合预期（ps:依旧肯定图画表达语法至关重要的地位！）
+
+```
+program : compound_statement DOT
+
+compound_statement : BEGIN statement_list END
+
+statement_list : statement
+               | statement SEMI statement_list
+
+statement : compound_statement
+          | assignment_statement
+          | empty
+
+assignment_statement : variable ASSIGN expr
+
+empty :
+
+expr: term ((PLUS | MINUS) term)*
+
+term: factor ((MUL | DIV) factor)*
+
+factor : PLUS factor
+       | MINUS factor
+       | INTEGER
+       | LPAREN expr RPAREN
+       | variable
+
+variable: ID
+```
+如果对比你会发现，一目了然，前者在初期理解上提供了巨大帮助，但随着你认识提高，必然会更倾向于后者。
+
+coding 下来没遇到太大问题，温顾的收获如下几点：
+
+1. source code 最小单元为 Token，是在程序设计之初就定下来的，但是并非就是指上面笔记图中的tree的节点小圆！
+2. 节点小圆其实我觉得应该是 AST 的数据呈现结构，比如 `Compound(AST)`复合语句，`Assign(AST)` 赋值语句，`Var(AST)` 表示变量等等一系列用于呈现抽象语法树中的节点，由我们制定的语法规则而定，比如赋值语句 `Assign` 如果用一个类来表示，那么肯定由左边变量+赋值符号":="+右边表达式构成，但是我们从tree来看就只会关注于Token(ASSIGN,":=") ，这个会影响我们判断；
+3. 说到 Interpretor，即对上述AST节点的vistor，不同节点有对应的解释操作！这里比较有意思的是对 `Assign` 赋值表达式的解释，代码如下：
+
+```python
+def visit_Assign(self,node):
+    var_name = node.left.value
+    self.GLOBAL_SCOPE[var_name] = self.visit(node.right)
+
+def visit_Var(self, node):
+    var_name = node.value
+    val = self.GLOBAL_SCOPE[var_name]
+    if val is None:
+        raise NameError(repr(var_name))
+    else:
+        return val
+```
+注意到赋值表达式我们的旨在将右侧的expr得到的结果赋值给左边的变量，而Assign的visitor实现可以发现竟然以key=变量名称，value为右侧表达式值写入全局表中；另外右侧表达式如果visit到Var的话就需要从全局表中取值再求值了。非常合理。
