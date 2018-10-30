@@ -680,3 +680,8 @@ def visit_Var(self, node):
         return val
 ```
 注意到赋值表达式我们的旨在将右侧的expr得到的结果赋值给左边的变量，而Assign的visitor实现可以发现竟然以key=变量名称，value为右侧表达式值写入全局表中；另外右侧表达式如果visit到Var的话就需要从全局表中取值再求值了。非常合理。
+
+
+
+# 2018/10/30
+修正昨日对Token和AST结构的认识，见10/29的更正。
