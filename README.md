@@ -1,12 +1,25 @@
 # 2018年学习历程记录
 
 # Learning Recording Timeline
+- [ ] [2018 十已月学习记录](./2018-11/2018-11-read-list.md)
 
-- [ ] [2018 十月学习记录](./2018-09/2018-09-read-list.md)
+> Theme: 编译器/解释器
+> Source Code Read Plan:
+* [x] 实现一个计算器解释器；
+* [x] 实现pascal解释器 ；
+* [ ] 指标平台公示解释器；
+* [ ] AST source to source 解释成诸如C语言的其他形式，或者是自定义一门标记语言解释成OC的button或是html的元素；
+* [ ] 编译器的话，可能就是要基于 source to source 到汇编或者C代码，再用对应的编译器编译成可执行文件。
+
+
+
+
+- [x] [2018 十月学习记录](./2018-10/2018-10-read-list.md)
 
 > Theme:  待定
-> Source Code Read Plan: 打算 `objc_msgSend` 收尾，另外实现以下知乎和App Store中的几个转场动画。
-> Reference Book List:  
+> Source Code Read Plan:  `objc_msgSend` 收尾，另外实现以下知乎和App Store中的几个转场动画。
+>
+> Core: 温顾了编译器/解释器相关知识，对于一个非科班出生的半吊子程序员，感觉收获还是蛮大，但是心中自知浮于表层，收效甚微。现在想来帮主之前分享读书经验时曾道：一鼓作气，再而衰，三而竭，读书亦是如此，虽知枯燥乏味，但仍久坐书桌前。11月尝试下，不说钻研，但求专心。
 
 
 
