@@ -1,7 +1,7 @@
 # 2018年学习历程记录
 
 # Learning Recording Timeline
-- [ ] [2018 十已月学习记录](./2018-11/2018-11-read-list.md)
+- [ ] [2018 十一月学习记录](./2018-11/2018-11-read-list.md)
 
 > Theme: 编译器/解释器
 > Source Code Read Plan:
