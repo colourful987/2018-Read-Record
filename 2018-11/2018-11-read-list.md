@@ -26,4 +26,6 @@
 ruslanspivak 的解释器系列文章只更新到14节，关于procedure的语法和形参等都没有讲解，其实就是有关函数和栈堆的使用问题，这些之后就自己摸索了，关于14节比较完整的demo源码我更新到14-1。
 
 # 2018/11/04
-Imp a new language：ND。
+Imp a new language：**ECHO**。
+
+实现Lisp解释器练手。
