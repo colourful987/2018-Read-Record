@@ -31,3 +31,8 @@ Imp a new language：**ECHO**。
 实现Lisp解释器练手，实现最基础的 `(+ 3 (- 4 2))`表达式，但是我对atom expr感觉领悟有些不足，果然光看教程码和独立自己实现一个其他语言的解释器差距有点大。
 
 源码我放在Content/iOS/Pascal Interpreter/LISP_INTERPRETER目录下，就当个demo看。
+
+
+
+# 2018/11/05
+校对了几篇swiftgg译文，感觉自己还是英文渣渣。
