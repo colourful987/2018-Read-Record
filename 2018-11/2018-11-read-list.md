@@ -36,3 +36,52 @@ Imp a new language：**ECHO**。
 
 # 2018/11/05
 校对了几篇swiftgg译文，感觉自己还是英文渣渣。
+
+
+
+# 2018/11/06
+
+实现 **ECHO** 语言的基础语法：
+
+```echo
+Simple Grammer:
+
+program: statement_list
+
+statement_list: statement
+                | (statement)+
+
+statement: declaration_statement  
+           | assignment_statement
+           | empty
+
+declaration_statement: var ID COLON type_spec # e.g var x: int
+
+assignment_statement: variable ASSIGN expr
+
+expr : term ((PLUS | MINUS) term)*
+
+term : factor ((MUL | DIV) factor)*
+
+factor : PLUS factor
+       | MINUS factor
+       | INTEGER_CONST
+       | REAL_CONST
+       | LPAREN expr RPAREN
+       | variable
+
+variable: ID
+
+emprty : 
+
+----------- code example -----------
+var x:int
+var y:int
+var z:int
+x = 12 + 2
+y = 2*x - 1
+z = x + (y - 3 * x)
+------------------------------------
+```
+# 2018/11/07
+完成了 ECHO LANGUAGE 的 Token Lexer AST Parser 编写，自己实现一门语言只有真正code的时候才发现真的不容易，maybe是因为我还处于入门的边缘，目前的境况就像那扇大门漏出了一丝缝隙，缝隙中透出一束光，让人想继续打开。
