@@ -2,6 +2,7 @@
 > Source Code Read Plan:
 * [x] 实现一个计算器解释器；
 * [x] 实现pascal解释器 ；
+* [x] 实现一门简单的语言 ECHO；
 * [ ] 指标平台公示解释器；
 * [ ] AST source to source 解释成诸如C语言的其他形式，或者是自定义一门标记语言解释成OC的button或是html的元素；
 * [ ] 编译器的话，可能就是要基于 source to source 到汇编或者C代码，再用对应的编译器编译成可执行文件。
@@ -85,3 +86,15 @@ z = x + (y - 3 * x)
 ```
 # 2018/11/07
 完成了 ECHO LANGUAGE 的 Token Lexer AST Parser 编写，自己实现一门语言只有真正code的时候才发现真的不容易，maybe是因为我还处于入门的边缘，目前的境况就像那扇大门漏出了一丝缝隙，缝隙中透出一束光，让人想继续打开。
+
+# 2018/11/08
+已实现 “ECHO” 的最基础语法，目前仅支持 declaration statement 和 assignment statement 两种：
+* `var x:int`
+* `z = x + (y - 3 * x)`
+
+另外我新建了一个 Compiler Interpreter 主题的目录，[传送门](https://github.com/colourful987/2018-Read-Record/tree/master/Content/Compiler%20Interpreter)。
+
+接下来的目标是增加基础语法：    
+1. `if-else if - else`
+2. `for(;;){statement}`
+3. `while(condition){ statement}`
