@@ -1,0 +1,6 @@
+var x:int
+var y:int
+var z:int
+x = 12 + 2
+y = 2 * x - 1
+z = x + (y - 3 * x)
