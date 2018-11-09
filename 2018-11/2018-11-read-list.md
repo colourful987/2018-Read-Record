@@ -98,3 +98,61 @@ z = x + (y - 3 * x)
 1. `if-else if - else`
 2. `for(;;){statement}`
 3. `while(condition){ statement}`
+
+
+
+# 2018/11/09
+添加了 `if-else` 语句的 Token (大括号`{}`/if/else/`> == <`)、Lexer 添加对上述Token的解析，以及 AST 支持条件语句的node，这里我构建的方式其实不是很好，整个`if-else` 作为condBlock代码块，而每一个条件+处理封装成了 CondBranchDecl，条件语句可以有多个CondBranchDecl，所以数据结构用了数组，最后是Condition条件，例如 `x+1 > 2`，这个和Assign赋值表达式很像，如下：
+
+```
+# if-else condition declaration
+class CondBlock(AST):
+    def __init__(self):
+        self.condBranchs = []
+
+# condition + expr()
+# note: now the block node is program
+class CondBranchDecl(AST):
+    def __init__(self,condition_node,block_node):
+        self.condtion = condition_node
+        self.block = block_node
+
+# expr </==/> expr
+class Condition(AST):
+    def __init__(self,left,op,right):
+        self.left = left
+        self.op = op
+        self.right = right
+```
+
+NodeVisitor代码也基本实现，遍历所有条件branch时，满足第一个执行后退出：
+
+```
+def visit_CondBlock(self,node):
+
+    for condBranch in node.condBranchs:
+        self.visit(condBranch) # TODO must has break
+
+def visit_CondBranchDecl(self,node):
+    cond_node = node.condition_node
+    block_node = node.block
+    value = self.visit(cond_node)
+    if value != 0 :
+        self.visit(block_node)
+
+def visit_Condition(self,node):
+    op = node.op
+    leftValue = self.visit(node.left)
+    rightValue = self.visit(node.right)
+
+    ret = 0
+    if op.type == GREATER:
+        ret = leftValue > rightValue
+    elif op.type == EQUAL:
+        ret = leftValue == rightValue
+    elif op.type == LESS:
+        ret = leftValue < rightValue
+
+    return ret
+```
+明天调试代码。

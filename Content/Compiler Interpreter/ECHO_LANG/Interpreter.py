@@ -48,6 +48,40 @@ class Interpreter(NodeVisitor):
         var_name = node.left.value
         self.GLOBAL_SCOPE[var_name] = self.visit(node.right)
 
+    def visit_CondBlock(self,node):
+
+        for condBranch in node.condBranchs:
+            excuted = self.visit(condBranch) # TODO must has break
+            if excuted == 1:
+                # mean satisfy condition and excute the block , so quit
+                break
+
+    def visit_CondBranchDecl(self,node):
+        cond_node = node.condition_node
+        block_node = node.block
+        value = self.visit(cond_node)
+        excuted = 0
+        if value != 0 :
+            excuted = 1
+            self.visit(block_node)
+        return excuted
+
+    def visit_Condition(self,node):
+        op = node.op
+        leftValue = self.visit(node.left)
+        rightValue = self.visit(node.right)
+
+        ret = 0
+        if op.type == GREATER:
+            ret = leftValue > rightValue
+        elif op.type == EQUAL:
+            ret = leftValue == rightValue
+        elif op.type == LESS:
+            ret = leftValue < rightValue
+
+        return ret
+
+
     def visit_Program(self, node):
         for statement in node.statements:
             self.visit(statement)

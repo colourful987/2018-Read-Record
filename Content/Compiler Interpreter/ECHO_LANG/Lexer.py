@@ -3,7 +3,11 @@ from Token import *
 ID, VAR, INTEGER, FLOAT = ('ID', 'VAR', 'INTEGER', 'FLOAT')
 ASSIGN, COLON, COMMA, SEMI, EOF = ('=', ':', ',', ';', 'EOF')
 LPAREN, RPAREN = ("(",")")
+LBRACE, RBRACE = ("{","}")
+LBRACKET,RBRACKET = ("[","]")
 PLUS, MINUS, MUL, DIV = ('+', '-', '*', '/')
+IF, ELSE = ("IF","ELSE")
+GREATER,EQUAL,LESS = ('>', '==', '<')
 
 
 # some id variable has been reserved by language
@@ -11,7 +15,9 @@ PLUS, MINUS, MUL, DIV = ('+', '-', '*', '/')
 RESERVED_KEYWORDS = {
     'int': Token(INTEGER, 'int'),
     'float': Token(FLOAT, 'float'),
-    'var': Token(VAR, 'var')
+    'var': Token(VAR, 'var'),
+    'if':Token(IF,'if'),
+    'else':Token(ELSE,'else'),
 }
 
 class Lexer(object):
@@ -88,6 +94,27 @@ class Lexer(object):
             if self.current_char == ':':
                 self.advance()
                 return Token(COLON,':')
+
+            if self.current_char == '{':
+                self.advance()
+                return Token(LBRACE, '{')
+
+            if self.current_char == '}':
+                self.advance()
+                return Token(RBRACE, '}')
+
+            if self.current_char == '>':
+                self.advance()
+                return Token(GREATER,'>')
+
+            if self.current_char == '=' and self.peek() == '=':
+                self.advance()
+                self.advance()
+                return Token(EQUAL,'==')
+
+            if self.current_char == '<':
+                self.advance()
+                return Token(LESS,'<')
 
             if self.current_char == '=':
                 self.advance()

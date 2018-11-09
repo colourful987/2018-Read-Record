@@ -70,7 +70,8 @@ class Parser(object):
             # declaration_statement: var ID COLON type_spec # e.g var x: int
             if self.current_token.type == VAR:
                 node = self.declaration_statement()
-
+            elif self.current_token.type == IF:
+                node = self.condition_statemnt()
             # assignment_statement: variable ASSIGN expr
             elif self.current_token.type == ID:
                 node = self.assignment_statement()
@@ -79,6 +80,33 @@ class Parser(object):
             statements.append(node)
         return statements
 
+    def condition_statemnt(self):
+        condBlock = CondBlock()
+
+        self.eat(IF)
+        self.eat(LPAREN)
+        cond_node = self.condition()
+        self.eat(RPAREN)
+        self.eat(LBRACE)
+        expr_node = self.program()
+        self.eat(RBRACE)
+
+        branch = CondBranchDecl(cond_node,expr_node)
+        condBlock.condBranchs.append(branch)
+
+        return condBlock
+
+    def condition(self):
+        leftExpr = self.expr()
+        op = self.current_token
+        if op.type == GREATER:
+            self.eat(GREATER)
+        elif op.type == EQUAL:
+            self.eat(EQUAL)
+        elif op.type == LESS:
+            self.eat(LESS)
+        rightExpr = self.expr()
+        return Condition(left=leftExpr,op=op,right=rightExpr)
 
     # declaration_statement: var ID COLON type_spec # e.g var x: int
     def declaration_statement(self):

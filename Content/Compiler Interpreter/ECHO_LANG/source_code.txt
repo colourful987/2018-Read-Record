@@ -1,6 +1,23 @@
 var x:int
 var y:int
 var z:int
+
 x = 12 + 2
 y = 2 * x - 1
 z = x + (y - 3 * x)
+
+var a:int
+var b:int
+var c:int
+
+if(x>11) {
+    a = 10
+}
+
+if (a == 10) {
+    b = 100 + 20/4
+}
+
+if (b < 200) {
+    c = 10
+}
