@@ -10,14 +10,22 @@ var a:int
 var b:int
 var c:int
 
-if(x>11) {
+if(x>100) {
     a = 10
+} elif (x < 20) {
+    a = 100
+} else {
+    a = 1000
 }
 
 if (a == 10) {
     b = 100 + 20/4
+} else {
+    b = 1000
 }
 
 if (b < 200) {
     c = 10
+} elif ( b > 500) {
+	c = 10000
 }

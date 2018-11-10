@@ -6,7 +6,7 @@ LPAREN, RPAREN = ("(",")")
 LBRACE, RBRACE = ("{","}")
 LBRACKET,RBRACKET = ("[","]")
 PLUS, MINUS, MUL, DIV = ('+', '-', '*', '/')
-IF, ELSE = ("IF","ELSE")
+IF, ELSE,ELIF = ("IF","ELSE","ELIF")
 GREATER,EQUAL,LESS = ('>', '==', '<')
 
 
@@ -18,6 +18,7 @@ RESERVED_KEYWORDS = {
     'var': Token(VAR, 'var'),
     'if':Token(IF,'if'),
     'else':Token(ELSE,'else'),
+    'elif':Token(ELIF,'elif'),
 }
 
 class Lexer(object):

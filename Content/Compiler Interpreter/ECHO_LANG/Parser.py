@@ -83,16 +83,36 @@ class Parser(object):
     def condition_statemnt(self):
         condBlock = CondBlock()
 
-        self.eat(IF)
-        self.eat(LPAREN)
-        cond_node = self.condition()
-        self.eat(RPAREN)
-        self.eat(LBRACE)
-        expr_node = self.program()
-        self.eat(RBRACE)
-
-        branch = CondBranchDecl(cond_node,expr_node)
-        condBlock.condBranchs.append(branch)
+        while self.current_token.type in (IF, ELSE, ELIF):
+            if self.current_token.type == IF:
+                self.eat(IF)
+                self.eat(LPAREN)
+                cond_node = self.condition()
+                self.eat(RPAREN)
+                self.eat(LBRACE)
+                expr_node = self.program()
+                self.eat(RBRACE)
+                branch = CondBranchDecl(cond_node, expr_node)
+                condBlock.condBranchs.append(branch)
+            elif self.current_token.type == ELIF:
+                self.eat(ELIF)
+                self.eat(LPAREN)
+                cond_node = self.condition()
+                self.eat(RPAREN)
+                self.eat(LBRACE)
+                expr_node = self.program()
+                self.eat(RBRACE)
+                branch = CondBranchDecl(cond_node, expr_node)
+                condBlock.condBranchs.append(branch)
+            else:
+                self.eat(ELSE)
+                cond_node = None
+                self.eat(LBRACE)
+                expr_node = self.program()
+                self.eat(RBRACE)
+                branch = CondBranchDecl(cond_node, expr_node)
+                condBlock.condBranchs.append(branch)
+                break
 
         return condBlock
 

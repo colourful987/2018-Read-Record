@@ -59,9 +59,14 @@ class Interpreter(NodeVisitor):
     def visit_CondBranchDecl(self,node):
         cond_node = node.condition
         block_node = node.block
-        value = self.visit(cond_node)
+
         excuted = 0
-        if value != 0 :
+        isSatisfy = 1
+        if cond_node is not None:
+            # this is else block
+            isSatisfy = self.visit(cond_node)
+
+        if isSatisfy != 0 :
             excuted = 1
             self.visit(block_node)
         return excuted
