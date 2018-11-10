@@ -45,7 +45,7 @@ Imp a new language：**ECHO**。
 实现 **ECHO** 语言的基础语法：
 
 ```echo
-Simple Grammer:
+Simple Grammar:
 
 program: statement_list
 
@@ -156,3 +156,65 @@ def visit_Condition(self,node):
     return ret
 ```
 明天调试代码。
+
+
+
+# 2018/11/10
+调试了昨天的代码，发现了几个问题，首先是对几个新增AST node的命名，由于我对grammer的定义其实不够清晰，因此抽象几种语法到对应的数据结构也不是很恰当，比如 `if else`语句中用`{}` 包裹的代码片段，之前没细想直接搞了个program用于表示多条statement，然而今天实现`if-else`的时候才发现应该在抽一个出来，专门用于 `{}`包裹的结构；其次Parser中有个逻辑写错了，代码如下:
+
+```
+def statement_list(self):
+    statements = [] # (statement)+
+
+    node = None
+    while self.current_token.type is not EOF:
+        # declaration_statement: var ID COLON type_spec # e.g var x: int
+        if self.current_token.type == VAR:
+            node = self.declaration_statement()
+        elif self.current_token.type == IF:
+            node = self.condition_statemnt()
+        # assignment_statement: variable ASSIGN expr
+        elif self.current_token.type == ID:
+            node = self.assignment_statement()
+        else:
+            break # 由于我们只解析赋值语句、if条件语句和、var声明语句，其他不处理，因此这里必须break掉
+        statements.append(node)
+    return statements
+```
+
+试着用“简陋”的解析器解析如下代码片段：
+```
+var x:int
+var y:int
+var z:int
+
+x = 12 + 2
+y = 2 * x - 1
+z = x + (y - 3 * x)
+
+var a:int
+var b:int
+var c:int
+
+if(x>11) {
+    a = 10
+}
+
+if (a == 10) {
+    b = 100 + 20/4
+}
+
+if (b < 200) {
+    c = 10
+}
+```
+
+输出结果如下：
+
+```
+/usr/bin/python "/Users/pmst/Source Code Repositories/2018-Read-Record/Content/Compiler Interpreter/ECHO_LANG/main.py"
+{'a': 10, 'c': 10, 'b': 105, 'y': 27, 'x': 14, 'z': -1}
+```
+
+
+> 今日收获：如果自己想要开发一门语言，对于 Grammar 对应的数据结构(AST Node) 抽象相当重要，考虑要全面一些，而不是为一个特定语法写一个特定的AST Node。

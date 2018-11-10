@@ -57,7 +57,7 @@ class Interpreter(NodeVisitor):
                 break
 
     def visit_CondBranchDecl(self,node):
-        cond_node = node.condition_node
+        cond_node = node.condition
         block_node = node.block
         value = self.visit(cond_node)
         excuted = 0

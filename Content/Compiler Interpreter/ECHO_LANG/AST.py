@@ -14,7 +14,7 @@ class CondBlock(AST):
 # note: now the block node is program
 class CondBranchDecl(AST):
     def __init__(self,condition_node,block_node):
-        self.condtion = condition_node
+        self.condition = condition_node
         self.block = block_node
 
 # expr </==/> expr

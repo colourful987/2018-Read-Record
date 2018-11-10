@@ -304,7 +304,7 @@ sort(a, i + 1, right);
 
 [Let’s Build A Simple Interpreter. Part 1-5 温顾，计算器篇](https://ruslanspivak.com/lsbasi-part4/)
 
-知识点在于 factor term expr 的引入，以及 context-free grammer 和 BNF(Backus-Naur Form) 概念，写解释器之前我们通常要绘制grammer语法表，比如：
+知识点在于 factor term expr 的引入，以及 context-free grammar 和 BNF(Backus-Naur Form) 概念，写解释器之前我们通常要绘制grammar语法表，比如：
 
 ![](https://ruslanspivak.com/lsbasi-part4/lsbasi_part4_bnf2.png)
 
@@ -320,19 +320,19 @@ sort(a, i + 1, right);
 
 
 
-# 2018/10/15(解释器—— Lexer AST Grammer 知识温顾)
+# 2018/10/15(解释器—— Lexer AST grammar 知识温顾)
 
 ![](https://ruslanspivak.com/lsbasi-part5/lsbasi_part5_syntaxdiagram.png)
 
 由于当前解释器只是个粗糙实现，其中解释器并没有先生成AST，再进行Interpret，因此如上图所示，每找到一个term对象，就要专注于对其的解释，这就是所谓的no-terminal非终结符号，紧接着解释一个 term 表达式，也就是`factor ((MUL|DIV)factor)*`，然而接触到第一个factor，我们发现它也是一个no-terminal符号，因此还需要进一步深入，直至将其解释成一个terminal符号，也就是整数；接着是 `* /` ，直接略过，寻找下一个factor并将其一步步解释成terminal符号，然后应用 `* /` 运算符号；这是一个term已经解释完毕，那么 `+ -` 符号优先级低，所以放在最上层，解释下一个term，依葫芦画瓢，算出这个表达式 term的值。
 
-> Note: 我的理解是，按照这里的grammer，我们总是遇到一个no-terminal符号必须解释成terminal符号才肯罢休！
+> Note: 我的理解是，按照这里的grammar，我们总是遇到一个no-terminal符号必须解释成terminal符号才肯罢休！
 
 引入 `()` 括号表达式的话，我们发现由于括号的优先级高，所以应该归纳到 factor 中，用一个 `|` 或符号。
 
 ![](https://ruslanspivak.com/lsbasi-part6/lsbasi_part6_factor_diagram.png)
 
-例如像 `2 * (7 + 3)` 表达式，Grammer图显示如下：
+例如像 `2 * (7 + 3)` 表达式，grammar图显示如下：
 
 ![](https://ruslanspivak.com/lsbasi-part6/lsbasi_part6_decomposition.png)
 

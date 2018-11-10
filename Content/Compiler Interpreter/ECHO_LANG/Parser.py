@@ -76,7 +76,7 @@ class Parser(object):
             elif self.current_token.type == ID:
                 node = self.assignment_statement()
             else:
-                self.error()
+                break
             statements.append(node)
         return statements
 
