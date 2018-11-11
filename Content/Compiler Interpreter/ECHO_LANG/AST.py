@@ -5,6 +5,12 @@ class Program(AST):
     def __init__(self):
         self.statements = []
 
+# while block declaration
+class WhileBlock(AST):
+    def __init__(self,condtion_node, block_node):
+        self.condition = condtion_node
+        self.block = block_node
+
 # if-else condition declaration
 class CondBlock(AST):
     def __init__(self):

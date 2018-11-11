@@ -39,6 +39,18 @@ var z:int
 x = 12 + 2
 y = 2*x - 1
 z = x + (y - 3 * x)
+
+if (a < 3) {
+
+} elif ( a > 4) {
+    
+} else {
+
+}
+
+while( x < 3) {
+    
+}
 ------------------------------------
 """
 class Parser(object):
@@ -71,16 +83,29 @@ class Parser(object):
             if self.current_token.type == VAR:
                 node = self.declaration_statement()
             elif self.current_token.type == IF:
-                node = self.condition_statemnt()
+                node = self.condition_statement()
             # assignment_statement: variable ASSIGN expr
             elif self.current_token.type == ID:
                 node = self.assignment_statement()
+            elif self.current_token.type == WHILE:
+                node = self.while_statement()
             else:
                 break
             statements.append(node)
         return statements
 
-    def condition_statemnt(self):
+    def while_statement(self):
+        self.eat(WHILE)
+        self.eat(LPAREN)
+        cond_node = self.condition()
+        self.eat(RPAREN)
+        self.eat(LBRACE)
+        excute_block = self.program()
+        self.eat(RBRACE)
+        whileBlock = WhileBlock(cond_node,excute_block)
+        return whileBlock
+
+    def condition_statement(self):
         condBlock = CondBlock()
 
         while self.current_token.type in (IF, ELSE, ELIF):

@@ -56,6 +56,13 @@ class Interpreter(NodeVisitor):
                 # mean satisfy condition and excute the block , so quit
                 break
 
+    def visit_WhileBlock(self,node):
+        cond_node = node.condition
+        block = node.block
+
+        while(self.visit(cond_node)) :
+            self.visit(block)
+
     def visit_CondBranchDecl(self,node):
         cond_node = node.condition
         block_node = node.block
