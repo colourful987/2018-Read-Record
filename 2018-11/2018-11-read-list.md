@@ -241,3 +241,64 @@ if (b < 200) {
 1. 实现 `if-else` 和 `while` grammar 解释器时候，对照自己语言的 `while` 和解释器中对这个语法的支持实现依然借助了python的`while`，这个有问题吗？短暂思考之后觉得完全ok，解释器本身就是用一门语言解释“新的语言”，之所以产生这种相似的错觉，只是因为我想要实现的语言grammar太过大众！“取其精华，去其糟粕”
 2. 到目前为止，感觉收获很大，首先知识层面来说学习了BNF，AST，Token，Parser等基础知识，作为一个非科班出身的小菜鸟对理解计算机底层实现很有帮助，思考面也扩大了不少；其次照着教程码一遍parser，现场即兴coding，以及实现自己的语言三者是一个递进的过程，真的不要觉得照着教程码了一遍代码就算大功告成了，这可能连入门都不算。就我而言现在每天接入一个小语法感觉还是游刃有余的，只不过每次接入的时候总会发现一些之前思考缺陷，这就是一种进步！
 3. 最后就是老生常谈的问题，为何我学习了感觉没有收获。1. 定目标；3、一鼓作气（这里感谢帮主之前对读书的分享）；2.自律，坚持。
+
+# 2018/11/12 am
+
+好奇看了下 [YYAsyncLayer](https://github.com/ibireme/YYAsyncLayer) 的实现，6个文件，代码量貌似就300行左右，关于如何提高用户体验，保证屏幕交互流畅不掉帧，常规思路一般为：
+1. 处理事务放在子线程；
+2. 缓存上一次的计算结果；
+3. 优化算法，比如操作的时间复杂度
+
+但是平常开发设计到渲染这一层时，可能出于对保证系统渲染流程的“敬畏”，抱着不想“横生枝节”的想法，因此不会在 `drawInContext:` 上搞些名堂。
+
+> 题外话：我作为小白当然也有这种想法，首先不清楚系统渲染流程的情况下，我不会随便去加一些带副作用的处理，但是假如我们已经掌握就另当别论了。
+
+`YYAsyncLayer` 借助GCD+queue的方式，将`drawInContext`的处理放到了队列中执行，这里的绘制时抽象的，我们不过是往context中写入东西罢了，`YYAsyncLayer` 会将context生成一张 image，然后赋值给 CALayer 的contets属性，这里看下系统的说明大概就知道了。为此`YYAsyncLayer`重写了几个 `CALayer` 的方法：
+
+```
+
+- (void)setNeedsDisplay {
+    [self _cancelAsyncDisplay];
+    [super setNeedsDisplay];
+}
+
+- (void)display {
+    super.contents = super.contents;
+    [self _displayAsync:_displaysAsynchronously];
+}
+
+```
+
+首先是`setNeedsDisplay`————我们经常调用的方法，这里其实就是标记这个layer需要在下一个runloop进行渲染，而非真正渲染到screen上，可以理解为一个布尔类型值，打个标记而已；display方法会间接调用 drawInContext 方法，然后生成contents内容属性。
+
+`YYAsyncLayer` 使用我截取下github的示例：
+
+```oc
+- (void)setText:(NSString *)text {
+    _text = text.copy;
+    [[YYTransaction transactionWithTarget:self selector:@selector(contentsNeedUpdated)] commit];
+}
+
+- (void)setFont:(UIFont *)font {
+    _font = font;
+    [[YYTransaction transactionWithTarget:self selector:@selector(contentsNeedUpdated)] commit];
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    [[YYTransaction transactionWithTarget:self selector:@selector(contentsNeedUpdated)] commit];
+}
+
+- (void)contentsNeedUpdated {
+    // do update
+    [self.layer setNeedsDisplay];
+}
+
+```
+
+可以看到赋值属性后并非立马进行 setNeedsDisplay 属性标识，而是创建了一个事务罢了，监听`kCFRunLoopBeforeWaiting | kCFRunLoopExit`事件，每次runloop休眠前把这些事务拿出来执行一遍（ 如果是异步的，就是把操作全部放到自定义队列中异步执行），这样就不会阻塞主线程，不会有掉帧问题了。
+
+由于是简单浏览了下源码，有如下几点疑问：
+1. 首先对渲染的细节不了解，给layer打上标记就，就是更新 contents 内容吗？然后runloop休眠后，系统在有其他线程进行提取contents内容，然后渲染到屏幕上，这里应该涉及GPU的知识点；
+2. YYSentinel 中的increase的调用不是很清楚，后面看下
+3. `YYAsyncLayer` 解决的应该是卡顿问题，所以貌似对于股票软件中移动k线图没什么用处，走势图在移动过程中总不能出现空白的情况吧。
