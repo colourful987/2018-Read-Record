@@ -1,0 +1,15 @@
+PROGRAM Part10AST;
+VAR
+   a, b : INTEGER;
+   y    : REAL;
+   PROCEDURE AlphaA(a:INTEGER);
+        VAR z:INTEGER;
+   BEGIN
+        z := 200 + 100;
+   END;
+
+BEGIN {Part10AST}
+   a := 3;
+   b := 10 * a + 10 * a DIV 4;
+   y := 20 / 7 + 3.14;
+END.  {Part10AST}

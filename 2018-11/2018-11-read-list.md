@@ -302,3 +302,44 @@ if (b < 200) {
 1. 首先对渲染的细节不了解，给layer打上标记就，就是更新 contents 内容吗？然后runloop休眠后，系统在有其他线程进行提取contents内容，然后渲染到屏幕上，这里应该涉及GPU的知识点；
 2. YYSentinel 中的increase的调用不是很清楚，后面看下
 3. `YYAsyncLayer` 解决的应该是卡顿问题，所以貌似对于股票软件中移动k线图没什么用处，走势图在移动过程中总不能出现空白的情况吧。
+
+
+
+# 2018/11/12
+
+* [x] 今日任务：source to source compiler ，将pascal转成c语言代码
+
+source to source compiler 其实很简单，就是改写我们的Interpreter就可以了。
+
+所有的visit_xxx函数返回一个字符串即可，但是我只是为了玩下这个知识点，就搞了个全局变量字符串在做拼接————这是很有问题，非常杂乱的赶脚。
+
+就拿 `visit_VarDecl` 来说，这是构造一个声明表达式，对比pascal和c语言：
+
+```
+//pascal
+VAR z : INTEGER;
+//c
+int z
+```
+
+再看下解释器中的visit_VarDecl方法:
+```
+def visit_VarDecl(self,node):
+    c_var_decl = ''
+    type_name = node.type_node.value
+    c_param_type = C_MAP_KEYWORDS[node.type_node.value]
+    # look up builtin type
+    type_symbol = self.current_scope.lookup(type_name)
+    var_name = node.var_node.value
+    # create new variable, and define into symtab
+    var_symbol = VarSymbol(var_name, type_symbol)
+    c_var_decl = '{type_name} {var_name}; \n'.format(type_name=c_param_type,var_name=var_name)
+    self.cCode += c_var_decl
+    self.current_scope.insert(var_symbol)
+```
+
+代码比较杂乱，其实可以看到本身要解释pascal的var声明表达式，现在就是构造一个对应的 c语言声明表达式。
+
+> 知识点：由于pascal和c语言变量声明方式从类型和语法表达式都略有不同。因此这里其实还需要构造一个映射表。这里不得不说下 LLVM，所谓的跨平台就是LLVM将输入语言转成中间语言 IR，然后再转成对应平台的目标语言。脑补就是多门语言指向中间语言，再由中间发散出去指向不同平台的不同目标语言。
+
+最后source to source demo也一并附上，仅做参考。
