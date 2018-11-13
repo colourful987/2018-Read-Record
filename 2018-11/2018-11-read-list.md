@@ -343,3 +343,91 @@ def visit_VarDecl(self,node):
 > 知识点：由于pascal和c语言变量声明方式从类型和语法表达式都略有不同。因此这里其实还需要构造一个映射表。这里不得不说下 LLVM，所谓的跨平台就是LLVM将输入语言转成中间语言 IR，然后再转成对应平台的目标语言。脑补就是多门语言指向中间语言，再由中间发散出去指向不同平台的不同目标语言。
 
 最后source to source demo也一并附上，仅做参考。
+
+
+
+# 2018/11/13
+
+[Getting to Know Enum, Struct and Class Types in Swift](https://www.raywenderlich.com/7320-getting-to-know-enum-struct-and-class-types-in-swift)
+
+raywenderlich 出品，学习的知识点包括：
+1. Swift 由6种类型组成，分别是 protocol、enum、struct、class 和 typle function，前四者称之为 Named Types，后两者称之为 Compound Types。有意思的是，一开始我还在诧异那些 Int、Bool、Float 等内置类型归属哪一类，后来立马恍然大悟，看过源码的知道它们应该归属于前四者；
+2. enum 用法和使用场景，无非就是 `RawRepresentable`，`CaseIterable`、`Associated Values` ；
+3. struct 和 class 用一个小demo来对比说明，struct 配合 protocol 确实用起来很顺手，尤其是 protocol 的 extension简直完美，然而也存在一些问题，如下：
+
+```swift
+protocol Drawable {
+  func draw(with context: DrawingContext)
+}
+
+struct Circle: Drawable {
+  var strokeWidth = 5
+  var strokeColor = CSSColor.named(name: .red)
+  var fillColor = CSSColor.named(name: .yellow)
+  var center = (x: 80.0, y: 160.0)
+  var radius = 60.0
+
+  // Adopting the Drawable protocol.
+
+  func draw(with context: DrawingContext) {
+    context.draw(self)
+  }
+}
+
+struct Rectangle: Drawable {
+  var strokeWidth = 5
+  var strokeColor = CSSColor.named(name: .teal)
+  var fillColor = CSSColor.named(name: .aqua)
+  var origin = (x: 110.0, y: 10.0)
+  var size = (width: 100.0, height: 130.0)
+
+  func draw(with context: DrawingContext) {
+    context.draw(self)
+  }
+}
+```
+很明显，其实 Circle 和 Rectangle 在class类型下可以抽象出 Shape 这个抽象基类，子类只需要赋值就ok了。
+
+```swift
+class Shape {
+  var strokeWidth = 1
+  var strokeColor = CSSColor.named(name: .black)
+  var fillColor = CSSColor.named(name: .black)
+  var origin = (x: 0.0, y: 0.0)
+  func draw(with context: DrawingContext) { fatalError("not implemented") }
+}
+
+class Circle: Shape {
+  override init() {
+    super.init()
+    strokeWidth = 5
+    strokeColor = CSSColor.named(name: .red)
+    fillColor = CSSColor.named(name: .yellow)
+    origin = (x: 80.0, y: 80.0)
+  }
+
+  var radius = 60.0
+  override func draw(with context: DrawingContext) {
+    context.draw(self)
+  }
+}
+
+class Rectangle: Shape {
+  override init() {
+    super.init()
+    strokeWidth = 5
+    strokeColor = CSSColor.named(name: .teal)
+    fillColor = CSSColor.named(name: .aqua)
+    origin = (x: 110.0, y: 10.0)
+  }
+
+  var size = (width: 100.0, height: 130.0)
+  override func draw(with context: DrawingContext) {
+    context.draw(self)
+  }
+}
+```
+
+然而这样也存在问题，比如新来一个“线” Shape，如果继承了 Shape，你会发现 fillColor 在线类型中显得有些突兀，很奇怪。
+
+> 总结来说：oc中视情况少用继承，多用组合。swift中用protocol+extension来搞比较合适，以上仅代表个人想法。
