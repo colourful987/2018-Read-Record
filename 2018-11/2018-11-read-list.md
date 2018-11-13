@@ -431,3 +431,29 @@ class Rectangle: Shape {
 然而这样也存在问题，比如新来一个“线” Shape，如果继承了 Shape，你会发现 fillColor 在线类型中显得有些突兀，很奇怪。
 
 > 总结来说：oc中视情况少用继承，多用组合。swift中用protocol+extension来搞比较合适，以上仅代表个人想法。
+
+
+
+# 2018/11/14 am
+
+严格意义上来说[Getting to Know Enum, Struct and Class Types in Swift](https://www.raywenderlich.com/7320-getting-to-know-enum-struct-and-class-types-in-swift)并不属于解释器的范畴，当时瞄文章内容以为是通过学习swift类型做一个解释器，最终目标是解释成 html 标记语言，如下：
+
+```html
+<!DOCTYPE html>
+<html>
+  <body>
+    <svg width='250' height='250'>
+      <rect x='110.0' y='10.0' width='100.0' height='130.0' stroke='teal' 
+        fill='aqua' stroke-width='5' />
+      <circle cx='80.0' cy='160.0' r='60.0' stroke='red' fill='yellow' 
+        stroke-width='5' />
+    </svg>
+  </body>
+</html>
+```
+
+真它喵我就信了，结果发现不过学习protocol实现圆和矩形两个shape，而 DrawingContext 协议定义了如何“绘制”圆和矩形，其实就是输出对应的html标记语言，也就是上面的 rect 和 circle，这种拼接输出方式就不再赘述。其实这个操作很像昨天pascal解释成c语言很类型。
+
+相关代码我已经上传到[GitHub](https://github.com/colourful987/2018-Read-Record/tree/master/Content/Compiler%20Interpreter/SwiftShape2SVGObject/SwiftShape2SVGObject_Protocol.playground)。
+
+说实话，这种面向协议编程拿Shape举例的文章看过不下4、5篇，甚至WWDC我记得将POP的时候也是拿这个举例的。但是今天在学习这篇教程的时候，自己似乎又对设计模式有些感悟，之后补上。
