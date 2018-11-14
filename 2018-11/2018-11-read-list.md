@@ -457,3 +457,25 @@ class Rectangle: Shape {
 相关代码我已经上传到[GitHub](https://github.com/colourful987/2018-Read-Record/tree/master/Content/Compiler%20Interpreter/SwiftShape2SVGObject/SwiftShape2SVGObject_Protocol.playground)。
 
 说实话，这种面向协议编程拿Shape举例的文章看过不下4、5篇，甚至WWDC我记得将POP的时候也是拿这个举例的。但是今天在学习这篇教程的时候，自己似乎又对设计模式有些感悟，之后补上。
+
+
+
+# 2018/11/15 am
+
+今天写了下将昨天的 html 标记语言parse成AST，然后将SVG相关内容用约定好的ios render 呈现画布，可以绘制矩形，圆等等，今日只完成parse部分，并没有调试。工程放置在[这里](https://github.com/colourful987/2018-Read-Record/tree/master/Content/Compiler%20Interpreter/SwiftSVGInterpreterForHTML)
+
+可认为是昨日的一个逆过程:
+
+```html
+<html>
+  <body>
+    <svg width='250' height='250'>
+      <rect x='110.0' y='10.0' width='100.0' height='130.0' stroke='teal' 
+        fill='aqua' stroke-width='5' />
+      <circle cx='80.0' cy='160.0' r='60.0' stroke='red' fill='yellow' 
+        stroke-width='5' />
+    </svg>
+  </body>
+</html>
+```
+最后会用ios 的 core graphic 绘制到uiview上。
