@@ -34,10 +34,12 @@ class Body:AST {
 }
 
 class SVG:AST {
-    var shapeElms:[AST]
+    var shapeElms:[Shape]
+    var propertyList:PropertyList
     
-    init(shapes:[AST]) {
-        self.shapeElms = []
+    init(shapes:[Shape], propertyList:PropertyList) {
+        self.shapeElms = shapes
+        self.propertyList = propertyList
         super.init()
         self.name = "SVG"
     }
@@ -47,13 +49,24 @@ class Shape:AST {
     // rect circle etc shapes
     var shapeType:Token
     // 属性
-    var properties:[Property]
+    var propertyList:PropertyList
     
-    init(shapeType:Token, properties:[Property]) {
+    init(shapeType:Token, propertyList:PropertyList) {
         self.shapeType = shapeType
-        self.properties = properties
+        self.propertyList = propertyList
         super.init()
         self.name = "Shape"
+    }
+}
+
+class PropertyList:AST {
+    // 属性
+    var properties:[Property]
+    
+    override init() {
+        self.properties = []
+        super.init()
+        self.name = "PropertyList"
     }
 }
 
@@ -164,25 +177,34 @@ class Parser {
     func svg() -> AST {
         self.eat(.angleLeftBracket)
         self.eat(.svg)
+        let propertyList = self.properties()
         self.eat(.angleRightBracket)
         
         var shapes:[AST] = []
-        while self.current_token! == .angleLeftBracket {
+        while self.current_token! == .angleLeftBracket && self.lexer.current_char! != "/" {
             self.eat(.angleLeftBracket)
             let shape = self.shape()
             self.eat(.backslash)
             self.eat(.angleRightBracket)
             shapes.append(shape)
         }
+        self.eat(.angleLeftBracket)
+        self.eat(.backslash)
+        self.eat(.svg)
+        self.eat(.angleRightBracket)
         
-        return SVG(shapes: shapes)
+        return SVG(shapes: shapes as! [Shape], propertyList:propertyList as! PropertyList)
     }
     
     func shape() -> AST {
         let shapeType = self.current_token!
         self.eat(.id("whatever"))
-        
-        var properties:[Property] = []
+        let propertyList = self.properties()
+        return Shape(shapeType: shapeType, propertyList: propertyList as! PropertyList)
+    }
+    
+    func properties() -> AST {
+        let propertyList = PropertyList()
         // 这里我可以再分成properties 我觉得比较好
         while self.current_token! == .id("whatever") {
             let key = self.current_token!
@@ -201,14 +223,11 @@ class Parser {
                 value = PropertyNum(token: valueToken)
                 self.eat(.real_const(100))
             }
-            
-            self.eat(.id("whatever"))
             self.eat(.quote)
             let property = Property(key: key, value: value)
-            properties.append(property)
+            propertyList.properties.append(property)
         }
-        
-        return Shape(shapeType: shapeType, properties: properties)
+        return propertyList
     }
     
     func parse() -> AST {

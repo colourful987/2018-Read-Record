@@ -28,7 +28,7 @@ extension Character {
     }
     
     func isalnum()->Bool {
-        return CharacterSet.alphanumerics.contains(self)
+        return CharacterSet.alphanumerics.contains(self) || self == "-"
     }
     
     func isalpha()->Bool{

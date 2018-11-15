@@ -30,11 +30,9 @@ enum Token {
     case eof
 }
 
-let RESERVED_KEYWORDS : [String:Token] = ["HTML":.html,
+let RESERVED_KEYWORDS : [String:Token] = ["html":.html,
                                           "body":.body,
-                                          "svg":.svg,
-                                          "rect":.rect,
-                                          "circle":.circle]
+                                          "svg":.svg]
 
 
 func == (lhs:Token,rhs:Token)->Bool{
@@ -58,6 +56,8 @@ func == (lhs:Token,rhs:Token)->Bool{
     case (.backslash,.backslash):
         return true
     case (.dot,.dot):
+        return true
+    case (.integer_const,.integer_const):
         return true
     case (.real_const,.real_const):
         return true

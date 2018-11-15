@@ -28,8 +28,7 @@ class ViewController: UIViewController {
         let lexer = Lexer(sourceCode: case_0)
         let parser = Parser(lexer: lexer)
         let interpreter = Interpreter(parser: parser)
-        let ret = interpreter.interpret()
-        print(interpreter.global_scope)
+        interpreter.interpret()
     }
 
 

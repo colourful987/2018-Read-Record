@@ -6,7 +6,7 @@
 //  Copyright © 2018 pmst. All rights reserved.
 //
 
-import Foundation
+import UIKit
 
 
 class Interpreter {
@@ -16,120 +16,125 @@ class Interpreter {
     init(parser:Parser) {
         self.parser = parser
     }
-//
-//    @discardableResult func visit(_ node:AST)->Float {
-//
-//        if node.name == "BinOp" {
-//            return self.visit_BinOp(node: node as! BinOp)
-//        } else if node.name == "Num" {
-//            return self.visit_Num(node as! Num)
-//        } else if node.name == "UnaryOp" {
-//            return self.visit_UnaryOp(node as! UnaryOp)
-//        } else if node.name == "Var" {
-//            return self.visit_Var(node as! Var)
-//        } else if node.name == "Compound" {
-//            return self.visit_Compound(node as! Compound)
-//        } else if node.name == "Assign" {
-//            return self.visit_Assign(node as! Assign)
-//        } else if node.name == "Program" {
-//            return self.visit_Program(node as! Program)
-//        } else if node.name == "Block" {
-//            return self.visit_Block(node as! Block)
-//        } else if node.name == "Type" {
-//            return self.visit_Type(node as! Type)
-//        } else if node.name == "VarDecl" {
-//            return self.visit_VarDel(node as! VarDecl)
-//        } else if node.name == "NoOp" {
-//            return self.visit_NoOp(node as! NoOp)
-//        }
-//
-//        print("error in visit")
-//        return 0
-//    }
-//
-//    func visit_Type(_ node:Type)->Float {
-//        return -1
-//    }
-//
-//    func visit_UnaryOp(_ node:UnaryOp)->Float {
-//        let op = node.token
-//        if op == .plus {
-//            return +self.visit(node.expr)
-//        } else if op == .minus {
-//            return -self.visit(node.expr)
-//        }
-//        print("error in visit")
-//        return 0
-//    }
-//
-//    func visit_BinOp(node:BinOp) -> Float {
-//        if node.token == .plus {
-//            return Float(self.visit(node.left) + self.visit(node.right))
-//        } else if node.token == .minus {
-//            return Float(self.visit(node.left) - self.visit(node.right))
-//        } else if node.token == .mul {
-//            return Float(self.visit(node.left) * self.visit(node.right))
-//        } else if node.token == .integer_div {
-//            return Float(self.visit(node.left) / self.visit(node.right))
-//        } else if node.token == .float_div {
-//            return Float(self.visit(node.left)) / Float(self.visit(node.right))
-//        }
-//        print("error !!!")
-//        return 0
-//    }
-//
-//    func visit_Num(_ node:Num) -> Float {
-//        return node.value
-//    }
-//
-//    func visit_NoOp(_ node:NoOp)->Float {
-//        return -1
-//    }
-//
-//    func visit_VarDel(_ node:VarDecl)->Float {
-//        return -1
-//    }
-//
-//    func visit_Assign(_ node:Assign)->Float{
-//        let var_name = node.variable.var_name
-//        self.global_scope[var_name!] = self.visit(node.expr)
-//        return -1
-//    }
-//
-//    func visit_Var(_ node:Var)->Float{
-//        let var_name = node.var_name
-//        let val = self.global_scope[var_name!]!
-//
-//        return val
-//    }
-//
-//    func visit_Compound(_ node:Compound)->Float{
-//        for child in node.children{
-//            self.visit(child)
-//        }
-//        return -1
-//    }
-//
-//    func visit_Program(_ node:Program)->Float {
-//        self.visit(node.block)
-//        return -1
-//    }
-//
-//    func visit_Block(_ node:Block)->Float {
-//        // 遍历所有的 VarDecl 设置到 GLOBAL 中
-//        for declaration in node.declarations {
-//            self.visit(declaration)
-//        }
-//
-//        // 遍历所有的复合程序
-//        self.visit(node.compound_statement)
-//        return -1
-//    }
+
+    @discardableResult func visit(_ node:AST) -> Any {
+
+        if node.name == "HTML" {
+            return self.visit_HTML(node as! HTML)
+        } else if node.name == "Body" {
+            return self.visit_Body(node as! Body)
+        } else if node.name == "SVG" {
+            return self.visit_SVG(node as! SVG)
+        } else if node.name == "Shape" {
+            return self.visit_Shape(node as! Shape)
+        } else if node.name == "PropertyList" {
+            return self.visit_PropertyList(node as! PropertyList)
+        } else if node.name == "Property" {
+            return self.visit_Property(node as! Property)
+        } else if node.name == "PropertyNum" {
+            return self.visit_PropertyNum(node as! PropertyNum)
+        } else if node.name == "PropertyString" {
+            return self.visit_PropertyString(node as! PropertyString)
+        } else if node.name == "NoOp" {
+            return self.vist_NoOp(node as! NoOp)
+        }
+
+        print("error in visit")
+        return UIView.init()
+    }
     
-    func interpret()-> Float {
+    func visit_HTML(_ node:HTML) -> UIView {
+        return self.visit(node.body) as! UIView
+    }
+    
+    func visit_Body(_ node:Body) -> UIView {
+        let view = UIView(frame: UIScreen.main.bounds)
+        var subView : UIView
+        for node in node.elements {
+            subView = self.visit(node) as! UIView
+            view.addSubview(subView)
+        }
+        return view
+    }
+    
+    func visit_SVG(_ node:SVG) -> UIView {
+        let property:PropertyList = node.propertyList
+        var width:Float = 0.0
+        var height:Float = 0.0
+        for property in property.properties {
+            guard case let .id(keyName) = property.key else {continue}
+
+            if keyName == "width" {
+                width = (property.value as! PropertyNum).value
+            } else if keyName == "height" {
+                height = (property.value as! PropertyNum).value
+            } else {
+                print("Not support property in SVG!!!")
+            }
+        }
+        let svgCanvas = UIView(frame: CGRect(x: 0.0, y: 0.0, width:Double(width), height: Double(height)))
+        UIGraphicsBeginImageContext(svgCanvas.bounds.size)
+        for shape in node.shapeElms {
+            self.visit(shape)
+        }
+        let image = UIGraphicsGetImageFromCurrentImageContext()!
+        UIGraphicsEndImageContext()
+        svgCanvas.addSubview(UIImageView(image: image))
+        return svgCanvas
+    }
+    
+    func visit_Shape(_ node:Shape) {
+        let context = UIGraphicsGetCurrentContext()
+        let params = self.visit(node.propertyList) as! [String:Any]
+        guard case let .id(shapeName) = node.shapeType else {
+            return
+        }
+        
+        if shapeName == "circle" {
+            print("绘制圆形，参数为\(params)")
+        } else if shapeName == "rect" {
+            print("绘制矩形，参数为\(params)")
+        } else {
+            print("暂不支持的Shape类型")
+        }
+        
+    }
+    
+    func visit_PropertyList(_ node:PropertyList) -> [String:Any] {
+        var ret : [String:Any] = Dictionary()
+        for property in node.properties {
+            let (key,value) = self.visit(property) as! (String,Any)
+            ret[key] = value
+        }
+        return ret
+    }
+    
+    func visit_Property(_ node:Property) -> (String,Any) {
+        var keyRet:String = ""
+        if case let .id(key) = node.key {
+            keyRet = key
+        }
+        let valueRet = self.visit(node.value)
+
+        return (keyRet, valueRet)
+    }
+    
+    func visit_PropertyNum(_ node:PropertyNum) -> Float {
+        return node.value
+    }
+    
+    func visit_PropertyString(_ node: PropertyString) -> String {
+        return node.value
+    }
+    
+    func vist_NoOp(_ node:NoOp) -> Float {
+        return -1
+    }
+    
+    
+    func interpret() {
         let tree = self.parser.parse()
-        return 1.0
-//        return self.visit(tree)
+        self.visit(tree)
     }
 }
 
