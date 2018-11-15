@@ -4,7 +4,7 @@
 * [x] 实现pascal解释器 ；
 * [x] 实现一门简单的语言 ECHO；
 * [ ] 指标平台公示解释器；
-* [ ] AST source to source 解释成诸如C语言的其他形式，或者是自定义一门标记语言解释成OC的button或是html的元素；
+* [x] AST source to source 解释成诸如C语言的其他形式，或者是自定义一门标记语言解释成OC的button或是html的元素；
 * [x] 编译器的话，可能就是要基于 source to source 到汇编或者C代码，再用对应的编译器编译成可执行文件。
 
 # 2018/11/01
@@ -479,3 +479,23 @@ class Rectangle: Shape {
 </html>
 ```
 最后会用ios 的 core graphic 绘制到uiview上。
+
+
+
+# 2018/11/16 am
+
+今日实现了上面html标记语言的解释器，即将parse后的AST语法树解释成swift中可呈现的UIView，内容包括矩形，圆形等等，不过我目前对绘制圆和矩形采用了print的方式：
+
+![](./resource/interpreter_result.png)
+
+语法树解析结果为：
+
+![](./resource/11_16_AST.png)
+
+贴图AST其实表达意义不大，总的来说确实已经实现了html标记语言到ios端解释成绘图，至于print转成绘图也是很简单，我会使用14号学习的知识，采用面向对象协议方式来玩这个，大致思路为：
+
+1. 首先为圆和矩形等制定抽象协议
+2. 圆和矩形类仅用于描述圆/矩形的属性，比如宽度，高度，stoke颜色，fill颜色等等，这些属性值都是由Interpreter从html标记语言中获得，比如`x='100'`，`stroke-width='5'` 这种
+3. 为了遵循Single responsibility principle，我将渲染步骤单独拎出来封装成一个类，也就是说我们会有一个rect render class和circle render class，而我们的circle默认可以绑定一个 render实例；
+
+明日实现上述思路，基本就是走个场，因为这个方案过一遍之后感觉还是没有问题的。
