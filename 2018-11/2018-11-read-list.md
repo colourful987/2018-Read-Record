@@ -499,3 +499,40 @@ class Rectangle: Shape {
 3. 为了遵循Single responsibility principle，我将渲染步骤单独拎出来封装成一个类，也就是说我们会有一个rect render class和circle render class，而我们的circle默认可以绑定一个 render实例；
 
 明日实现上述思路，基本就是走个场，因为这个方案过一遍之后感觉还是没有问题的。
+
+
+
+# 2018/11/17
+
+添加了Render类用于渲染SVG HTML 语言对应的 ios 绘制方式，由于SVG中设置参数之前AST中我们用property抽象对象来表示，在 Interpreter 的时候将其放置到了一个字典中，也就是说一个Shape绑定了相应的图形参数，比如宽高，绘制颜色等等，我们的渲染类————或者称之为画笔，需要在绘制前，先根据这些参数设定好属性，因此我搞了一个协议来规范这个解析参数操作：
+
+```swift
+protocol ParseRenderParams {
+    func parse(with params:Dictionary<String, Any>)
+}
+
+struct Circle:Drawable {
+    var strokeWidth = 5
+    var strokeColor = Color.named(name: .red)
+    var fillColor = Color.named(name: .yellow)
+    var center = (x:80.0, y:160.0)
+    var raduis = 60.0
+}
+
+extension Circle:ParseRenderParams {
+    func parse(with params: Dictionary<String, Any>) {
+        // 这里就是解析字典，然后将属性分别设置给上述几个属性
+        // 绘制时候就用这些属性渲染出一个符合预期的圆了
+        print("解析传入的参数: \(params)")
+    }
+}
+```
+
+
+
+> 总结：上述可算作一个“完整”且具有应用场景的解释器，允许你们从 HTML->iOS绘制图形，甚至 HTML 新闻-> 原生控件显示。但是严格意义上来说终究是个Demo，太多业务场景没有考虑。
+
+之后安排，可能另外起一个工程实现一门语言————之前那个太随性了...考虑有如下两点：
+
+1. 先系统地考虑下grammar，对Token抽象归类，AST 这个抽象这次会考虑周全点，比如函数调用，堆栈等等，之前Symbol相关的我都没有实现；实现语言还没想好，无非就是 swift pythom oc，想用swift，但又怕用得不够swifty；用python吧感觉自己还要补python知识浪费进度，oc呢确实顺手，而且有运行时和python差不多，但是老是啃一样也没啥意思；
+2. 这个项目可能更新会慢一点，用于巩固，温习和探索新的解释器/编译器知识领域，目前来说仅入门而已，都没看过llvm的源码实现... 我发现之前学习的汇编和objc_msgSend相关知识又模糊了，这说明之前的学习方式是有问题的，付出和收入不成正比，甚至可以说回报率极低，需要想想怎么改进。
