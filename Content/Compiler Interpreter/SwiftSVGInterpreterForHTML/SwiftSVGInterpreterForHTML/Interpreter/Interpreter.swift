@@ -91,9 +91,13 @@ class Interpreter {
         }
         
         if shapeName == "circle" {
-            print("绘制圆形，参数为\(params)")
+            let circle = Circle()
+            circle.parse(with: params)
+            circle.draw(in: context!)
         } else if shapeName == "rect" {
-            print("绘制矩形，参数为\(params)")
+            let rectangle = Rectangle()
+            rectangle.parse(with: params)
+            rectangle.draw(in: context!)
         } else {
             print("暂不支持的Shape类型")
         }
@@ -132,9 +136,9 @@ class Interpreter {
     }
     
     
-    func interpret() {
+    func interpret() -> UIView {
         let tree = self.parser.parse()
-        self.visit(tree)
+        return self.visit(tree) as! UIView
     }
 }
 

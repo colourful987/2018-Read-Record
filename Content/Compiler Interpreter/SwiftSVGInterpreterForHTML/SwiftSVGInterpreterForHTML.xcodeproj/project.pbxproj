@@ -17,6 +17,7 @@
 		4F762D9F219C74D8005EA10C /* Interpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F762D9A219C74D7005EA10C /* Interpreter.swift */; };
 		4F762DA0219C74D8005EA10C /* AST.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F762D9B219C74D7005EA10C /* AST.swift */; };
 		4F762DA1219C74D8005EA10C /* CharacterSet+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F762D9C219C74D8005EA10C /* CharacterSet+Extension.swift */; };
+		4FC7A47821A0523700521135 /* Render.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FC7A47721A0523700521135 /* Render.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		4F762D9A219C74D7005EA10C /* Interpreter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Interpreter.swift; sourceTree = "<group>"; };
 		4F762D9B219C74D7005EA10C /* AST.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AST.swift; sourceTree = "<group>"; };
 		4F762D9C219C74D8005EA10C /* CharacterSet+Extension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "CharacterSet+Extension.swift"; sourceTree = "<group>"; };
+		4FC7A47721A0523700521135 /* Render.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Render.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +66,7 @@
 		4F762D84219C6F26005EA10C /* SwiftSVGInterpreterForHTML */ = {
 			isa = PBXGroup;
 			children = (
+				4FC7A47621A051F800521135 /* Render */,
 				4F762D97219C6F2C005EA10C /* Interpreter */,
 				4F762D85219C6F26005EA10C /* AppDelegate.swift */,
 				4F762D87219C6F26005EA10C /* ViewController.swift */,
@@ -85,6 +88,14 @@
 				4F762D99219C74D7005EA10C /* Token.swift */,
 			);
 			path = Interpreter;
+			sourceTree = "<group>";
+		};
+		4FC7A47621A051F800521135 /* Render */ = {
+			isa = PBXGroup;
+			children = (
+				4FC7A47721A0523700521135 /* Render.swift */,
+			);
+			path = Render;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -165,6 +176,7 @@
 				4F762D86219C6F26005EA10C /* AppDelegate.swift in Sources */,
 				4F762D9E219C74D8005EA10C /* Token.swift in Sources */,
 				4F762D9F219C74D8005EA10C /* Interpreter.swift in Sources */,
+				4FC7A47821A0523700521135 /* Render.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

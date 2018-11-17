@@ -28,7 +28,7 @@ class ViewController: UIViewController {
         let lexer = Lexer(sourceCode: case_0)
         let parser = Parser(lexer: lexer)
         let interpreter = Interpreter(parser: parser)
-        interpreter.interpret()
+        self.view.addSubview(interpreter.interpret())
     }
 
 
