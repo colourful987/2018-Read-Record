@@ -542,3 +542,15 @@ extension Circle:ParseRenderParams {
 [如何编程解决朋友圈个数问题？](https://mp.weixin.qq.com/s/uPoruWUD-v_1YQf2KPO45w)
 
 算法题，学习到了如何使用数组来表示完全二叉树，非常有意思，简直就是新大陆。ps: 对这个所谓的面试题不是很理解，如何算作一个朋友圈感觉很奇怪，但是这并不影响我对并查集实际应用的兴趣
+
+
+
+# 2018/11/19
+
+[QTEventBus](https://github.com/LeoMobileDeveloper/QTEventBus) 如何解耦通信相关的代码。可以学习到：
+
+1. 通知Notif/事件Event/响应Response 注册、派发相关知识；
+2. DSL 链式编程思想；
+3. 宏定义在实战中妙用
+
+源码还没有深究，明天会花一天尽量吃透思想，由于太多的block嵌套，代码学习成本还是比较高的。
