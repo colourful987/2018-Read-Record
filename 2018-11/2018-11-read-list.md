@@ -569,3 +569,161 @@ extension Circle:ParseRenderParams {
 6. UIResponder 和 AppDelegate 未细看
 
 > 题外话：源码引入了总线 BUS 一说，就像 REDUX、ReactCocoa 等都是把其他领域的设计思路和模式引入到iOS中，怎么说呢？个人觉得引入如果能解决一些问题的痛点那就是好的，相反如果增加了学习成本和维护成本，那么外表光鲜又有什么用呢？比如把Haskell的 Functor/Monad 等强加到swift上的map reduce 等，可以，但没必要，真没必要。言归正传，我觉得Bus其实就是充当一个事件派发中枢机构————就是中间者单例，其他就没什么了。当然 QTEventBus 也解决了一些问题，比如实例销毁后，自动从注销监听事件状态，这个其实很早之前在其他地方就看到有这种实现思路了，无非就是又加了一个中间层罢了，貌似是objc的文章，另外我自己也写过《如何实现一个优雅的KVO和KVB中间件》一文。打算明天就学习这个开源库写一下笔记和心得，主要是从简入繁来实现一个Event管理者，随着业务的增加必定会暴露出当前实现的不足，因此需要使用设计模式或者其他一些方案来解决问题。
+
+
+
+# 2018/11/21
+
+理一下通知的使用方式：
+
+## 1. 常规使用
+系统的 `[NSNotificationCenter defaultCenter]` 首先是个单例，在整个应用生命周期充当着一个通知事件派发的中间者角色，它允许像视图控制器或其他实例对象将自己作为观察者注册进来，监听某个主题的通知；另一方面，某个地方触发了事件，就需要向通知中心post告知某个Event发生了，通知中心就会遍历注册该事件的观察者们，然后逐一派发通知这些实例对象。
+
+```oc
+/// ViewController.m
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(notificationDidReceived:) name:@"ClickButton" object:nil];
+}
+
+- (void)notificationDidReceived:(NSDictionary *)userInfo {
+    NSLog(@"received userInfo:%@",userInfo);
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+```
+上面是 `ViewController` 实例将自己作为观察者向通知中心注册监听 `ClickButton` 事件，这里采用 target/selector 方式，当然还有block注册方式。
+
+另外一方面，还需要由事件触发源：
+
+```oc
+/// ViewController2.m
+
+- (IBAction)triggerNotification:(id)sender {
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"ClickButton" object:nil userInfo:@{@"triggerVC":@"ViewController2", @"triggerEvent":@"ButtonClick"}];
+}
+
+```
+
+## 2. 进一步改进：自动注销
+
+* 基于 `target/selector` 的观察接口，我们都知道在实例释放之前必须先将自己从通知中心移除掉，一般都选择在 `dealloc` 中调用 `removeObserver` 方法；
+* 而以 block 的方式是否需要注销就非常模糊了， Foundation 发布注意事项明确表明需要手动注销，但是官方文档又说 iOS9 和 macOS 10.11即以上不再需要，这个真的很Apple，为此Ole Begemann做了代码验证，更多请见 swift.gg 译文[《Block 形式的通知中心观察者是否需要手动注销》](http://swift.gg/2018/07/26/notificationcenter-removeobserver/)，结论如下：
+  * 基于block 形式的观察者依然需要进行手动注销操作（即使在 iOS 11.2 上），所以 removeObserver (_:) 文档存在明显的误导。
+  * 如果没有进行注销操作的话，那么 block 就会被一直持有而且依然能够被相关通知触发执行。此时该行为对 APP 的潜在威胁取决于 block 内部持有的对象。
+  * 即使你在 deinit 中调用了注销操作，你依旧需要注意 block 中不能捕获 self 引用，否则会造成循环引用此时 deinit 也永远不会得到执行。
+
+
+其实很早之前就有解决方案，正如 David John Wheeler 提出的：
+
+> All problems in computer science can be solved by another level of indirection.
+
+我们将注册通知行为`[[NSNotificationCenter defaultCenter] addObserver:]` 和 `removeObserver` 抽出来封装成一个新的对象 NotificationToken：
+
+
+```oc
+/// NotificationToken.h
+
+@interface NotificationToken ()
+@property(nonatomic, weak)id observer;
+@property(nonatomic, assign)SEL selector;
+@end
+
+@implementation NotificationToken
+
+- (instancetype)initWithObserver:(id)observer
+                        selector:(SEL)aSelector
+                            name:(nullable NSNotificationName)aName {
+    self = [super init];
+    
+    if (self) {
+        self.observer = observer;
+        self.selector = aSelector;
+        [[NSNotificationCenter defaultCenter] addObserver:observer selector:aSelector name:aName object:nil];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self.observer];
+}
+@end
+```
+
+这样就把注册行为和移除观察者行为都统一抽象到了 `NotificationToken` 这个类中，而观察者具体的添加行为（监听什么事件，以及事件发生时执行的操作） 都由外部控制，来看下怎么用 NotificationToken 这个封装类。
+
+```oc
+/// ViewController.h
+
+#import "ViewController.h"
+#import "NotificationToken.h"
+
+@interface ViewController ()
+@property(nonatomic, strong)NotificationToken *token;
+@end
+
+@implementation ViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    self.token = [[NotificationToken alloc] initWithObserver:self selector:@selector(notificationDidReceived:) name:@"ClickButton"];
+}
+
+- (void)notificationDidReceived:(NSDictionary *)userInfo {
+    NSLog(@"received userInfo:%@",userInfo);
+}
+
+@end
+```
+和旧代码对比可以发现，我们新增了一个属性来**强**持有了 token 实例，与此同时去除了 dealloc 中移除观察者的代码。因为 现在由 NotificationToken 来负责这个职责。当 ViewController 实例释放时，就会释放其持有的所有实例对象，比如这里的token，token释放时又会调用 dealloc，里面进行观察者移除操作。
+
+## 3. NotificationToken 生成的另一种方式
+
+其实我们对NotificationCenter增加一个Category就可以了，实现都是大同小异：
+
+```oc
+#import "NSNotificationCenter+Token.h"
+
+@implementation NSNotificationCenter (Token)
+
+- (NotificationToken *)observeWithName:(nullable NSNotificationName)aName
+                              observer:(id)observer
+                              selector:(SEL)aSelector {
+    
+    [self addObserver:observer selector:aSelector name:aName object:nil];
+    
+    NotificationToken *token = [[NotificationToken alloc] initWithObserver:observer];
+    return token;
+}
+
+@end
+```
+
+当然我们的 NotificationToken 构造方法中不再需要 addObserver 注册观察者了。注册方式其实没有变化：
+
+```oc
+@interface ViewController ()
+@property(nonatomic, strong)NotificationToken *token;
+@end
+
+@implementation ViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    self.token = [[NSNotificationCenter defaultCenter] observeWithName:@"ClickButton" observer:self selector:@selector(notificationDidReceived:)];
+}
+
+- (void)notificationDidReceived:(NSDictionary *)userInfo {
+    NSLog(@"received userInfo:%@",userInfo);
+}
+
+@end
+```
+
+> 上述就是简单的一次代码实践过程，核心知识点就是搞个中间层。明天把Bus涉及的知识点再理下，整理成文。
