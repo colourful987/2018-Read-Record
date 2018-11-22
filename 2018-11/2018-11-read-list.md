@@ -727,3 +727,171 @@ extension Circle:ParseRenderParams {
 ```
 
 > 上述就是简单的一次代码实践过程，核心知识点就是搞个中间层。明天把Bus涉及的知识点再理下，整理成文。
+
+# 2018/11/22
+
+今日继续关于通知事件传递的改进，昨日的Demo其实还存在一些问题：
+1. 比如一个ViewController监听一个通知，那么我们需要构造一个实例属性 token，如果我们有多个呢？所以当前方案需要改进；
+2. 目前注册通知行为可以放在生成 NotificationToken 的初始化中，或者 `observeWithName` 的时候———— 见昨日提供的两种方案，其实还有一种，由于OC中所有的类都是继承自 NSObject，因此我们需要对 NSObject 进行 Category 扩展下：
+
+```oc
+@interface NSObject (Notification_Private)
+
+- (void)observeWithName:(nullable NSNotificationName)aName
+               observer:(id)observer
+               selector:(SEL)aSelector;
+
+@end
+
+@implementation NSObject (Notification_Private)
+
+- (void)observeWithName:(nullable NSNotificationName)aName
+               observer:(id)observer
+               selector:(SEL)aSelector {
+    [[NSNotificationCenter defaultCenter] addObserver:observer selector:aSelector name:aName object:nil];
+    
+    NotificationToken *token = [[NotificationToken alloc] initWithObserver:observer];
+    [self.disposeBag addToken:token];
+}
+
+@end
+```
+使用也非常简单：
+
+```oc
+@implementation ViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    [self observeWithName:@"ClickButton" observer:self selector:@selector(notificationDidReceived:)];
+}
+
+@end
+```
+
+而注册通知返回的 Token，我们会借助runtime的关联属性持有它，考虑到可能会有多个，因此我们会使用数组来保存，但是为了更好的封装，构造了一个 DisposeBag 类，如下代码，首先是如何利用runtime添加一个关联属性：
+
+```oc
+static const char key_of_disposeBagContext;
+
+@implementation NSObject (Notification_Private)
+
+- (DisposeBag *)disposeBag {
+    DisposeBag *bag = objc_getAssociatedObject(self, &key_of_disposeBagContext);
+    if (!bag) {
+        bag = [DisposeBag new];
+        objc_setAssociatedObject(self, &key_of_disposeBagContext, bag, OBJC_ASSOCIATION_RETAIN);
+    }
+    return bag;
+}
+
+//...
+@end
+```
+
+DisposeBag 类的实现也非常简单：
+
+```oc
+#import "DisposeBag.h"
+
+@interface DisposeBag ()
+@property(nonatomic, strong)NSMutableArray<NotificationToken *> *tokens;
+@end
+
+@implementation DisposeBag
+- (NSMutableArray<NotificationToken *> *)tokens {
+    if (!_tokens) {
+        _tokens = [[NSMutableArray alloc] init];
+    }
+    return _tokens;
+}
+
+- (void)addToken:(NotificationToken *)token {
+    @synchronized(self) {
+        [self.tokens addObject:token];
+    }
+}
+
+@end
+```
+
+这样我们自己的类就完全不用考虑需要新增属性变量来持有token了。实际使用代码也和之前没有区别：
+
+```oc
+@implementation ViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    [self observeWithName:@"ClickButton" observer:self selector:@selector(notificationDidReceived:)];
+}
+
+- (IBAction)triggerNotification:(id)sender {
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"ClickButton" object:nil userInfo:@{@"triggerVC":@"ViewController2", @"triggerEvent":@"ButtonClick"}];
+}
+
+- (void)notificationDidReceived:(NSDictionary *)userInfo {
+    NSLog(@"received userInfo:%@",userInfo);
+}
+@end
+```
+
+讲道理其实封装得已经还算可以了，后面再考虑下remove的操作、循环引用问题以及block方式注册等优化点就ok了。
+
+持有关系是，每个NSObject子类都会关联一个 DisposeBag 属性变量，它又包含一个数组持有所有通知的Token，随着每次实例(比如这里的ViewController) 注册一次通知`observeWithName` ，我们的 DisposeBag 就会Add一个新的Token，一旦实例释放，那么 DisposeBag 属性实例就会释放，随之持有的数组释放，最终所有Token释放，dealloc 就会调用注销通知操作。
+
+> ViewController 实例 -> DisposeBag -> 数组 -> Token，这个关系链太长了，而且需要在Token释放时才注销，其实吧，还有一种比较巧妙的方式，就是Token不再持有observer，以及在 dealloc 中进行注销操作，它用一个unique唯一标识，以及一个 dispose block代码块用于处理事务————而这里就是注销通知，实现如下：
+
+```oc
+
+@protocol NotificationToken
+- (void)dispose;
+@end
+
+@interface NotificationToken: NSObject<NotificationToken>
+@property (copy, nonatomic) NSString * uniqueId;
+@property (copy, nonatomic) void(^onDispose)(NSString * uniqueId);
+@property (assign, nonatomic) BOOL isDisposed;
+
+@end
+
+@implementation NotificationToken
+
+- (instancetype)initWithKey:(NSString *)uniqueId{
+    if (self = [super init]) {
+        _uniqueId = uniqueId;
+        _isDisposed = NO;
+    }
+    return self;
+}
+
+- (void)dispose{
+    @synchronized(self){
+        if (_isDisposed) {
+            return;
+        }
+        _isDisposed = YES;
+    }
+    if (self.onDispose) {
+        self.onDispose(self.uniqueId);
+    }
+}
+@end
+```
+
+Token 在生成的时候会绑定 onDispose block 代码块，会被dispose接口方法调用，一般我们就是移除通知操作，现在我们的注销操作要放在 DisposeBag 类中了：
+
+```oc
+@implementation DisposeBag
+
+- (void)dealloc {
+    for (NotificationToken *token in self.tokens) {
+        [token dispose];
+    }
+}
+
+@end
+
+```
+关于Token的onDispose绑定是放在添加通知的时机，这里不再赘述。
