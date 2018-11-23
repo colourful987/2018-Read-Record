@@ -895,3 +895,14 @@ Token 在生成的时候会绑定 onDispose block 代码块，会被dispose接�
 
 ```
 关于Token的onDispose绑定是放在添加通知的时机，这里不再赘述。
+
+# 2018/11/23
+
+![QTEventBus 整体架构图](./resource/QTEventBusOverallArchitecture.png)
+
+上面蓝色标的为注册了通知的实例，昨日讲到了它的设计思路：持有一个 eb_disposeBag，在生命周期结束时(`dealloc`)遍历所有的tokens实例，即所有的注册事件，调用dispose方法处理注销收尾工作，**见Dispose Block** 中的 `onDispose` 闭包实现，这里是在 QTEventBus 单例中赋值这个block代码块。生命周期结束的最后，执行token的block是让QTEventBus单例执行 `removeNotification` 操作，这里有两种，如果是自定义的，那么只需从观察者列表移除观察者——即移除相应的uniqueId即可，这样下次触发事件时，就不会通知这个释放掉的实例了。
+
+> QTEventBus 单例维护了两套通知方案：一、自定义事件，以事件为Key，subscriber为value，事件发生时，遍历对应事件key的subscriber列表对象，逐一派发即可；二、NSNotification 系统的通知派发，即QTEventBus单例注册成所有 NSNotification 事件的观察者，然后在派发给指定的observer；相当于原先是所有实例对象指向NSNotificationCenter单例，现在两者中间加了一个 QTEventBus 单例中间者。
+
+![QTEventBus 整体架构图](./resource/QTEvent_Notification_RelationShip.png)
+
