@@ -906,3 +906,8 @@ Token 在生成的时候会绑定 onDispose block 代码块，会被dispose接�
 
 ![QTEventBus 整体架构图](./resource/QTEvent_Notification_RelationShip.png)
 
+
+
+# 2018/11/25
+
+推荐《The Dark Net》 和《七堂极简物理课》两本书
