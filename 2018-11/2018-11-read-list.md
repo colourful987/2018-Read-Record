@@ -912,8 +912,17 @@ Token 在生成的时候会绑定 onDispose block 代码块，会被dispose接�
 
 推荐《The Dark Net》 和《七堂极简物理课》两本书
 
-
-
 # 2018/11/26
 
 明日计划：微信小程序新闻停驻到小圆球，点击又push。
+
+# 2018/11/27
+微信这个转场动画和之前 TransitionWorld 中的 CircularAnimtion 是类似的，主要原理是利用 maskLayer 来进行专场过渡。更多请见[这里]()。
+
+整理了下Runloop的源码，感觉用矩形图更形象点，用平常的FlowChart其实有点限制：
+
+![RunLoop overview](./resource/RunLoopOverView.png)
+
+可以直观看到runloop包含几个while循环，哪些是过程式的，当然我整理还是简化了很多，比如CFRunLoopSpecific 那里我就没有仔细写调用过程：根据mode name查找当前runloop中是否包含这样的rlm，判断后替换一个新的runloop mode 执行；以及kCFRunLoopEntry和kCFRunLoopExit我都没有标注出来，
+
+__CFRunLoopRun 写的比较详细，但是也省略while之前的超时定时器设置步骤等几个小点。
