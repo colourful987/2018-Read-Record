@@ -942,3 +942,55 @@ RunLoop 计划，时间评估至月底：
 * [ ] RunLoop 的使用场景有哪些，具体实现又是怎么样的？
 * [ ] GCD 为什么会有个 gcdDispatchPort?
 * [ ] Observer 休眠前、休眠后等事件可以玩一些什么花样呢？
+
+
+
+# 2018/11/30（RunLoop主题）
+
+Mach port 有关的文档少之又少，且叙述不清，google了一些，暂时整理如下：
+
+* [官方文档：Kernel Programming Guide ](https://developer.apple.com/library/archive/documentation/Darwin/Conceptual/KernelProgramming/Mach/Mach.html#//apple_ref/doc/uid/TP30000905-CH209-TPXREF101)主要看 “Ports, Port Rights, Port Sets, and Port Namespaces” 这一节，但是有点绕；
+* Damien DeVille 的[《Interprocess communication on iOS with Mach messages》](http://ddeville.me/2015/02/interprocess-communication-on-ios-with-mach-messages) 这篇文档比较推荐，但是讲述的是CFMessagePortRef，是对C语言 mach_port 的封装，例子也简单易懂：
+
+```C
+CFDataRef callback(CFMessagePortRef local, SInt32 msgid, CFDataRef data, void *info)
+{
+    return NULL;
+}
+
+// remote endpoint
+void create_port(void)
+{
+    CFStringRef port_name = CFSTR("com.ddeville.myapp.group.port");
+    CFMessagePortRef port = CFMessagePortCreateLocal(kCFAllocatorDefault, port_name, &callback, NULL, NULL);
+    CFMessagePortSetDispatchQueue(port, dispatch_get_main_queue());
+}
+
+// local endpoint
+void create_port(void)
+{
+    CFStringRef port_name = CFSTR("com.ddeville.myapp.group.port");
+    CFMessagePortRef port = CFMessagePortCreateRemote(kCFAllocatorDefault, port_name));
+}
+
+// On the client
+void send_message(void)
+{
+    SInt32 messageIdentifier = 1;
+    CFDataRef messageData = (__bridge CFDataRef)[@"Hello server!" dataUsingEncoding:NSUTF8StringEncoding];
+
+    CFDataRef response = NULL;
+    SInt32 status = CFMessagePortSendRequest(port, messageIdentifier, messageData, 1000, 1000, kCFRunLoopDefaultMode, &response);
+}
+
+// On the server
+CFDataRef callback(CFMessagePortRef local, SInt32 msgid, CFDataRef data, void *info)
+{
+    return (__bridge CFDataRef)[@"Hello client!" dataUsingEncoding:NSUTF8StringEncoding];
+}
+```
+
+* [Interprocess communication on iOS with Berkeley sockets](http://ddeville.me/2015/02/interprocess-communication-on-ios-with-berkeley-sockets) 这个是将mach port的应用，berkeley sockets，篇幅较长；
+* [mach_port_t for inter-process communication](http://fdiv.net/2011/01/14/machportt-inter-process-communication) 基础，但是感觉不够清楚。
+* [Mach Messaging and Mach Interprocess Communication](https://docs.huihoo.com/darwin/kernel-programming-guide/boundaries/chapter_14_section_4.html) 貌似是官方外的另一个文档，没看；
+* [Abusing Mach on Mac OS X - Uninformed pdf](https://www.google.co.jp/url?sa=t&rct=j&q=&esrc=s&source=web&cd=8&cad=rja&uact=8&ved=2ahUKEwjD-qGbr_zeAhWBi7wKHYRYDk8QFjAHegQIAxAC&url=http%3A%2F%2Fwww.uninformed.org%2F%3Fv%3D4%26a%3D3%26t%3Dpdf&usg=AOvVaw3sraSLdwRTvPca4iHV5NDL)
