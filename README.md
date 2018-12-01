@@ -1,18 +1,32 @@
 # 2018年学习历程记录
 
 # Learning Recording Timeline
-- [ ] [2018 十一月学习记录](./2018-11/2018-11-read-list.md)
+
+- [ ] [2018 十一月学习记录](./2018-12/2018-12-read-list.md)
+
+> Theme: RunLoop主题、年度整理
+> Source Code Read Plan:
+- [ ] MachPort的设计思路以及写Example；
+- [ ] Main RunLoop 默认添加了哪些 Mode，各适用于哪些场景；
+- [ ] GCD Dispatch 的MachPort是怎么玩的；
+- [ ] RunLoop 的休眠，休眠时候真的什么都不做吗？那视图渲染呢？
+- [ ] Window 的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
+- [ ] 昨日的 CFRunLoopDoBlocks 执行的是？
+- [ ] RunLoop 的使用场景有哪些，具体实现又是怎么样的？
+- [ ] GCD 为什么会有个 gcdDispatchPort?
+- [ ] Observer 休眠前、休眠后等事件可以玩一些什么花样呢？
+
+- [x] [2018 十一月学习记录](./2018-11/2018-11-read-list.md)
 
 > Theme: 编译器/解释器
 > Source Code Read Plan:
 * [x] 实现一个计算器解释器；
 * [x] 实现pascal解释器 ；
 * [ ] 指标平台公示解释器；
-* [ ] AST source to source 解释成诸如C语言的其他形式，或者是自定义一门标记语言解释成OC的button或是html的元素；
-* [ ] 编译器的话，可能就是要基于 source to source 到汇编或者C代码，再用对应的编译器编译成可执行文件。
+* [x] AST source to source 解释成诸如C语言的其他形式，或者是自定义一门标记语言解释成OC的button或是html的元素；
+* [x] 编译器的话，可能就是要基于 source to source 到汇编或者C代码，再用对应的编译器编译成可执行文件。
 
-
-
+> 十一月份的完成度较高，专注度也不错，另外每日会读一些杂书，比如关于物理、天文、逻辑等方面知识，对拓展思维很有帮助，毕竟每日满脑的编程是很无趣且限制思维的。
 
 - [x] [2018 十月学习记录](./2018-10/2018-10-read-list.md)
 
