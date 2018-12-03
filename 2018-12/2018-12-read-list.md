@@ -31,6 +31,9 @@
 4. 刚才demo没跑起来，其实就是因为header中的size没有设置对，其实想想也对，因为接收端需要明确需要receive多少个字节后才能解析成对的数据结构；
 5. pthread的使用，这个网上资料很多
 
+<details>
+  <summary>Hello World Demo 片段</summary>
+
 ```c
 #include "string.h"
 #include "assert.h"
@@ -132,3 +135,4 @@ int main(int argc, const char * argv[]) {
     return 0;
 }
 ```
+</details>
