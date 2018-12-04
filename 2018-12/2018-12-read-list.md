@@ -308,3 +308,279 @@ _dispatch_runloop_root_queue_get_port_4CF(dispatch_queue_t dq)
 5. 接近尾声，为啥会有一堆port的判断，livePort、waitPort都是什么东西？
 
 上述这些明天学习。
+
+
+
+# 2018/12/04
+
+今日学习和解决疑惑点：
+
+1. 可爱的 mach port 相关声明，比如 `mach_msg_header_t` 和 `msg_buffer` 一个3字节缓存数组，【2651-2664】
+2. 紧接着一个 `__CFRunLoopServiceMachPort` 拉开了序幕，【2685-2700】
+3. 再次进入下一层“梦境”(do{}while(1))，里面的 `__CFRunLoopServiceMachPort`和`_dispatch_runloop_root_queue_perform_4CF` 着实看着有趣、亲切；【2727-2740】
+4. 孤苦伶仃的 `__CFPortSetRemove(dispatchPort, waitSet);`【2770-2770】
+5. 接近尾声，为啥会有一堆port的判断，livePort、waitPort都是什么东西？
+
+## 第1点 ： mach port 相关声明
+<details open>
+  <summary>源码如下：</summary>
+
+```c
+#if DEPLOYMENT_TARGET_MACOSX || DEPLOYMENT_TARGET_EMBEDDED || DEPLOYMENT_TARGET_EMBEDDED_MINI
+        voucher_mach_msg_state_t voucherState = VOUCHER_MACH_MSG_STATE_UNCHANGED;
+        voucher_t voucherCopy = NULL;
+#endif
+        uint8_t msg_buffer[3 * 1024];
+#if DEPLOYMENT_TARGET_MACOSX || DEPLOYMENT_TARGET_EMBEDDED || DEPLOYMENT_TARGET_EMBEDDED_MINI
+        mach_msg_header_t *msg = NULL;
+        mach_port_t livePort = MACH_PORT_NULL;
+#endif
+```
+
+</details>
+
+上面仅仅是声明变量，具体实例化和配置应该在后面
+
+## 第2点：`__CFRunLoopServiceMachPort(dispatchPort...)` 前瞻（后面还要分析）
+
+<details open>
+  <summary>保留MacOS平台源码：</summary>
+
+```c
+if (MACH_PORT_NULL != dispatchPort && !didDispatchPortLastTime) {
+  msg = (mach_msg_header_t *)msg_buffer;
+  if (__CFRunLoopServiceMachPort(dispatchPort, &msg, sizeof(msg_buffer), &livePort, 0, &voucherState, NULL)) {
+      goto handle_msg;
+  }
+}
+```
+
+</details>
+
+`dispatchPort`是通过 `_dispatch_get_main_queue_port_4CF()` 方法获得，即从mainQueue队列中取到绑定的port，这部分代码可以回顾之间的笔记。
+
+> port都是通过 `mach_port_allocate` 实例化出来的，至于所以的 mainQueue 主队列，不过就是 `_dispatch_main_q` 全局变量，一个结构体，初始化源码貌似上面没贴，这里补上：
+
+
+<details>
+  <summary>全局变量`_dispatch_main_q`定义如下：</summary>
+
+```c
+struct dispatch_queue_s _dispatch_main_q = {
+	DISPATCH_GLOBAL_OBJECT_HEADER(queue_main),
+#if !DISPATCH_USE_RESOLVERS
+	.do_targetq = &_dispatch_root_queues[
+			DISPATCH_ROOT_QUEUE_IDX_DEFAULT_QOS_OVERCOMMIT],
+#endif
+	.dq_state = DISPATCH_QUEUE_STATE_INIT_VALUE(1) |
+			DISPATCH_QUEUE_ROLE_BASE_ANON,
+	.dq_label = "com.apple.main-thread",
+	.dq_atomic_flags = DQF_THREAD_BOUND | DQF_CANNOT_TRYSYNC | DQF_WIDTH(1),
+	.dq_serialnum = 1,
+};
+```
+
+</details>
+
+上面源码先判断port不为空，且上一次没有 `dispatchPortLastTime` 过才满足条件，值得注意的是一开始`dispatchPortLastTime` 初始值为 true，所以第一次是直接越过这个if-else语句，紧跟这个条件语句竟然是`dispatchPortLastTime=false`。
+
+那么疑惑点又要+1了，为啥第一次要绕过呢？另外livePort初始值也为NULL，看来后面又会设置，毕竟这一步绕过了。
+
+尽管我很想看 `__CFRunLoopServiceMachPort` 的实现，但是此时显然时机不佳，暂时按下不表。
+
+## 第2.1点：`__CFPortSetInsert` 的小插曲
+这部分源码上面我发现还有个落网之鱼：
+
+```
+///【2716-2718】
+#if __HAS_DISPATCH__
+  __CFPortSetInsert(dispatchPort, waitSet);
+#endif
+```
+首先 `__CFPortSet waitSet = rlm->_portSet;` 从当前模式中取到port端口，dispatchPort我发现根据条件一定是main Queue 的port。
+
+另外RunLoopMode结构体包含了一个属性 `dispatch_queue_t queue`，而它又绑定了我们的 mach Port；但是`__CFPortSet _portSet;`这个port又是什么鬼？？？？
+
+找了下`mach_port_insert_member`的声明[接口说明](http://web.mit.edu/darwin/src/modules/xnu/osfmk/man/mach_port_insert_member.html)，对于三个参数解释如下：
+
+```
+task
+[in task send right] The task holding the port set and receive right.
+member
+[in scalar] The task's name for the receive right.
+set
+[in scalar] The task's name for the port set.
+```
+这尼玛是什么鬼东西，其实都没搞懂receive right和 port set的定义和作用...姑且理解为将member port的receive right赋予给一个port set。
+
+我在uninformed找到了对port set的定义：
+> A port set is (unsurprisingly) a collection of Mach ports. Each of the ports in a port set use the same queue of messages.
+
+一开始我也这么理解，但是我看到 `__CFPortSet` 并非是个集合或者数组啊，只是一个普普通通的 `unsigned int`，难道？maybe这个int值标识作为key，取到的value就是一个集合？？ 这样貌似说的通了。
+
+另外这段代码源码也给了注释：
+> Must push the local-to-this-activation ports in on every loop iteration, as this mode could be run re-entrantly and we don't want these ports to get serviced.
+
+结合上面的理解，我认为变相的就是把dispatchPort**整合/加入**到waitSet中，这样所有的ports都共用一个消息队列来派发拉(见上面对portSet的定义)。
+
+## 第三点：`__CFRunLoopServiceMachPort` 的学习
+<details>
+  <summary>按惯例贴源码，然后再细看分析</summary>
+
+```c
+do {
+    msg = (mach_msg_header_t *)msg_buffer;
+    
+    __CFRunLoopServiceMachPort(waitSet, &msg, sizeof(msg_buffer), &livePort, poll ? 0 : TIMEOUT_INFINITY, &voucherState, &voucherCopy);
+    
+    if (modeQueuePort != MACH_PORT_NULL && livePort == modeQueuePort) {
+        // Drain the internal queue. If one of the callout blocks sets the timerFired flag, break out and service the timer.
+        while (_dispatch_runloop_root_queue_perform_4CF(rlm->_queue));
+        if (rlm->_timerFired) {
+            // Leave livePort as the queue port, and service timers below
+            rlm->_timerFired = false;
+            break;
+        } else {
+            if (msg && msg != (mach_msg_header_t *)msg_buffer) free(msg);
+        }
+    } else {
+        // Go ahead and leave the inner loop.
+        break;
+    }
+} while (1);
+```
+
+</details>
+
+核心方法应该还是 `__CFRunLoopServiceMachPort`，此时的 waitSet 我们刚“改装”过，&msg其实就是个局部变量，指向分配了3字节的数组`msg_buffer`，看似应该是用来接收数据；&livePort其实就是传个指针进去，为的是函数内部赋值这个live活着的port。 至于 &voucherState 还不知道.
+
+<details>
+  <summary>`__CFRunLoopServiceMachPort` 实现代码有点多</summary>
+
+```c
+static Boolean __CFRunLoopServiceMachPort(mach_port_name_t port, mach_msg_header_t **buffer, size_t buffer_size, mach_port_t *livePort, mach_msg_timeout_t timeout, voucher_mach_msg_state_t *voucherState, voucher_t *voucherCopy) {
+    Boolean originalBuffer = true;
+    kern_return_t ret = KERN_SUCCESS;
+    for (;;) {		/* In that sleep of death what nightmares may come ... */
+        mach_msg_header_t *msg = (mach_msg_header_t *)*buffer;
+        msg->msgh_bits = 0;
+        msg->msgh_local_port = port;
+        msg->msgh_remote_port = MACH_PORT_NULL;
+        msg->msgh_size = buffer_size;
+        msg->msgh_id = 0;
+        if (TIMEOUT_INFINITY == timeout) { CFRUNLOOP_SLEEP(); } else { CFRUNLOOP_POLL(); }
+        ret = mach_msg(msg, MACH_RCV_MSG|(voucherState ? MACH_RCV_VOUCHER : 0)|MACH_RCV_LARGE|((TIMEOUT_INFINITY != timeout) ? MACH_RCV_TIMEOUT : 0)|MACH_RCV_TRAILER_TYPE(MACH_MSG_TRAILER_FORMAT_0)|MACH_RCV_TRAILER_ELEMENTS(MACH_RCV_TRAILER_AV), 0, msg->msgh_size, port, timeout, MACH_PORT_NULL);
+
+        // Take care of all voucher-related work right after mach_msg.
+        // If we don't release the previous voucher we're going to leak it.
+        voucher_mach_msg_revert(*voucherState);
+        
+        // Someone will be responsible for calling voucher_mach_msg_revert. This call makes the received voucher the current one.
+        *voucherState = voucher_mach_msg_adopt(msg);
+        
+        if (voucherCopy) {
+            *voucherCopy = NULL;
+        }
+
+        CFRUNLOOP_WAKEUP(ret);
+        if (MACH_MSG_SUCCESS == ret) {
+            *livePort = msg ? msg->msgh_local_port : MACH_PORT_NULL;
+            return true;
+        }
+        if (MACH_RCV_TIMED_OUT == ret) {
+            if (!originalBuffer) free(msg);
+            *buffer = NULL;
+            *livePort = MACH_PORT_NULL;
+            return false;
+        }
+        if (MACH_RCV_TOO_LARGE != ret) break;
+        buffer_size = round_msg(msg->msgh_size + MAX_TRAILER_SIZE);
+        if (originalBuffer) *buffer = NULL;
+        originalBuffer = false;
+        *buffer = realloc(*buffer, buffer_size);
+    }
+    HALT;
+    return false;
+}
+```
+
+</details>
+
+其实虽然复杂，但是仔细看发送就是hello.c中的server函数。说了设置local就是为了receive，设置了remote就是为了send。
+有看到说 `CFRUNLOOP_SLEEP 和 CFRUNLOOP_POLL`并非是`do{}while(0)`宏定义实现，而真正实现应该是在 `CFRunLoopProbes.h` 中，注意看宏定义中的 `#if CF_RUN_LOOP_PROBES #else #endif`。
+
+虽然很遗憾，还得继续。
+
+`ret = mach_msg` 这边我看是单纯为接收存在。`thread voucher state` 难道是指线程凭证状态吗，用状态来管理线程？这个暂时先不了解了，反正我看 `voucher_mach_msg_revert` 和 `voucher_mach_msg_adopt` ，如果让我理解就是一个全局变量，就是存储当前线程的信息，比如这里的msg。
+
+后面可以看到livePort的赋值，和我们预料的差不多，此时livePort有了，`msg_buffer`也有数据了，voucherState也取到了值（函数返回值定义如下：The previous thread voucher state or `VOUCHER_MACH_MSG_STATE_UNCHANGED` if no state change occurred.）。
+
+最后就是 `goto handle_msg`。
+
+> 小节：这里留下一堆疑惑点，还是不知道休眠怎么实现的，还是苹果爸爸太封闭，`CFRUNLOOP_SLEEP` 和`CFRUNLOOP_POLL` 以及`CFRUNLOOP_WAKEUP` 宏定义都没告诉我们。假如timeout=0，猜测是不进入休眠，而是直接监听port消息。
+
+## 第3.1点：`_dispatch_runloop_root_queue_perform_4CF(rlm->_queue)`
+差点就略过这里了，简单贴下源码吧，这端代码执行的前提是 `modeQueuePort != MACH_PORT_NULL && livePort == modeQueuePort`，相当于是为 `modeQueuePort` 服务，而modeQueuePort 之前说了就是从rlm的queue队列中取出port，结合今天学习到的port Set，相当于消息队列都会和一个端口绑定，port可能会接受很多message，将这些消息都push到队列中一个个处理确实比较合理，这些都是我的猜测。
+
+```c
+bool
+_dispatch_runloop_root_queue_perform_4CF(dispatch_queue_t dq)
+{
+	if (slowpath(dq->do_vtable != DISPATCH_VTABLE(queue_runloop))) {
+		DISPATCH_CLIENT_CRASH(dq->do_vtable, "Not a runloop queue");
+	}
+	dispatch_retain(dq);
+	bool r = _dispatch_runloop_queue_drain_one(dq);
+	dispatch_release(dq);
+	return r;
+}
+```
+`_dispatch_runloop_queue_drain_one` 的实现有点长，打算在之后学习GCD的时候学习。大概猜测下，首先 `dispatch_queue_t` 队列是绑定了一个端口的，然后可以从线程中取到voucher，然后给port派发消息？？？？
+
+看下源码注释：
+
+```c
+// Drain the internal queue. If one of the callout blocks sets the timerFired flag, break out and service the timer.
+```
+另外 `rlm->_timerFired` 注释也写到 `set to true by the source when a timer has fired`，感觉就是定时器。
+
+不过`_dispatch_runloop_root_queue_perform_4CF` 完整流程感觉还是无法自圆其说，说明我理解有误。
+
+## 第4点：__CFPortSetRemove(dispatchPort, waitSet);
+
+不难理解了，就是从waitSet中剥离出dispatchPort。
+
+## 第5点： 一系列的场景判断
+其中 `modeQueuePort != MACH_PORT_NULL && livePort == modeQueuePort` 我发现这里比较有意思，刚才对这个就不理解，`_dispatch_runloop_root_queue_perform_4CF` 到底干了正事没，现在看发现这里在执行Timer的Block。
+
+```c
+if (!__CFRunLoopDoTimers(rl, rlm, mach_absolute_time())) {
+    // 由于我们提前开火了，所以需要为下一次重新组装一个定时器 
+    __CFArmNextTimerInMode(rlm, rl);
+}
+```
+`rlm->_timerPort` 是什么鬼不知道。。。
+
+`livePort == dispatchPort` 的场景就需要 `__CFRUNLOOP_IS_SERVICING_THE_MAIN_DISPATCH_QUEUE__(msg)`来干活了。反正又扯上了 GCD 的 `_dispatch_main_queue_callback_4CF` 方法。
+
+我突然想到所谓的drain queue，其实就是把队列中的任务(Block) 一个个做完吧。。。。
+
+其他情况就是 `CFRUNLOOP_WAKEUP_FOR_SOURCE` ：
+```c
+CFRUNLOOP_WAKEUP_FOR_SOURCE();
+// Despite the name, this works for windows handles as well
+CFRunLoopSourceRef rls = __CFRunLoopModeFindSourceForMachPort(rl, rlm, livePort);
+if (rls) {
+  mach_msg_header_t *reply = NULL;
+  sourceHandledThisLoop = __CFRunLoopDoSource1(rl, rlm, rls, msg, msg->msgh_size, &reply) || sourceHandledThisLoop;
+  if (NULL != reply) {
+      (void)mach_msg(reply, MACH_SEND_MSG, reply->msgh_size, 0, MACH_PORT_NULL, 0, MACH_PORT_NULL);
+      CFAllocatorDeallocate(kCFAllocatorSystemDefault, reply);
+  }
+}
+```
+可以看到是do Source1事件，也就是用户自定义事件，比如TouchEvent。
+
+注意 `mach_msg` 就是作为source1 block之后，如果reply，那么需要向port返回值。
+
+> 今天差不多到这里可以了，明天会对port相关的收个尾，发现知识点实在太多，已经尽量做到不拓展了，一有发散的想法，马上会告诉自己，哪个才是重点，当下目的是为了解决什么？那个知识点对全局理解有影响吗，是否真的必不可少，基本这样问完，我就取舍一二，效率还算可以。
