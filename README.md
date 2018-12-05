@@ -2,7 +2,7 @@
 
 # Learning Recording Timeline
 
-- [ ] [2018 十一月学习记录](./2018-12/2018-12-read-list.md)
+- [ ] [2018 十二月学习记录](./2018-12/2018-12-read-list.md)
 
 > Theme: RunLoop主题、年度整理
 > Source Code Read Plan:
