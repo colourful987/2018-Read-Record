@@ -2,12 +2,12 @@
 > Source Code Read Plan:
 - [x] MachPort的设计思路以及写Example；
 - [ ] Main RunLoop 默认添加了哪些 Mode，各适用于哪些场景；
-- [ ] GCD Dispatch 的MachPort是怎么玩的；
+- [x] GCD Dispatch 的MachPort是怎么玩的；
 - [ ] RunLoop 的休眠，休眠时候真的什么都不做吗？那视图渲染呢？
 - [ ] Window 的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
-- [ ] 昨日的 CFRunLoopDoBlocks 执行的是？
+- [x] 昨日的 CFRunLoopDoBlocks 执行的是？
 - [ ] RunLoop 的使用场景有哪些，具体实现又是怎么样的？
-- [ ] GCD 为什么会有个 gcdDispatchPort?
+- [x] GCD 为什么会有个 gcdDispatchPort?
 - [ ] Observer 休眠前、休眠后等事件可以玩一些什么花样呢？
 > reference：
 
@@ -15,12 +15,13 @@
 * [mach_port_t for inter-process communication](http://fdiv.net/2011/01/14/machportt-inter-process-communication) 
 * [Mach Messaging and Mach Interprocess Communication](https://docs.huihoo.com/darwin/kernel-programming-guide/boundaries/chapter_14_section_4.html) 
 * [Abusing Mach on Mac OS X - Uninformed pdf](https://www.google.co.jp/url?sa=t&rct=j&q=&esrc=s&source=web&cd=8&cad=rja&uact=8&ved=2ahUKEwjD-qGbr_zeAhWBi7wKHYRYDk8QFjAHegQIAxAC&url=http%3A%2F%2Fwww.uninformed.org%2F%3Fv%3D4%26a%3D3%26t%3Dpdf&usg=AOvVaw3sraSLdwRTvPca4iHV5NDL)
+* [ipc-hello.c Example](http://walfield.org/pub/people/neal/papers/hurd-misc/ipc-hello.c)
 
 # 2018/12/01
-
 开箱
 
 # 2018/12/02
+
 - [x] MachPort的设计思路以及写Example
 
 更正下上一个提交，首先mach port的资料真的很匮乏，即使到如今还是搜不到健全的资料，甚至连个完整能运行的Demo都没有（可能是我搜到的博文认为这都是基础，因此只贴了一些数据结构的解释），下面的代码运行ok的，我用pthread创建线程用于监听消息，在主线程里发送给指定的port一个`0x12345678`的数据。注意点罗列下：
@@ -31,8 +32,8 @@
 4. 刚才demo没跑起来，其实就是因为header中的size没有设置对，其实想想也对，因为接收端需要明确需要receive多少个字节后才能解析成对的数据结构；
 5. pthread的使用，这个网上资料很多
 
-<details>
-  <summary>Hello World Demo 片段</summary>
+<details close>
+  <summary>点击展开 Hello World Demo 片段</summary>
 
 ```c
 #include "string.h"
@@ -137,7 +138,7 @@ int main(int argc, const char * argv[]) {
 ```
 </details>
 
-
+> `mach_port_t` 的本质就是 `typedef unsigned int` ！！！
 
 # 2018/12/03
 
@@ -308,8 +309,6 @@ _dispatch_runloop_root_queue_get_port_4CF(dispatch_queue_t dq)
 5. 接近尾声，为啥会有一堆port的判断，livePort、waitPort都是什么东西？
 
 上述这些明天学习。
-
-
 
 # 2018/12/04
 
@@ -584,3 +583,96 @@ if (rls) {
 注意 `mach_msg` 就是作为source1 block之后，如果reply，那么需要向port返回值。
 
 > 今天差不多到这里可以了，明天会对port相关的收个尾，发现知识点实在太多，已经尽量做到不拓展了，一有发散的想法，马上会告诉自己，哪个才是重点，当下目的是为了解决什么？那个知识点对全局理解有影响吗，是否真的必不可少，基本这样问完，我就取舍一二，效率还算可以。
+
+# 2018/12/05
+* [ ] 今日目标：学习 `CFRunLoopDoBlocks` 实现和用途。
+
+源码很简单：
+```c
+__CFRunLoopDoBlocks(rl, rlm);
+```
+
+直接在实现源码上做了注释，主要是链表的遍历，执行。列表Item就是封装了block的结构体，难点应该是那个模式条件判断，需要理下commonModes，commonModeItems是什么，以及当前RunLoop有哪些模式，比如`kCFRunLoopDefaultMode`,`UITrackingRunLoopMode`等，这些其实都可以打上“common”标签，`kCFRunLoopCommonModes`，并非是一个新模式，应该算是多所有打了common标签的模式集合统称。
+
+<details>
+  <summary>点击展开源码TL;DR</summary>
+
+```c
+
+static Boolean __CFRunLoopDoBlocks(CFRunLoopRef rl, CFRunLoopModeRef rlm) { // Call with rl and rlm locked
+    if (!rl->_blocks_head) return false;
+    if (!rlm || !rlm->_name) return false;
+    Boolean did = false;
+    struct _block_item *head = rl->_blocks_head;
+    struct _block_item *tail = rl->_blocks_tail;
+    rl->_blocks_head = NULL;
+    rl->_blocks_tail = NULL;
+    // commonMode
+    CFSetRef commonModes = rl->_commonModes;
+    // rlm其实就是当前的模式 从rl->_currentMode 也是可以的
+    CFStringRef curMode = rlm->_name;
+    __CFRunLoopModeUnlock(rlm);
+    __CFRunLoopUnlock(rl);
+    struct _block_item *prev = NULL;
+    struct _block_item *item = head;
+    while (item) {
+        struct _block_item *curr = item;
+        item = item->_next;
+        Boolean doit = false;
+        if (CFStringGetTypeID() == CFGetTypeID(curr->_mode)) {
+            // String 类型 比如 kCFRunLoopDefaultMode UITrackingRunLoopMode
+            // 如果说这个block标识运行的模式为 kCFRunLoopCommonModes，
+            // 也就是当前模式也打上了“common”标签
+            // ps: 对于default track mode，都是默认打上了common标签的，所以会把modeItem加入到
+            // commonModeItem中。而 commonModes 等同于标记common的名称数组
+            // [kCFRunLoopDefaultMode,UITrackingRunLoopMode]
+            doit = CFEqual(curr->_mode, curMode) || (CFEqual(curr->_mode, kCFRunLoopCommonModes) && CFSetContainsValue(commonModes, curMode));
+        } else {
+            // 如果 curr->mode 本身就是一个SetRef 集合 那么就要使用contain判断的
+            // 场景应该是某个block是要求在多个mode下被调用
+            // 条件一：表示当前模式在它“白名单”中
+            // 条件二：白名单中可能还包含 kCFRunLoopCommonModes，所以还要遍历
+            // 举个例子，curr->_mode 是block要求执行的场景比如 [kCFRunLoopCommonModes]
+            // curMode = UITrackingRunLoopMode
+            // 然后commonModes 应该包含的是所有打了common标签的mode,这里包含default tracking等等
+            // 主要场景是用户其实不想为某个block指定具体的mode，直接common了事
+            doit = CFSetContainsValue((CFSetRef)curr->_mode, curMode) || (CFSetContainsValue((CFSetRef)curr->_mode, kCFRunLoopCommonModes) && CFSetContainsValue(commonModes, curMode));
+        }
+        if (!doit) prev = curr;
+        if (doit) {
+            if (prev) prev->_next = item;
+            if (curr == head) head = item;
+            if (curr == tail) tail = prev;
+            void (^block)(void) = curr->_block;
+                CFRelease(curr->_mode);
+                free(curr);
+            if (doit) {
+                    // 其他没有好说的，这里的calling out 有种打电话过来的意味
+                    // 试想我们在上层代码中，突然runloop打电话过来告诉你事件...执行block
+                    __CFRUNLOOP_IS_CALLING_OUT_TO_A_BLOCK__(block);
+                did = true;
+            }
+            Block_release(block); // do this before relocking to prevent deadlocks where some yahoo wants to run the run loop reentrantly from their dealloc
+        }
+    }
+    __CFRunLoopLock(rl);
+    __CFRunLoopModeLock(rlm);
+    if (head) {
+	tail->_next = rl->_blocks_head;
+	rl->_blocks_head = head;
+        if (!rl->_blocks_tail) rl->_blocks_tail = tail;
+    }
+    return did;
+}
+```
+
+</details>
+
+> 但是现在问题来了，其实实现非常简单，但是我还是不知道这些Block到底是通过何种方式添加进去的。这个应该是明日要解决的问题。
+
+# 2018/12/06
+（明日待办任务列表）
+- [ ] Main RunLoop 默认添加了哪些 Mode，各适用于哪些场景；
+- [ ] CFRunLoopDoBlocks 执行的链表item是怎么加进去的
+- [ ] RunLoop 的休眠，休眠时候真的什么都不做吗？那视图渲染呢？
+- [ ] Window 的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
