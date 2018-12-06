@@ -676,3 +676,5 @@ static Boolean __CFRunLoopDoBlocks(CFRunLoopRef rl, CFRunLoopModeRef rlm) { // C
 - [ ] CFRunLoopDoBlocks 执行的链表item是怎么加进去的
 - [ ] RunLoop 的休眠，休眠时候真的什么都不做吗？那视图渲染呢？
 - [ ] Window 的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
+
+今日在看runLoop.c源码————从头至尾。基本就是DoXXXX系列。上述任务延后。
