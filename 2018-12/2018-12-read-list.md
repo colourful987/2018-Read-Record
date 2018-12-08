@@ -678,3 +678,9 @@ static Boolean __CFRunLoopDoBlocks(CFRunLoopRef rl, CFRunLoopModeRef rlm) { // C
 - [ ] Window 的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
 
 今日在看runLoop.c源码————从头至尾。基本就是DoXXXX系列。上述任务延后。
+
+
+
+# 2018/12/08
+
+今日小雪。看完了runloop.c文件的源码，收获很少，可能是因为没有结合学习目标，或是应用场景，明日还是按照计划来做事。
