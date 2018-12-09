@@ -1,10 +1,10 @@
 > Theme: RunLoop主题、年度整理
 > Source Code Read Plan:
 - [x] MachPort的设计思路以及写Example；
-- [ ] Main RunLoop 默认添加了哪些 Mode，各适用于哪些场景；
+- [x] Main RunLoop 默认添加了哪些 Mode，各适用于哪些场景；
 - [x] GCD Dispatch 的MachPort是怎么玩的；
-- [ ] RunLoop 的休眠，休眠时候真的什么都不做吗？那视图渲染呢？
-- [ ] Window 的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
+- [x] RunLoop 的休眠，休眠时候真的什么都不做吗？那视图渲染呢？
+- [x] 屏幕的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
 - [x] 昨日的 CFRunLoopDoBlocks 执行的是？
 - [ ] RunLoop 的使用场景有哪些，具体实现又是怎么样的？
 - [x] GCD 为什么会有个 gcdDispatchPort?
@@ -16,6 +16,10 @@
 * [Mach Messaging and Mach Interprocess Communication](https://docs.huihoo.com/darwin/kernel-programming-guide/boundaries/chapter_14_section_4.html) 
 * [Abusing Mach on Mac OS X - Uninformed pdf](https://www.google.co.jp/url?sa=t&rct=j&q=&esrc=s&source=web&cd=8&cad=rja&uact=8&ved=2ahUKEwjD-qGbr_zeAhWBi7wKHYRYDk8QFjAHegQIAxAC&url=http%3A%2F%2Fwww.uninformed.org%2F%3Fv%3D4%26a%3D3%26t%3Dpdf&usg=AOvVaw3sraSLdwRTvPca4iHV5NDL)
 * [ipc-hello.c Example](http://walfield.org/pub/people/neal/papers/hurd-misc/ipc-hello.c)
+* [iOS 模块详解Runloop](https://juejin.im/entry/599c13bc6fb9a0248926a77d)
+* [Stackoverflow Question: NSRunLoop : Is it really idle between kCFRunLoopBeforeWaiting & kCFRunLoopAfterWaiting?](https://stackoverflow.com/questions/35872203/nsrunloop-is-it-really-idle-between-kcfrunloopbeforewaiting-kcfrunloopafterw)
+* Yuri Romanchenko 的回答有点厉害：[Does UIApplication sendEvent: execute in a NSRunLoop?](https://stackoverflow.com/questions/22116698/does-uiapplication-sendevent-execute-in-a-nsrunloop/22121981#22121981)
+
 
 # 2018/12/01
 开箱
@@ -675,12 +679,159 @@ static Boolean __CFRunLoopDoBlocks(CFRunLoopRef rl, CFRunLoopModeRef rlm) { // C
 - [ ] Main RunLoop 默认添加了哪些 Mode，各适用于哪些场景；
 - [ ] CFRunLoopDoBlocks 执行的链表item是怎么加进去的
 - [ ] RunLoop 的休眠，休眠时候真的什么都不做吗？那视图渲染呢？
-- [ ] Window 的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
+- [ ] 屏幕的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
 
 今日在看runLoop.c源码————从头至尾。基本就是DoXXXX系列。上述任务延后。
-
-
 
 # 2018/12/08
 
 今日小雪。看完了runloop.c文件的源码，收获很少，可能是因为没有结合学习目标，或是应用场景，明日还是按照计划来做事。
+
+# 2018/12/09
+
+### 1. Main RunLoop 默认添加了哪些 Mode，各适用于哪些场景
+
+目前网上很多教程都会提及系统提供的4个Mode：
+1. kCFRunLoopDefaultMode (NSDefaultRunLoopMode)
+2. UITrackingRunLoopMode
+3. UIInitializationRunLoopMode
+4. GSEventReceiveRunLoopMode
+
+另外 NSRunLoopCommonModes 根据上面的源码分析，可以看到仅仅是对正常Mode的标记“Common”。
+
+> 上面除了 initializationRunLoopMode ，其他都可以 `NSRunLoop *runloop = [NSRunLoop currentRunLoop];` 打印这个runloop对象可以看到。
+
+至于何时添加这些Mode，google后没找到
+
+### 2. CFRunLoopDoBlocks 执行的链表item是怎么加进去的
+
+首先block添加接口可以在源码中找到：
+```c
+void CFRunLoopPerformBlock(CFRunLoopRef rl, CFTypeRef mode, void (^block)(void)){}
+```
+
+`CFSocket.c` 文件中的 `__CFSocketManager` 有调用到，但是貌似只是日志输出：
+
+```c
+CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopDefaultMode, ^{
+    CFTimeInterval dt = CFAbsoluteTimeGetCurrent() - endTime;
+    if (dt > 0) {
+        __CFSOCKETLOG("select() timeout %lu - took %.05f for the main runloop (TOO LONG!)", __CFSocketManagerIteration, dt);
+    } else {
+        __CFSOCKETLOG("select() timeout %lu - took %.05f for the main runloop", __CFSocketManagerIteration, dt < 0? -dt : dt);
+    }
+});
+```
+再去 gcd 源码中找了下，发现也仅是日志，可能是搜索方式不对，暂时reserved。
+
+不过发现了这个方法和gcd的 `dispatch_async` 方法对比：
+
+```c
+dispatch_async(dispatch_get_main_queue(), ^{calayer.transform = newTransform});
+
+CFRunLoopPerformBlock(CFRunLoopGetMain(), kCFRunLoopCommonModes, ^(void) {calayer.transform = newTransform});
+```
+
+简要总结下stackoverflow上的回答
+1. 前者仅能控制在哪个队列中，比如mainloop，或其他runloop，但是无法指定mode类型，也就是说默认就是commonModes；后者显而易见就是更灵活；
+2. `CFRunLoopPerformBlock` 并不能立马wake up唤醒当前runloop的休眠，只能等到有事件到来（user event occurs, timer fires, run loop source fires, mach message is received, etc.）唤醒runloop，下一次流程执行 `CFRunLoopDoBlocks`，这可能就解释了为啥有些地方有多个调用，可以回去再看下源码，我记得自己标记了不解；但是如果我们希望`CFRunLoopPerformBlock` 立马调用，就需要间接再调用 `CFRunLoopWakeUp` 方法；
+
+因此，如果你使用 `CFRunLoopDoBlocks` 配合 `CFRunLoopWakeUp` 其实两者就很相似了。
+
+
+### 3. RunLoop 的休眠，休眠时候真的什么都不做吗？那视图渲染呢？
+没找到具体文档或者教程来阐述这方面的知识，搜了下Stackoverflow发现也有人又相关疑惑，比如 [Stackoverflow Question: NSRunLoop : Is it really idle between kCFRunLoopBeforeWaiting & kCFRunLoopAfterWaiting?](https://stackoverflow.com/questions/35872203/nsrunloop-is-it-really-idle-between-kcfrunloopbeforewaiting-kcfrunloopafterw) ，这里有个小技巧，看过源码我们知道内部的 `do{}while(0==retVal)` 处理流程第一步就是通知observer kCFRunLoopBeforeTimers 事件，紧接是 kCFRunLoopBeforeSources，所以我们可以简单认为beforeTimer这个观察事件是一次新runloop流程处理的开始，为此我们可以监听这个事件，然后搞个static静态变量计数，每次事件发生时计数加一，标识一次新的runloop处理Id，如下：
+
+```oc
+CFRunLoopObserverRef observerRef = CFRunLoopObserverCreateWithHandler(NULL, kCFRunLoopAllActivities, YES, 0, ^(CFRunLoopObserverRef observer, CFRunLoopActivity activity) {
+    if (activity == kCFRunLoopBeforeTimers) {
+        weakSelf.runloopId += 1;
+    }
+    NSLog(@"RunloopId : %lu, Activity : %ld, %lf\n", (unsigned long)weakSelf.runloopId, activity, [[NSDate date] timeIntervalSince1970]);
+});
+CFRunLoopAddObserver(CFRunLoopGetMain(), observerRef, kCFRunLoopCommonModes);
+
+// 输入类似如下：
+RunloopId : 156, Activity : 2, 1457445513.522846
+RunloopId : 156, Activity : 4, 1457445513.522985
+RunloopId : 156, Activity : 32, 1457445513.523144
+RunloopId : 156, Activity : 64, 1457445529.002502
+RunloopId : 157, Activity : 2, 1457445529.002820
+RunloopId : 157, Activity : 4, 1457445529.003044
+```
+
+关于视图渲染，其实是 `Core Animation` 在干活。
+
+[Understanding NSRunLoop](https://stackoverflow.com/questions/12091212/understanding-nsrunloop)，看了感觉干货不多，暂时留着给有需要的人看。
+
+Yuri Romanchenko 的回答有点厉害：[Does UIApplication sendEvent: execute in a NSRunLoop?](https://stackoverflow.com/questions/22116698/does-uiapplication-sendevent-execute-in-a-nsrunloop/22121981#22121981)
+让我知道了还有 purple system project 这一层，是iOS的代号？？？其实少数人只知道有springBoard.app来派发事件给launch的应用程序，比如告诉touches触摸事件，前后台切换等等，殊不知其实springboard是通过purple system event 的port来进行事件交流的。
+
+另外还查到一个GCD比较有意思的东西，就是如何在一个应用程序或是一个runloop外进行GCD事件派发，即实现一个简单、且最小巧的GCD代码。[源码](https://wiki.freebsd.org/GCD)如下：
+
+```c
+#include <dispatch/dispatch.h>
+
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int
+main(int argc, char *argv[])
+{
+        dispatch_queue_t q;
+        dispatch_time_t t;
+
+        q = dispatch_get_main_queue();
+        t = dispatch_time(DISPATCH_TIME_NOW, 5LL * NSEC_PER_SEC);
+
+        // Print a message and exit after 5 seconds.
+        dispatch_after(t, q, ^{
+                printf("block_dispatch\n");
+                exit(0);
+            });
+
+        dispatch_main();
+        return (0);
+}
+```
+
+以及不适用 C block的方式：
+
+```c
+#include <dispatch/dispatch.h>
+
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+void
+deferred_code(__unused void *arg)
+{
+
+        printf("block_dispatch\n");
+        exit(0);
+}
+
+int
+main(int argc, char *argv[])
+{
+        dispatch_queue_t q;
+        dispatch_time_t t;
+
+        q = dispatch_get_main_queue();
+        t = dispatch_time(DISPATCH_TIME_NOW, 5LL * NSEC_PER_SEC);
+
+        dispatch_after_f(t, q, NULL, deferred_code);
+
+        dispatch_main();
+        return (0);
+}
+```
+关键还是 `dispatch_main()` 方法，内部估计也是开了个pthread，然后while1了。 之后学习GCD的时候就可以看到。
+
+### 4. 屏幕的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
+
+reserved ，不是很清楚是在哪一步提交的layer.content。
+
+
