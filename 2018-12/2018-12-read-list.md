@@ -6,9 +6,9 @@
 - [x] RunLoop 的休眠，休眠时候真的什么都不做吗？那视图渲染呢？
 - [x] 屏幕的 UI 渲染更新机制，是放在RunLoop哪个阶段做的；
 - [x] 昨日的 CFRunLoopDoBlocks 执行的是？
-- [ ] RunLoop 的使用场景有哪些，具体实现又是怎么样的？
+- [x] RunLoop 的使用场景有哪些，具体实现又是怎么样的？
 - [x] GCD 为什么会有个 gcdDispatchPort?
-- [ ] Observer 休眠前、休眠后等事件可以玩一些什么花样呢？
+- [x] Observer 休眠前、休眠后等事件可以玩一些什么花样呢？
 > reference：
 
 * [Interprocess communication on iOS with Berkeley sockets](http://ddeville.me/2015/02/interprocess-communication-on-ios-with-berkeley-sockets) 
@@ -1049,3 +1049,47 @@ sources1 (HashTable) = PurpleEventCallback
 ```
 
 </details>
+
+# 2018/12/12
+`_ZN2CA11Transaction17observer_callbackEP19__CFRunLoopObservermPv` 监听了进入休眠前和退出状态，且优先级设置的很高，保证所有的事项都完成后再调用这个方法。这个方法负责提交当前一次Runloop中所有的UI更新内容给iOS的渲染线程将内容呈现到屏幕上，比如修改frame、调整了UI层级（UIView/CALayer）或者手动设置了setNeedsDisplay/setNeedsLayout 之后就会将这些操作提交到全局容器。
+
+> 最后说一点对渲染的理解，可能不太准确，主线程中我们操作的UIView，比如调整位置、赋值颜色、重写drawRect绘制一些图形、添加一个子视图等等，那么就需要维护一个layer tree（专门描述当前屏幕的内容），而每个layer都有自己的内容————也就是 layer.content 属性，大部分情况下就是image；而主线程要做的是每一次runloop这个layer tree的改动提交给专门维护layer tree的线程做处理；处理完之后我们需要把这个layer tree真正映射成一张“图”，通常就是指rgb合成，光栅化处理等，这些全部由GPU处理，GPU负责这些重复、且计算量大的事务非常合适，千万不要怀疑它的能力（貌似GPU的内存多，但是逻辑电路少吧；CPU刚刚相反，不知道有没有记错）;GPU处理后的数据其实就是 0，1数据了，由于我的专业是机械电子，做过嵌入式相关的东西，有涉及液晶的读写，一般液晶屏会自带一个驱动芯片，只需要先设置控制端口当前状态：比如读、或写，然后往数据接口传输一长串的0、1就行了，本质也就是配置时钟信号发送高低电平；最后液晶得到数据后，在通过高低电平控制液晶每个像素“灯”的暗灭吧。
+
+应用场景的话应该就是 AsyncDisplayKit 和 YYLabel 系列的框架了，其实就是将计算和绘制运算都放到子线程处理————最终目的是生成layer.content，我们一般会维护一个队列，将每次UI更新操作都封装成一个Operation放到队列中，在进入休眠前，把operation派发到多个子线程计算和绘制运算，得到最终content后，回到主线程赋值给layer.content（CATransaction commit下），此次 runloop 就会带上这次提交渲染事务，最终呈现在屏幕上。
+
+### 关于卡顿的小研究
+关于**卡顿**，如果按照我的猜测，倘若主线程正在进行耗时操作，那么迟迟进入不到休眠，那么所有提交的UI改动`_ZN2CA11Transaction17observer_callbackEP19__CFRunLoopObservermPv`都无法提交到渲染线程中；本来60ms就能跑完一次runloop，进入休眠前把提交所有的UI更新，如果加上其他一些耗时，算作83ms才把内容显示在屏幕上，相当于60帧更新，完美！但是倘若由于耗时操作，需要500ms才能跑完一次runloop再提交内容，相当于1秒才更新2次，开始到结束———— 肉眼直观就是跳跃性。
+
+我故意在自定义 TableViewCell 中写了一个延迟：
+```objective-c
+/// MyCell.m
+- (void)configuration:(NSString *)desc {
+    [NSThread sleepForTimeInterval: 0.13];
+    self.textLabel.text = desc;
+}
+
+/// ViewController.m
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    MyCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell" forIndexPath:indexPath];
+    
+    [cell configuration: [NSString stringWithFormat:@"label %d", indexPath.row]];
+    
+    return cell;
+}
+```
+
+![](./resource/runloop_scroll_trackmode_prebreak.png)
+
+预先打了断点，然后滑动列表，线程callback trace
+
+看callback trace我们发现是runloop进入休眠前的Observer callback调用，检查是否更新，由于tableview滑动，内容移动，frame变化导致`layout_if_needed`满足，触发一次内容更新调用 `configuration`方法，会延迟0.13秒。此时的RunLoop Mode为default，说好的是 UITrackingRunLoopMode 呢？
+
+后来我发现滑动Tableview时候确实切换到了 UITrackingRunLoopMode，只需要滑动用力一点，然后在滑动停止之前打断点，堆栈信息如下：
+
+![](./resource/runloop_scroll_trackmode_midbreak.png)
+
+说明当前runloop的mode已经从 default 切换到了 tracking，但是此时触发`configuration`方法是source1事件，然后再是 `display_timer_callback`，而且发现之后也没有调用 `_ZN2CA11Transaction17observer_callbackEP19__CFRunLoopObservermPv` 方法。
+
+但是如果预先打断点，一开始进的是`_ZN2CA11Transaction17observer_callbackEP19__CFRunLoopObservermPv`，后面会切换到 `display_timer_callback`，这不就说明模式切换了嘛。
+
+不管是 UITrackingRunLoopMode 还是 kCFRunLoopDefaultMode，只要操作耗时导致提交UI更新事务延迟，那么就会卡顿。
