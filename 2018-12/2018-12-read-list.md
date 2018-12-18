@@ -1093,3 +1093,177 @@ sources1 (HashTable) = PurpleEventCallback
 但是如果预先打断点，一开始进的是`_ZN2CA11Transaction17observer_callbackEP19__CFRunLoopObservermPv`，后面会切换到 `display_timer_callback`，这不就说明模式切换了嘛。
 
 不管是 UITrackingRunLoopMode 还是 kCFRunLoopDefaultMode，只要操作耗时导致提交UI更新事务延迟，那么就会卡顿。
+
+
+
+# 2018/12/13 - 2018/12/31（年终整理）
+
+。。。
+
+# 2018/12/18
+
+之前在effective-c 52中看到了dynamic关键字的用处，以及使用场景例如CoreData框架中 NSManagedObject 类，每个Entity必须继承自它。
+
+除此之外又提供了一个很“酷炫” 但不“实用”的例子：
+
+```objective-c
+id autoDictionaryGetter(id self, SEL _cmd);
+void autoDictionarySetter(id self, SEL _cmd, id value);
+
+@interface EOCAutoDictionary : NSObject
+@property(nonatomic, strong)NSString *string;
+@property(nonatomic, strong)NSNumber *number;
+@property(nonatomic, strong)NSDate *date;
+@property(nonatomic, strong)id opaqueObject;
+@end
+
+@interface EOCAutoDictionary ()
+@property(nonatomic, strong)NSMutableDictionary *backingStore;
+@end
+@implementation EOCAutoDictionary
+@dynamic string, number, date, opaqueObject;
+
+- (instancetype)init {
+    if (self = [super init]) {
+        _backingStore = [NSMutableDictionary new];
+    }
+    return self;
+}
+
++ (BOOL)resolveInstanceMethod:(SEL)sel {
+    NSString *selectorString = NSStringFromSelector(sel);
+    if ([selectorString hasPrefix:@"set"]) {
+        class_addMethod(self, sel, (IMP)autoDictionarySetter, "v@:@");
+    } else {
+        class_addMethod(self, sel, (IMP)autoDictionaryGetter, @"@@:");
+    }
+}
+
+@end
+
+
+id autoDictionaryGetter(id self, SEL _cmd){
+    EOCAutoDictionary *typedSelf = (EOCAutoDictionary *)self;
+    NSMutableDictionary *backingStore = typedSelf.backingStore;
+    
+    NSString *key = NSStringFromSelector(_cmd);
+    return [backingStore objectForKey:key];
+}
+
+void autoDictionarySetter(id self, SEL _cmd, id value){
+    EOCAutoDictionary *typedSelf = (EOCAutoDictionary *)self;
+    NSMutableDictionary *backingStore = typedSelf.backingStore;
+    
+    NSString *selectorString = NSStringFromSelector(_cmd);
+    NSMutableString *key = [selectorString copy];
+    // 移除冒号 :
+    [key deleteCharactersInRange:NSMakeRange(key.length - 1, 1)];
+    // 移除前缀 set
+    [key deleteCharactersInRange:NSMakeRange(0, 3)];
+    
+    NSString *lowercaseFirstChar = [[key substringToIndex:1] lowercaseString];
+    [key replaceCharactersInRange:NSMakeRange(0, 1) withString:lowercaseFirstChar];
+    if (value) {
+        [backingStore setObject:value forKey:key];
+    } else {
+        [backingStore removeObjectForKey:key];
+    }
+    
+}
+```
+
+上面的例子在我刚学oc时感觉非常“惊艳”，但是我又不禁思考上面的实现由什么应用场景，还是说仅仅为了展示runtime和dynamic属性使用方式。
+
+实际场景中，我们大可以直接使用`NSDictionary`不就完事了嘛，难道是觉得每次用 key-value形式取值不够方便且key容易拼错？？
+
+如果原因是这个话我们封装一个对象，然后定义属性让外部访问确实也说的通。不过内置的backStore字典完全没有必要啊。像下面这样就可以了：
+```
+@interface EOCAutoDictionary : NSObject
+@property(nonatomic, strong)NSString *string;
+@property(nonatomic, strong)NSNumber *number;
+@property(nonatomic, strong)NSDate *date;
+@property(nonatomic, strong)id opaqueObject;
+@end
+
+@interface EOCAutoDictionary
+
+@end
+
+// 平常使用
+EOCAutoDictionary *dict = [EOCAutoDictionary new];
+dict.string = @"pmst";
+...
+```
+
+> 总结下上面的实现：例子中的EOCAutoDictionary内置一个字典作为存储容器，然后用dynamic修饰属性使得系统不自动为属性生成getter setter方法，最后利用runtime运行时将发送给对象的getter setter消息分别让 `autoDictionaryGetter` 和 `autoDictionarySetter` 处理。
+
+到底有什么应用场景呢？？？？
+
+其实仔细想想为啥要有一个backingStore，那是因为所有属性值都是从它这边取，然后属性赋值最终修改的也是后端容器存储。
+
+然后最近看到了一种对 NSUserdefault的配合使用真的不错。
+
+```objective-c
+#import <Foundation/Foundation.h>
+
+@interface Preferences : NSObject {
+    NSUserDefaults *_defaults;
+}
+
+@property (nonatomic, assign) BOOL autoStartBreak;
+// ... many, many more
+
++ (Preferences *)sharedInstance;
+
+@end
+
+// Preferences.m
+#import "Preferences.h"
+
+@implementation Preferences
+
+- (id)init {
+    if (self = [super init]) {
+        _defaults = [NSUserDefaults standardUserDefaults];
+    }
+
+    return self;
+}
+
++ (Preferences *)sharedInstance {
+    static Preferences *sharedInstance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[Preferences alloc] init];
+    });
+
+    return sharedInstance;
+}
+
+- (BOOL)autoStartBreak {
+    return [_defaults boolForKey:@"autoStartBreak"];
+}
+
+- (void)setAutoStartBreak:(BOOL)autoStartBreak {
+    [_defaults setBool:autoStartBreak forKey:@"autoStartBreak"];
+}
+// ... many, many more
+
+@end
+```
+
+我们使用dynamic标识后，然后自己来重新实现了getter setter方法，然后取值赋值都是对userdefault操作；不过有个问题，这样实现意味着我们每添加一个属性，都需要重写getter setter方法，显然很麻烦；如果用 resolveInstanceMethod 解决这个问题，似乎在属性类型上限制死了必须是个对象，那些primitive type怎么办，比如bool，int。
+
+看了下runtim，其实 class_copyPropertyList() 方法可以获得这个类的所有属性描述，因此相当于我们是知道类型的，因此只需要根据类型选择对应的getter setter 方法就可以了，比如：
+
+```
+BOOL paprefBoolGetter(id self, SEL _cmd) {
+    // ...
+    return [[NSUserDefaults standardUserDefaults] boolForKey:key];
+}
+
+void paprefBoolSetter(id self, SEL _cmd, BOOL value) {
+    // ...
+    [[NSUserDefaults standardUserDefaults] setBool:value forKey:key;
+}
+```
