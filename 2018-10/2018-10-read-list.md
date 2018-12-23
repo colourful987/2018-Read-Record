@@ -184,7 +184,7 @@ public class MinStack {
 ```
 for(int i = 0 ;i < count -1 ;i++) {
   // 一次冒泡操作 送一个数到最上面
-  for(int j = 0; j < count -1-j;j++){
+  for(int j = 0; j < count -1-i;j++){
     int a = arr[j];
     int b = arr[j+1];
     
